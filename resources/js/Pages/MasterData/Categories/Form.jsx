@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { FormField } from '@/components/ui/form-field';
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -95,24 +96,25 @@ export default function Form({ category, revenueAccounts, expenseAccounts }) {
                             {errors.type && <p className="text-sm text-red-500">{errors.type}</p>}
                         </div>
 
-                        <Input
-                            label="Nama Kategori"
-                            placeholder={data.type === 'income' ? 'Contoh: Penjualan Produk' : 'Contoh: Biaya Listrik'}
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            isInvalid={!!errors.name}
-                            errorMessage={errors.name}
-                            isRequired
-                        />
+                        <FormField label="Nama Kategori" required error={errors.name}>
+                            <Input
+                                placeholder={data.type === 'income' ? 'Contoh: Penjualan Produk' : 'Contoh: Biaya Listrik'}
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                aria-invalid={!!errors.name}
+                            />
+                        </FormField>
 
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">
-                                Akun Buku Besar <span className="text-red-500">*</span>
-                            </label>
+                        <FormField
+                            label="Akun Buku Besar"
+                            required
+                            error={errors.account_id}
+                            hint="Transaksi dengan kategori ini akan dicatat ke akun yang dipilih"
+                        >
                             <select
                                 value={data.account_id}
                                 onChange={(e) => setData('account_id', e.target.value)}
-                                className={`w-full h-10 px-3 rounded-md border ${errors.account_id ? 'border-red-500' : 'border-gray-300'} bg-white focus:outline-none focus:ring-2 focus:ring-primary-500`}
+                                className={`h-8 w-full min-w-0 rounded-none border bg-transparent px-2.5 py-1 text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 ${errors.account_id ? 'border-destructive' : 'border-input'}`}
                             >
                                 <option value="">Pilih akun...</option>
                                 {accounts.map((acc) => (
@@ -121,23 +123,19 @@ export default function Form({ category, revenueAccounts, expenseAccounts }) {
                                     </option>
                                 ))}
                             </select>
-                            {errors.account_id && <p className="text-sm text-red-500">{errors.account_id}</p>}
-                            <p className="text-xs text-gray-500">
-                                Transaksi dengan kategori ini akan dicatat ke akun yang dipilih
-                            </p>
-                        </div>
+                        </FormField>
 
-                        <Textarea
-                            label="Keterangan (Opsional)"
-                            placeholder="Deskripsi singkat tentang kategori ini"
-                            value={data.description}
-                            onChange={(e) => setData('description', e.target.value)}
-                            isInvalid={!!errors.description}
-                            errorMessage={errors.description}
-                        />
+                        <FormField label="Keterangan (Opsional)" error={errors.description}>
+                            <Textarea
+                                placeholder="Deskripsi singkat tentang kategori ini"
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                aria-invalid={!!errors.description}
+                            />
+                        </FormField>
 
                         <div className="flex gap-3 pt-4">
-                            <Button type="submit" isLoading={processing}>
+                            <Button type="submit" disabled={processing}>
                                 {isEdit ? 'Simpan Perubahan' : 'Tambah Kategori'}
                             </Button>
                             <Link href="/master/kategori">

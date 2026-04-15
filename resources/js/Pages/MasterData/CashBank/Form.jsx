@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FormField } from '@/components/ui/form-field';
 import { ArrowLeft } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -75,24 +76,20 @@ export default function Form({ cashBank, ledgerAccounts, types }) {
                             {errors.type && <p className="text-sm text-red-500">{errors.type}</p>}
                         </div>
 
-                        <Input
-                            label="Nama Akun"
-                            placeholder={data.type === 'cash' ? 'Contoh: Kas Toko' : 'Contoh: BCA Utama'}
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            isInvalid={!!errors.name}
-                            errorMessage={errors.name}
-                            isRequired
-                        />
+                        <FormField label="Nama Akun" required error={errors.name}>
+                            <Input
+                                placeholder={data.type === 'cash' ? 'Contoh: Kas Toko' : 'Contoh: BCA Utama'}
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                aria-invalid={!!errors.name}
+                            />
+                        </FormField>
 
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">
-                                Akun Buku Besar <span className="text-red-500">*</span>
-                            </label>
+                        <FormField label="Akun Buku Besar" required error={errors.account_id}>
                             <select
                                 value={data.account_id}
                                 onChange={(e) => setData('account_id', e.target.value)}
-                                className={`w-full h-10 px-3 rounded-md border ${errors.account_id ? 'border-red-500' : 'border-gray-300'} bg-white focus:outline-none focus:ring-2 focus:ring-primary-500`}
+                                className={`h-8 w-full min-w-0 rounded-none border bg-transparent px-2.5 py-1 text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 ${errors.account_id ? 'border-destructive' : 'border-input'}`}
                             >
                                 <option value="">Pilih akun...</option>
                                 {filteredAccounts.map((acc) => (
@@ -101,54 +98,53 @@ export default function Form({ cashBank, ledgerAccounts, types }) {
                                     </option>
                                 ))}
                             </select>
-                            {errors.account_id && <p className="text-sm text-red-500">{errors.account_id}</p>}
-                        </div>
+                        </FormField>
 
                         {data.type === 'bank' && (
                             <>
-                                <Input
-                                    label="Nama Bank"
-                                    placeholder="Contoh: BCA, Mandiri, BRI"
-                                    value={data.bank_name}
-                                    onChange={(e) => setData('bank_name', e.target.value)}
-                                    isInvalid={!!errors.bank_name}
-                                    errorMessage={errors.bank_name}
-                                />
+                                <FormField label="Nama Bank" error={errors.bank_name}>
+                                    <Input
+                                        placeholder="Contoh: BCA, Mandiri, BRI"
+                                        value={data.bank_name}
+                                        onChange={(e) => setData('bank_name', e.target.value)}
+                                        aria-invalid={!!errors.bank_name}
+                                    />
+                                </FormField>
 
-                                <Input
-                                    label="Nomor Rekening"
-                                    placeholder="Contoh: 1234567890"
-                                    value={data.account_number}
-                                    onChange={(e) => setData('account_number', e.target.value)}
-                                    isInvalid={!!errors.account_number}
-                                    errorMessage={errors.account_number}
-                                />
+                                <FormField label="Nomor Rekening" error={errors.account_number}>
+                                    <Input
+                                        placeholder="Contoh: 1234567890"
+                                        value={data.account_number}
+                                        onChange={(e) => setData('account_number', e.target.value)}
+                                        aria-invalid={!!errors.account_number}
+                                    />
+                                </FormField>
                             </>
                         )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input
-                                type="number"
-                                label="Saldo Awal"
-                                placeholder="0"
-                                value={data.opening_balance}
-                                onChange={(e) => setData('opening_balance', e.target.value)}
-                                isInvalid={!!errors.opening_balance}
-                                errorMessage={errors.opening_balance}
-                            />
+                            <FormField label="Saldo Awal" error={errors.opening_balance}>
+                                <Input
+                                    type="number"
+                                    placeholder="0"
+                                    value={data.opening_balance}
+                                    onChange={(e) => setData('opening_balance', e.target.value)}
+                                    aria-invalid={!!errors.opening_balance}
+                                />
+                            </FormField>
 
-                            <Input
-                                type="date"
-                                label="Tanggal Saldo Awal"
-                                value={data.opening_balance_date}
-                                onChange={(e) => setData('opening_balance_date', e.target.value)}
-                                isInvalid={!!errors.opening_balance_date}
-                                errorMessage={errors.opening_balance_date}
-                            />
+                            <FormField label="Tanggal Saldo Awal" error={errors.opening_balance_date}>
+                                <Input
+                                    type="date"
+                                    value={data.opening_balance_date}
+                                    onChange={(e) => setData('opening_balance_date', e.target.value)}
+                                    aria-invalid={!!errors.opening_balance_date}
+                                />
+                            </FormField>
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                            <Button type="submit" isLoading={processing}>
+                            <Button type="submit" disabled={processing}>
                                 {isEdit ? 'Simpan Perubahan' : 'Tambah Akun'}
                             </Button>
                             <Link href="/master/kas-bank">

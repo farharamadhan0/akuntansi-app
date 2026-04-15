@@ -2,7 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, Lock, User } from 'lucide-react';
+import { FormField } from '@/components/ui/form-field';
 import GuestLayout from '@/Layouts/GuestLayout';
 
 export default function Register() {
@@ -29,71 +29,54 @@ export default function Register() {
                     </h2>
 
                     <form onSubmit={submit} className="space-y-4">
-                        <Input
-                            type="text"
-                            label="Nama Lengkap"
-                            placeholder="Masukkan nama lengkap"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            isInvalid={!!errors.name}
-                            errorMessage={errors.name}
-                            prefix={<User size={18} />}
-                            isRequired
-                        />
+                        <FormField label="Nama Lengkap" required error={errors.name}>
+                            <Input
+                                type="text"
+                                placeholder="Masukkan nama lengkap"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                aria-invalid={!!errors.name}
+                            />
+                        </FormField>
 
-                        <Input
-                            type="email"
-                            label="Email"
-                            placeholder="nama@email.com"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email}
-                            prefix={<Mail size={18} />}
-                            isRequired
-                        />
+                        <FormField label="Email" required error={errors.email}>
+                            <Input
+                                type="email"
+                                placeholder="nama@email.com"
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                aria-invalid={!!errors.email}
+                            />
+                        </FormField>
 
-                        <Input
-                            type="password"
-                            label="Password"
-                            placeholder="Minimal 8 karakter"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            isInvalid={!!errors.password}
-                            errorMessage={errors.password}
-                            prefix={<Lock size={18} />}
-                            isRequired
-                        />
+                        <FormField label="Password" required error={errors.password}>
+                            <Input
+                                type="password"
+                                placeholder="Minimal 8 karakter"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                aria-invalid={!!errors.password}
+                            />
+                        </FormField>
 
-                        <Input
-                            type="password"
-                            label="Konfirmasi Password"
-                            placeholder="Ulangi password"
-                            value={data.password_confirmation}
-                            onChange={(e) =>
-                                setData('password_confirmation', e.target.value)
-                            }
-                            isInvalid={!!errors.password_confirmation}
-                            errorMessage={errors.password_confirmation}
-                            prefix={<Lock size={18} />}
-                            isRequired
-                        />
+                        <FormField label="Konfirmasi Password" required error={errors.password_confirmation}>
+                            <Input
+                                type="password"
+                                placeholder="Ulangi password"
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                aria-invalid={!!errors.password_confirmation}
+                            />
+                        </FormField>
 
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            isLoading={processing}
-                        >
-                            Daftar
+                        <Button type="submit" className="w-full" disabled={processing}>
+                            {processing ? 'Memproses...' : 'Daftar'}
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-gray-600">
+                    <div className="mt-6 text-center text-sm text-muted-foreground">
                         Sudah punya akun?{' '}
-                        <Link
-                            href="/login"
-                            className="text-primary-600 hover:text-primary-700 font-medium"
-                        >
+                        <Link href="/login" className="text-primary font-medium hover:underline">
                             Masuk di sini
                         </Link>
                     </div>

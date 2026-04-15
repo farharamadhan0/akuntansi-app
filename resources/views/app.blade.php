@@ -6,13 +6,13 @@
     <title inertia>{{ config('app.name', 'Akuntansi') }}</title>
     
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700&display=swap" rel="stylesheet" />
-    
+    <link href="https://fonts.bunny.net/css?family=dm-sans:400,500,600,700&display=swap" rel="stylesheet" />
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @inertiaHead
 </head>
-<body class="font-sans antialiased" style="font-family: 'Poppins', sans-serif;">
+<body class="font-sans antialiased">
     @inertia
 </body>
 </html>
