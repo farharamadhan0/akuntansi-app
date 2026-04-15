@@ -1,114 +1,146 @@
 import { Head } from '@inertiajs/react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+    TrendingUp,
+    TrendingDown,
+    Users,
+    Truck,
+    Plus,
+    ArrowRight,
+} from 'lucide-react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Dashboard() {
+export default function Dashboard({ stats, company }) {
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value);
+    };
+
     return (
-        <>
+        <AuthenticatedLayout>
             <Head title="Dashboard" />
-            <div className="min-h-screen bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            Selamat Datang di Akuntansi App
-                        </h1>
-                        <p className="mt-1 text-gray-600">
-                            Aplikasi pembukuan sederhana untuk UMKM Indonesia
-                        </p>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <DashboardCard
-                            title="Total Uang Masuk"
-                            value="Rp 0"
-                            subtitle="Bulan ini"
-                            color="green"
-                        />
-                        <DashboardCard
-                            title="Total Uang Keluar"
-                            value="Rp 0"
-                            subtitle="Bulan ini"
-                            color="red"
-                        />
-                        <DashboardCard
-                            title="Piutang"
-                            value="Rp 0"
-                            subtitle="Belum dibayar"
-                            color="yellow"
-                        />
-                        <DashboardCard
-                            title="Hutang"
-                            value="Rp 0"
-                            subtitle="Belum dibayar"
-                            color="blue"
-                        />
-                    </div>
-
-                    <div className="mt-8 bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                            Mulai Menggunakan Aplikasi
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <QuickAction
-                                icon="💰"
-                                title="Catat Uang Masuk"
-                                description="Catat pendapatan atau penjualan"
-                            />
-                            <QuickAction
-                                icon="💸"
-                                title="Catat Uang Keluar"
-                                description="Catat pengeluaran atau pembelian"
-                            />
-                            <QuickAction
-                                icon="📋"
-                                title="Buat Piutang"
-                                description="Catat tagihan ke pelanggan"
-                            />
-                            <QuickAction
-                                icon="📊"
-                                title="Lihat Laporan"
-                                description="Lihat laporan keuangan"
-                            />
-                        </div>
-                    </div>
-                </div>
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900">
+                    Selamat Datang, {company?.name}
+                </h1>
+                <p className="mt-1 text-gray-600">
+                    Ringkasan keuangan bulan ini
+                </p>
             </div>
-        </>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard
+                    title="Uang Masuk"
+                    value={formatCurrency(stats.incomeThisMonth)}
+                    subtitle="Bulan ini"
+                    icon={TrendingUp}
+                    color="success"
+                />
+                <StatCard
+                    title="Uang Keluar"
+                    value={formatCurrency(stats.expenseThisMonth)}
+                    subtitle="Bulan ini"
+                    icon={TrendingDown}
+                    color="danger"
+                />
+                <StatCard
+                    title="Piutang"
+                    value={formatCurrency(stats.totalReceivables)}
+                    subtitle="Belum dibayar"
+                    icon={Users}
+                    color="warning"
+                />
+                <StatCard
+                    title="Hutang"
+                    value={formatCurrency(stats.totalPayables)}
+                    subtitle="Belum dibayar"
+                    icon={Truck}
+                    color="primary"
+                />
+            </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                        Aksi Cepat
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <QuickActionButton
+                            icon={Plus}
+                            title="Catat Uang Masuk"
+                            color="bg-green-100 text-green-700 hover:bg-green-200"
+                        />
+                        <QuickActionButton
+                            icon={Plus}
+                            title="Catat Uang Keluar"
+                            color="bg-red-100 text-red-700 hover:bg-red-200"
+                        />
+                        <QuickActionButton
+                            icon={Plus}
+                            title="Buat Piutang"
+                            color="bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                        />
+                        <QuickActionButton
+                            icon={ArrowRight}
+                            title="Lihat Laporan"
+                            color="bg-primary-100 text-primary-700 hover:bg-primary-200"
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+        </AuthenticatedLayout>
     );
 }
 
-function DashboardCard({ title, value, subtitle, color }) {
+function StatCard({ title, value, subtitle, icon: Icon, color }) {
     const colorClasses = {
-        green: 'bg-green-50 border-green-200',
-        red: 'bg-red-50 border-red-200',
-        yellow: 'bg-yellow-50 border-yellow-200',
-        blue: 'bg-blue-50 border-blue-200',
+        success: 'bg-green-50 text-green-600',
+        danger: 'bg-red-50 text-red-600',
+        warning: 'bg-yellow-50 text-yellow-600',
+        primary: 'bg-primary-50 text-primary-600',
     };
 
     const valueColorClasses = {
-        green: 'text-green-700',
-        red: 'text-red-700',
-        yellow: 'text-yellow-700',
-        blue: 'text-blue-700',
+        success: 'text-green-700',
+        danger: 'text-red-700',
+        warning: 'text-yellow-700',
+        primary: 'text-primary-700',
     };
 
     return (
-        <div className={`rounded-lg border p-6 ${colorClasses[color]}`}>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className={`mt-2 text-2xl font-bold ${valueColorClasses[color]}`}>
-                {value}
-            </p>
-            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
-        </div>
+        <Card>
+            <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-medium text-gray-600">
+                        {title}
+                    </span>
+                    <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
+                        <Icon size={20} />
+                    </div>
+                </div>
+                <p className={`text-2xl font-bold ${valueColorClasses[color]}`}>
+                    {value}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+            </CardContent>
+        </Card>
     );
 }
 
-function QuickAction({ icon, title, description }) {
+function QuickActionButton({ icon: Icon, title, color }) {
     return (
-        <button className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-primary-300 transition-colors text-left w-full">
-            <span className="text-2xl">{icon}</span>
-            <div>
-                <p className="font-medium text-gray-900">{title}</p>
-                <p className="text-sm text-gray-500">{description}</p>
-            </div>
-        </button>
+        <Button
+            variant="ghost"
+            className={`h-auto py-4 flex flex-col gap-2 w-full ${color}`}
+        >
+            <Icon size={24} />
+            <span>{title}</span>
+        </Button>
     );
 }
