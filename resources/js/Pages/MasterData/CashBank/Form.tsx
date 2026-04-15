@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,36 @@ import { FormField } from '@/components/ui/form-field';
 import { ArrowLeft } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Form({ cashBank, ledgerAccounts, types }) {
+interface LedgerAccount {
+    id: number;
+    code: string;
+    name: string;
+    subtype: string;
+}
+
+interface CashBankData {
+    id: number;
+    account_id: number;
+    name: string;
+    type: string;
+    bank_name: string;
+    account_number: string;
+    opening_balance: number;
+    opening_balance_date: string;
+}
+
+interface CashBankType {
+    value: string;
+    label: string;
+}
+
+interface FormProps {
+    cashBank?: CashBankData;
+    ledgerAccounts: LedgerAccount[];
+    types: CashBankType[];
+}
+
+export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
     const isEdit = !!cashBank;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -19,7 +49,7 @@ export default function Form({ cashBank, ledgerAccounts, types }) {
         opening_balance_date: cashBank?.opening_balance_date || new Date().toISOString().split('T')[0],
     });
 
-    const submit = (e) => {
+    const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (isEdit) {
             put(`/master/kas-bank/${cashBank.id}`);
@@ -128,7 +158,7 @@ export default function Form({ cashBank, ledgerAccounts, types }) {
                                     type="number"
                                     placeholder="0"
                                     value={data.opening_balance}
-                                    onChange={(e) => setData('opening_balance', e.target.value)}
+                                    onChange={(e) => setData('opening_balance', Number(e.target.value))}
                                     aria-invalid={!!errors.opening_balance}
                                 />
                             </FormField>

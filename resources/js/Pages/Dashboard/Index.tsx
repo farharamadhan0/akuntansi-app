@@ -1,18 +1,21 @@
 import { Head } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-    TrendingUp,
-    TrendingDown,
-    Users,
-    Truck,
-    Plus,
-    ArrowRight,
-} from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Truck, Plus, ArrowRight, LucideIcon } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Dashboard({ stats, company }) {
-    const formatCurrency = (value) => {
+interface Stats {
+    incomeThisMonth: number;
+    expenseThisMonth: number;
+    totalReceivables: number;
+    totalPayables: number;
+}
+
+interface Company {
+    name: string;
+}
+export default function Dashboard({ stats, company }: { stats: Stats; company?: Company }) {
+    const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -98,7 +101,13 @@ export default function Dashboard({ stats, company }) {
     );
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, color }) {
+function StatCard({ title, value, subtitle, icon: Icon, color }: {
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: LucideIcon;
+    color: 'success' | 'danger' | 'warning' | 'primary';
+}) {
     const colorClasses = {
         success: 'bg-green-50 text-green-600',
         danger: 'bg-red-50 text-red-600',
@@ -133,7 +142,11 @@ function StatCard({ title, value, subtitle, icon: Icon, color }) {
     );
 }
 
-function QuickActionButton({ icon: Icon, title, color }) {
+function QuickActionButton({ icon: Icon, title, color }: {
+    icon: LucideIcon;
+    title: string;
+    color: string;
+}) {
     return (
         <Button
             variant="ghost"

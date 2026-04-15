@@ -1,8 +1,14 @@
 import { Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LogOut, User, Building2, ChevronDown, LayoutDashboard, Wallet, Tags, Menu, X } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, ReactNode } from 'react';
+
+interface PageProps {
+    auth: { user: { name: string } };
+    company?: { name: string };
+    [key: string]: unknown;
+}
 
 const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,19 +16,19 @@ const navItems = [
     { href: '/master/kategori', label: 'Kategori', icon: Tags },
 ];
 
-export default function AuthenticatedLayout({ children }) {
-    const { auth, company, url } = usePage().props;
+export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
+    const { auth, company } = usePage<PageProps>().props;
     const [showMenu, setShowMenu] = useState(false);
     const [showMobileNav, setShowMobileNav] = useState(false);
-    const menuRef = useRef(null);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const handleLogout = () => {
         router.post('/logout');
     };
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowMenu(false);
             }
         };
@@ -30,7 +36,7 @@ export default function AuthenticatedLayout({ children }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const isActive = (href) => {
+    const isActive = (href: string) => {
         const currentPath = window.location.pathname;
         if (href === '/') return currentPath === '/';
         return currentPath.startsWith(href);
@@ -87,10 +93,11 @@ export default function AuthenticatedLayout({ children }) {
                                     className="flex items-center gap-2"
                                     onClick={() => setShowMenu(!showMenu)}
                                 >
-                                    <Avatar
-                                        name={auth.user.name}
-                                        className="w-8 h-8 text-sm"
-                                    />
+                                    <Avatar className="w-8 h-8">
+                                        <AvatarFallback>
+                                            {auth.user.name.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <span className="hidden sm:inline">
                                         {auth.user.name}
                                     </span>

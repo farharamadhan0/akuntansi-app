@@ -14,22 +14,31 @@ import {
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useState } from "react";
 
+interface Category {
+    id: number;
+    name: string;
+    type: 'income' | 'expense';
+    description?: string;
+    is_active: boolean;
+    account?: { code: string; name: string };
+}
+
 const FILTERS = [
     { value: "all", label: "Semua" },
     { value: "income", label: "Pemasukan" },
     { value: "expense", label: "Pengeluaran" },
 ];
 
-export default function Index({ categories }) {
-    const [filter, setFilter] = useState("all");
+export default function Index({ categories }: { categories: Category[] }) {
+    const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
-    const handleDelete = (id) => {
+    const handleDelete = (id: number) => {
         if (confirm("Yakin ingin menghapus kategori ini?")) {
             router.delete(`/master/kategori/${id}`);
         }
     };
 
-    const handleToggle = (id) => {
+    const handleToggle = (id: number) => {
         router.post(`/master/kategori/${id}/toggle`);
     };
 
@@ -64,7 +73,7 @@ export default function Index({ categories }) {
                     {FILTERS.map((f) => (
                         <button
                             key={f.value}
-                            onClick={() => setFilter(f.value)}
+                            onClick={() => setFilter(f.value as 'all' | 'income' | 'expense')}
                             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                                 filter === f.value
                                     ? "bg-gray-900 text-white"
@@ -117,12 +126,12 @@ export default function Index({ categories }) {
                                                     ? "bg-green-100 text-green-700"
                                                     : "bg-red-100 text-red-700"
                                             }`}>
-                                                {cat.type_label}
+                                                {cat.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            <p>{cat.account_name}</p>
-                                            <p className="text-xs text-muted-foreground">{cat.account_code}</p>
+                                            <p>{cat.account?.name}</p>
+                                            <p className="text-xs text-muted-foreground">{cat.account?.code}</p>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${

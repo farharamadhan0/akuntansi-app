@@ -1,4 +1,5 @@
 import '../css/app.css';
+import './bootstrap';
 
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
@@ -9,11 +10,12 @@ const appName = import.meta.env.VITE_APP_NAME || 'Akuntansi';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolve: (name: string) =>
         resolvePageComponent(
-            `./Pages/${name}.jsx`,
-            import.meta.glob('./Pages/**/*.jsx')
-        ),
+            `./Pages/${name}.tsx`,
+            import.meta.glob('./Pages/**/*.tsx')
+        ) as any,
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(<App {...props} />);

@@ -1,6 +1,16 @@
+import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export function FormField({ label, error, required, hint, children, className }) {
+interface FormFieldProps {
+    label?: string;
+    error?: string;
+    required?: boolean;
+    hint?: string;
+    children: ReactNode;
+    className?: string;
+}
+
+export function FormField({ label, error, required, hint, children, className }: FormFieldProps) {
     return (
         <div className={cn('space-y-1', className)}>
             {label && (

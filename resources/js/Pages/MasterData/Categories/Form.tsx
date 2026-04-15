@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,27 @@ import { FormField } from '@/components/ui/form-field';
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Form({ category, revenueAccounts, expenseAccounts }) {
+interface Account {
+    id: number;
+    code: string;
+    name: string;
+}
+
+interface Category {
+    id: number;
+    account_id: number;
+    name: string;
+    type: 'income' | 'expense';
+    description: string;
+}
+
+interface FormProps {
+    category?: Category;
+    revenueAccounts: Account[];
+    expenseAccounts: Account[];
+}
+
+export default function Form({ category, revenueAccounts, expenseAccounts }: FormProps) {
     const isEdit = !!category;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -17,7 +38,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }) {
         description: category?.description || '',
     });
 
-    const submit = (e) => {
+    const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (isEdit) {
             put(`/master/kategori/${category.id}`);
@@ -61,7 +82,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }) {
                                         value="income"
                                         checked={data.type === 'income'}
                                         onChange={(e) => {
-                                            setData('type', e.target.value);
+                                            setData('type', e.target.value as 'income' | 'expense');
                                             setData('account_id', '');
                                         }}
                                         className="sr-only"
@@ -82,7 +103,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }) {
                                         value="expense"
                                         checked={data.type === 'expense'}
                                         onChange={(e) => {
-                                            setData('type', e.target.value);
+                                            setData('type', e.target.value as 'income' | 'expense');
                                             setData('account_id', '');
                                         }}
                                         className="sr-only"

@@ -5,8 +5,21 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Wallet, Building } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Index({ accounts }) {
-    const formatCurrency = (value) => {
+interface CashBankAccount {
+    id: number;
+    name: string;
+    type: 'cash' | 'bank';
+    type_label: string;
+    bank_name?: string;
+    account_number?: string;
+    opening_balance: number;
+    is_active: boolean;
+    account_code: string;
+    account: { code: string; name: string };
+}
+
+export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
+    const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -14,13 +27,13 @@ export default function Index({ accounts }) {
         }).format(value);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus akun ini?')) {
             router.delete(`/master/kas-bank/${id}`);
         }
     };
 
-    const handleToggle = (id) => {
+    const handleToggle = (id: number) => {
         router.post(`/master/kas-bank/${id}/toggle`);
     };
 

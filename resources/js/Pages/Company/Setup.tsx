@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +18,7 @@ export default function Setup() {
         email: '',
     });
 
-    const submit = (e) => {
+    const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post('/company/setup');
     };
