@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
+use App\Http\Controllers\ExpenseTransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -50,13 +51,21 @@ Route::middleware('auth')->group(function () {
             Route::post('kategori/{category}/toggle', [TransactionCategoryController::class, 'toggleActive'])->name('categories.toggle');
         });
 
-        // Transaksi - Uang Masuk
+        // Transaksi
         Route::prefix('transaksi')->group(function () {
+            // Uang Masuk
             Route::get('uang-masuk', [IncomeTransactionController::class, 'index'])->name('income.index');
             Route::get('uang-masuk/catat', [IncomeTransactionController::class, 'create'])->name('income.create');
             Route::post('uang-masuk', [IncomeTransactionController::class, 'store'])->name('income.store');
             Route::get('uang-masuk/{income}', [IncomeTransactionController::class, 'show'])->name('income.show');
             Route::post('uang-masuk/{income}/batal', [IncomeTransactionController::class, 'void'])->name('income.void');
+
+            // Uang Keluar
+            Route::get('uang-keluar', [ExpenseTransactionController::class, 'index'])->name('expense.index');
+            Route::get('uang-keluar/catat', [ExpenseTransactionController::class, 'create'])->name('expense.create');
+            Route::post('uang-keluar', [ExpenseTransactionController::class, 'store'])->name('expense.store');
+            Route::get('uang-keluar/{expense}', [ExpenseTransactionController::class, 'show'])->name('expense.show');
+            Route::post('uang-keluar/{expense}/batal', [ExpenseTransactionController::class, 'void'])->name('expense.void');
         });
     });
 });
