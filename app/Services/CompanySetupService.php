@@ -82,7 +82,8 @@ class CompanySetupService
 
     protected function assignOwner(Company $company, User $owner): void
     {
-        $ownerRole = Role::where('company_id', $company->id)
+        $ownerRole = Role::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
             ->where('name', 'Owner')
             ->first();
 
@@ -159,7 +160,8 @@ class CompanySetupService
 
     protected function createDefaultCashAccount(Company $company): void
     {
-        $cashAccount = Account::where('company_id', $company->id)
+        $cashAccount = Account::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
             ->where('code', '1110')
             ->first();
 
@@ -176,11 +178,13 @@ class CompanySetupService
 
     protected function createDefaultCategories(Company $company): void
     {
-        $revenueAccount = Account::where('company_id', $company->id)
+        $revenueAccount = Account::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
             ->where('code', '4100')
             ->first();
 
-        $expenseAccount = Account::where('company_id', $company->id)
+        $expenseAccount = Account::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
             ->where('code', '5100')
             ->first();
 

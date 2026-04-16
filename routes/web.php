@@ -6,6 +6,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
+use App\Http\Controllers\IncomeTransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -47,6 +48,15 @@ Route::middleware('auth')->group(function () {
             Route::put('kategori/{category}', [TransactionCategoryController::class, 'update'])->name('categories.update');
             Route::delete('kategori/{category}', [TransactionCategoryController::class, 'destroy'])->name('categories.destroy');
             Route::post('kategori/{category}/toggle', [TransactionCategoryController::class, 'toggleActive'])->name('categories.toggle');
+        });
+
+        // Transaksi - Uang Masuk
+        Route::prefix('transaksi')->group(function () {
+            Route::get('uang-masuk', [IncomeTransactionController::class, 'index'])->name('income.index');
+            Route::get('uang-masuk/catat', [IncomeTransactionController::class, 'create'])->name('income.create');
+            Route::post('uang-masuk', [IncomeTransactionController::class, 'store'])->name('income.store');
+            Route::get('uang-masuk/{income}', [IncomeTransactionController::class, 'show'])->name('income.show');
+            Route::post('uang-masuk/{income}/batal', [IncomeTransactionController::class, 'void'])->name('income.void');
         });
     });
 });
