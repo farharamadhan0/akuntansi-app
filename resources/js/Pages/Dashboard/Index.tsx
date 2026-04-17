@@ -8,7 +8,7 @@ import {
     Plus,
     ArrowRight,
     LucideIcon,
-    HandCoins,
+    DollarSign,
 } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -115,7 +115,7 @@ export default function Dashboard({
                 <StatCard
                     title="Laba Bulan Ini"
                     value={formatCurrency(stats.netProfit)}
-                    icon={HandCoins}
+                    icon={DollarSign}
                     iconBg={stats.netProfit >= 0 ? 'bg-emerald-100' : 'bg-orange-100'}
                     iconColor={stats.netProfit >= 0 ? 'text-emerald-600' : 'text-orange-600'}
                     valueColor={stats.netProfit >= 0 ? 'text-emerald-700' : 'text-orange-700'}

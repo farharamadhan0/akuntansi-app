@@ -8,6 +8,8 @@ use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
+use App\Http\Controllers\ReceivableController;
+use App\Http\Controllers\ReceivablePaymentController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -66,6 +68,20 @@ Route::middleware('auth')->group(function () {
             Route::post('uang-keluar', [ExpenseTransactionController::class, 'store'])->name('expense.store');
             Route::get('uang-keluar/{expense}', [ExpenseTransactionController::class, 'show'])->name('expense.show');
             Route::post('uang-keluar/{expense}/batal', [ExpenseTransactionController::class, 'void'])->name('expense.void');
+
+            // Piutang
+            Route::get('piutang', [ReceivableController::class, 'index'])->name('receivables.index');
+            Route::get('piutang/buat', [ReceivableController::class, 'create'])->name('receivables.create');
+            Route::post('piutang', [ReceivableController::class, 'store'])->name('receivables.store');
+            Route::get('piutang/{receivable}', [ReceivableController::class, 'show'])->name('receivables.show');
+            Route::post('piutang/{receivable}/batal', [ReceivableController::class, 'void'])->name('receivables.void');
+
+            // Pembayaran Piutang
+            Route::get('piutang-bayar', [ReceivablePaymentController::class, 'index'])->name('receivable-payments.index');
+            Route::get('piutang-bayar/catat', [ReceivablePaymentController::class, 'create'])->name('receivable-payments.create');
+            Route::post('piutang-bayar', [ReceivablePaymentController::class, 'store'])->name('receivable-payments.store');
+            Route::get('piutang-bayar/{payment}', [ReceivablePaymentController::class, 'show'])->name('receivable-payments.show');
+            Route::post('piutang-bayar/{payment}/batal', [ReceivablePaymentController::class, 'void'])->name('receivable-payments.void');
         });
     });
 });

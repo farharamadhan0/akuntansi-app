@@ -1,0 +1,197 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\ReceivableRequest;
+use App\Models\Receivable;
+use App\Models\Customer;
+use App\Models\TransactionCategory;
+use App\Services\ReceivableService;
+use App\Enums\TransactionStatus;
+use App\Enums\PaymentStatus;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ReceivableController extends Controller
+{
+    public function __construct(
+        protected ReceivableService $receivableService
+    ) {}
+
+    public function index(Request $request): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        $query = Receivable::where('company_id', $companyId)
+            ->with(['customer:id,name', 'category:id,name'])
+            ->orderByDesc('date')
+            ->orderByDesc('created_at');
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by payment status
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        $receivables = $query->get()->map(fn(Receivable $r) => [
+            'id' => $r->id,
+            'receivable_number' => $r->receivable_number,
+            'customer_name' => $r->customer->name,
+            'date' => $r->date->format('Y-m-d'),
+            'due_date' => $r->due_date->format('Y-m-d'),
+            'amount' => (float) $r->amount,
+            'paid_amount' => (float) $r->paid_amount,
+            'remaining_amount' => (float) $r->remaining_amount,
+            'description' => $r->description,
+            'status' => $r->status->value,
+            'status_label' => $r->status->label(),
+            'payment_status' => $r->payment_status->value,
+            'payment_status_label' => $r->payment_status->label(),
+            'is_overdue' => $r->isOverdue(),
+        ]);
+
+        // Summary stats
+        $totalOutstanding = Receivable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+            ->value('total');
+
+        $totalOverdue = Receivable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->where('due_date', '<', now()->toDateString())
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+            ->value('total');
+
+        return Inertia::render('Receivables/Index', [
+            'receivables' => $receivables,
+            'summary' => [
+                'totalOutstanding' => (float) $totalOutstanding,
+                'totalOverdue' => (float) $totalOverdue,
+            ],
+            'filters' => $request->only(['status', 'payment_status']),
+        ]);
+    }
+
+    public function create(): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        $customers = Customer::where('company_id', $companyId)
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        $categories = TransactionCategory::where('company_id', $companyId)
+            ->where('type', 'income')
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('Receivables/Create', [
+            'customers' => $customers,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function store(ReceivableRequest $request): RedirectResponse
+    {
+        try {
+            $receivable = $this->receivableService->create($request->validated());
+            $this->receivableService->post($receivable);
+
+            return redirect()
+                ->route('receivables.show', $receivable)
+                ->with('success', 'Piutang berhasil dicatat.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    public function show(Receivable $receivable): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($receivable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $receivable->load(['customer:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
+
+        // Get journal entries
+        $journalEntries = $receivable->journalEntries()
+            ->with(['lines.account:id,code,name'])
+            ->orderByDesc('date')
+            ->get()
+            ->map(fn($entry) => [
+                'entry_number' => $entry->entry_number,
+                'date' => $entry->date->format('Y-m-d'),
+                'description' => $entry->description,
+                'status' => $entry->status->value,
+                'lines' => $entry->lines->map(fn($line) => [
+                    'account_code' => $line->account->code,
+                    'account_name' => $line->account->name,
+                    'debit' => (float) $line->debit,
+                    'credit' => (float) $line->credit,
+                ]),
+            ]);
+
+        return Inertia::render('Receivables/Show', [
+            'receivable' => [
+                'id' => $receivable->id,
+                'receivable_number' => $receivable->receivable_number,
+                'customer' => $receivable->customer,
+                'category_name' => $receivable->category?->name,
+                'date' => $receivable->date->format('Y-m-d'),
+                'due_date' => $receivable->due_date->format('Y-m-d'),
+                'amount' => (float) $receivable->amount,
+                'paid_amount' => (float) $receivable->paid_amount,
+                'remaining_amount' => (float) $receivable->remaining_amount,
+                'description' => $receivable->description,
+                'reference' => $receivable->reference,
+                'status' => $receivable->status->value,
+                'status_label' => $receivable->status->label(),
+                'payment_status' => $receivable->payment_status->value,
+                'payment_status_label' => $receivable->payment_status->label(),
+                'is_overdue' => $receivable->isOverdue(),
+                'posted_at' => $receivable->posted_at?->format('Y-m-d H:i'),
+                'voided_at' => $receivable->voided_at?->format('Y-m-d H:i'),
+                'void_reason' => $receivable->void_reason,
+                'created_by_name' => $receivable->createdBy?->name,
+            ],
+            'journalEntries' => $journalEntries,
+        ]);
+    }
+
+    public function void(Request $request, Receivable $receivable): RedirectResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($receivable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $this->receivableService->void($receivable, $request->reason);
+
+            return redirect()
+                ->route('receivables.show', $receivable)
+                ->with('success', 'Piutang berhasil dibatalkan.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+}
