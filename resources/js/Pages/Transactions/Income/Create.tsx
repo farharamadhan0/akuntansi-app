@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
-import { ArrowLeft, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface CashBankAccount {
     id: number;
@@ -62,14 +63,11 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
             <Head title="Catat Uang Masuk" />
 
             <div className="max-w-2xl mx-auto">
-                <div className="flex items-center gap-3 mb-6">
-                    <Link href="/transaksi/uang-masuk">
-                        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                            <ArrowLeft size={16} />
-                            Kembali
-                        </Button>
-                    </Link>
-                </div>
+                <Breadcrumb items={[
+                    { label: 'Transaksi' },
+                    { label: 'Uang Masuk', href: '/transaksi/uang-masuk' },
+                    { label: 'Catat' },
+                ]} />
 
                 {flashError && (
                     <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">

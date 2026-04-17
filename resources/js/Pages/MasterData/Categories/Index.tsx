@@ -11,6 +11,7 @@ import {
     TrendingUp,
     TrendingDown,
 } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useState } from "react";
 
@@ -50,6 +51,11 @@ export default function Index({ categories }: { categories: Category[] }) {
     return (
         <AuthenticatedLayout>
             <Head title="Kategori Transaksi" />
+
+            <Breadcrumb items={[
+                { label: 'Master Data' },
+                { label: 'Kategori' },
+            ]} />
 
             <div className="flex justify-between items-center mb-6">
                 <div>

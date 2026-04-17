@@ -3,7 +3,8 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, TrendingUp, BookOpen, XCircle } from 'lucide-react';
+import { TrendingUp, BookOpen, XCircle } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface JournalLine {
     account_code: string;
@@ -92,14 +93,11 @@ export default function Show({ transaction: t }: Props) {
             <Head title={`Uang Masuk – ${t.transaction_number}`} />
 
             <div className="max-w-2xl mx-auto">
-                <div className="flex items-center gap-3 mb-6">
-                    <Link href="/transaksi/uang-masuk">
-                        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                            <ArrowLeft size={16} />
-                            Kembali
-                        </Button>
-                    </Link>
-                </div>
+                <Breadcrumb items={[
+                    { label: 'Transaksi' },
+                    { label: 'Uang Masuk', href: '/transaksi/uang-masuk' },
+                    { label: 'Detail' },
+                ]} />
 
                 <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-3">

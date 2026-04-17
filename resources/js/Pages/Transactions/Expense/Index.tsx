@@ -12,6 +12,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Plus, Eye, TrendingDown, ArrowDownCircle } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Transaction {
     id: number;
@@ -75,6 +76,11 @@ export default function Index({ transactions }: Props) {
     return (
         <AuthenticatedLayout>
             <Head title="Uang Keluar" />
+
+            <Breadcrumb items={[
+                { label: 'Transaksi' },
+                { label: 'Uang Keluar' },
+            ]} />
 
             <div className="flex items-center justify-between mb-6">
                 <div>

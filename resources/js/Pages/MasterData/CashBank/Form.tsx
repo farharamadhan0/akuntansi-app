@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/ui/form-field';
-import { ArrowLeft } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface LedgerAccount {
@@ -68,11 +68,13 @@ export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
         <AuthenticatedLayout>
             <Head title={isEdit ? 'Edit Kas/Bank' : 'Tambah Kas/Bank'} />
 
+            <Breadcrumb items={[
+                { label: 'Master Data' },
+                { label: 'Kas & Bank', href: '/master/kas-bank' },
+                { label: isEdit ? 'Edit' : 'Tambah' },
+            ]} />
+
             <div className="mb-6">
-                <Link href="/master/kas-bank" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
-                    <ArrowLeft size={18} className="mr-1" />
-                    Kembali
-                </Link>
                 <h1 className="text-2xl font-bold text-gray-900">
                     {isEdit ? 'Edit Akun Kas/Bank' : 'Tambah Akun Kas/Bank'}
                 </h1>

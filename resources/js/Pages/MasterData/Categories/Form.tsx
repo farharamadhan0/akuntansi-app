@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface Account {
@@ -53,11 +54,13 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
         <AuthenticatedLayout>
             <Head title={isEdit ? 'Edit Kategori' : 'Tambah Kategori'} />
 
+            <Breadcrumb items={[
+                { label: 'Master Data' },
+                { label: 'Kategori', href: '/master/kategori' },
+                { label: isEdit ? 'Edit' : 'Tambah' },
+            ]} />
+
             <div className="mb-6">
-                <Link href="/master/kategori" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
-                    <ArrowLeft size={18} className="mr-1" />
-                    Kembali
-                </Link>
                 <h1 className="text-2xl font-bold text-gray-900">
                     {isEdit ? 'Edit Kategori' : 'Tambah Kategori'}
                 </h1>

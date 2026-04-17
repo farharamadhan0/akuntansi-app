@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Wallet, Building } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface CashBankAccount {
@@ -40,6 +41,11 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
     return (
         <AuthenticatedLayout>
             <Head title="Kas & Bank" />
+
+            <Breadcrumb items={[
+                { label: 'Master Data' },
+                { label: 'Kas & Bank' },
+            ]} />
 
             <div className="flex justify-between items-center mb-6">
                 <div>
