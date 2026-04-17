@@ -9,6 +9,7 @@ use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,13 @@ Route::middleware('auth')->group(function () {
             Route::post('piutang', [ReceivableController::class, 'store'])->name('receivables.store');
             Route::get('piutang/{receivable}', [ReceivableController::class, 'show'])->name('receivables.show');
             Route::post('piutang/{receivable}/batal', [ReceivableController::class, 'void'])->name('receivables.void');
+
+            // Hutang
+            Route::get('hutang', [PayableController::class, 'index'])->name('payables.index');
+            Route::get('hutang/buat', [PayableController::class, 'create'])->name('payables.create');
+            Route::post('hutang', [PayableController::class, 'store'])->name('payables.store');
+            Route::get('hutang/{payable}', [PayableController::class, 'show'])->name('payables.show');
+            Route::post('hutang/{payable}/batal', [PayableController::class, 'void'])->name('payables.void');
 
             // Pembayaran Piutang
             Route::get('piutang-bayar', [ReceivablePaymentController::class, 'index'])->name('receivable-payments.index');
