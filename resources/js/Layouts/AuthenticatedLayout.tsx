@@ -1,7 +1,7 @@
 import { Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User, Building2, ChevronDown, LayoutDashboard, Wallet, Tags, TrendingUp, TrendingDown, Users, Menu, X } from 'lucide-react';
+import { LogOut, User, Building2, ChevronDown, LayoutDashboard, Wallet, Tags, TrendingUp, TrendingDown, Users, UserCheck, Menu, X } from 'lucide-react';
 import { useState, useRef, useEffect, ReactNode } from 'react';
 
 interface PageProps {
@@ -15,6 +15,7 @@ const navItems = [
     { href: '/transaksi/uang-masuk', label: 'Uang Masuk', icon: TrendingUp },
     { href: '/transaksi/uang-keluar', label: 'Uang Keluar', icon: TrendingDown },
     { href: '/transaksi/piutang', label: 'Piutang', icon: Users },
+    { href: '/master/pelanggan', label: 'Pelanggan', icon: UserCheck },
     { href: '/master/kas-bank', label: 'Kas & Bank', icon: Wallet },
     { href: '/master/kategori', label: 'Kategori', icon: Tags },
 ];

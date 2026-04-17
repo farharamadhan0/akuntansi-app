@@ -8,6 +8,7 @@ use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
 use Illuminate\Support\Facades\Route;
@@ -33,8 +34,17 @@ Route::middleware('auth')->group(function () {
     Route::middleware('has.company')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         
-        // Master Data - Kas & Bank
+        // Master Data - Pelanggan
         Route::prefix('master')->group(function () {
+            Route::get('pelanggan', [CustomerController::class, 'index'])->name('customers.index');
+            Route::get('pelanggan/tambah', [CustomerController::class, 'create'])->name('customers.create');
+            Route::post('pelanggan', [CustomerController::class, 'store'])->name('customers.store');
+            Route::get('pelanggan/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
+            Route::put('pelanggan/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+            Route::delete('pelanggan/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+            Route::post('pelanggan/{customer}/toggle', [CustomerController::class, 'toggleActive'])->name('customers.toggle');
+
+        // Master Data - Kas & Bank
             Route::get('kas-bank', [CashBankAccountController::class, 'index'])->name('cash-bank.index');
             Route::get('kas-bank/tambah', [CashBankAccountController::class, 'create'])->name('cash-bank.create');
             Route::post('kas-bank', [CashBankAccountController::class, 'store'])->name('cash-bank.store');
