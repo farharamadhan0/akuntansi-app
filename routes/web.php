@@ -12,6 +12,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -100,6 +101,15 @@ Route::middleware('auth')->group(function () {
             Route::post('piutang-bayar', [ReceivablePaymentController::class, 'store'])->name('receivable-payments.store');
             Route::get('piutang-bayar/{payment}', [ReceivablePaymentController::class, 'show'])->name('receivable-payments.show');
             Route::post('piutang-bayar/{payment}/batal', [ReceivablePaymentController::class, 'void'])->name('receivable-payments.void');
+        });
+
+        // Laporan
+        Route::prefix('laporan')->group(function () {
+            Route::get('transaksi', [ReportController::class, 'transactionList'])->name('reports.transactions');
+            Route::get('piutang', [ReportController::class, 'receivableList'])->name('reports.receivables');
+            Route::get('hutang', [ReportController::class, 'payableList'])->name('reports.payables');
+            Route::get('laba-rugi', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
+            Route::get('arus-kas', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         });
     });
 });
