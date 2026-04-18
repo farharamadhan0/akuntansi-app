@@ -92,12 +92,18 @@ class ReceivablePaymentController extends Controller
     public function store(ReceivablePaymentRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $companyId = auth()->user()->current_company_id;
 
         // Calculate total from allocations
         $totalAmount = array_sum(array_column($validated['allocations'], 'amount'));
 
-        // Get customer from first allocation
-        $firstReceivable = Receivable::find($validated['allocations'][0]['id']);
+        // Get customer from first allocation (company-scoped)
+        $firstReceivable = Receivable::where('company_id', $companyId)
+            ->find($validated['allocations'][0]['id']);
+
+        if (!$firstReceivable) {
+            return back()->withInput()->with('error', 'Piutang tidak valid untuk perusahaan ini.');
+        }
 
         try {
             $payment = $this->paymentService->createReceivablePayment([

@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 
 class TransactionCategory extends Model
 {
-    use HasFactory, BelongsToCompany;
+    use HasFactory, SoftDeletes, BelongsToCompany, Auditable;
 
     protected $fillable = [
         'company_id',

@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Traits\BelongsToCompany;
 use App\Traits\HasJournalEntries;
 use App\Traits\Auditable;
+use App\Traits\PreventsPostedDeletion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class Receivable extends Model
 {
-    use HasFactory, SoftDeletes, BelongsToCompany, HasJournalEntries, Auditable;
+    use HasFactory, SoftDeletes, BelongsToCompany, HasJournalEntries, Auditable, PreventsPostedDeletion;
 
     protected $fillable = [
         'company_id',

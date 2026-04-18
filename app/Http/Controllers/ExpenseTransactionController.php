@@ -90,6 +90,8 @@ class ExpenseTransactionController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
+        $this->authorizeAccount($request->cash_bank_account_id, $companyId);
+
         try {
             DB::transaction(function () use ($request, $companyId) {
                 $transaction = $this->expenseService->create(array_merge(
@@ -177,6 +179,17 @@ class ExpenseTransactionController extends Controller
         }
         if ($transaction->type !== TransactionType::Expense) {
             abort(404);
+        }
+    }
+
+    protected function authorizeAccount(int $cashBankAccountId, int $companyId): void
+    {
+        $exists = CashBankAccount::where('id', $cashBankAccountId)
+            ->where('company_id', $companyId)
+            ->exists();
+
+        if (!$exists) {
+            abort(403, 'Akun kas/bank tidak valid untuk perusahaan ini.');
         }
     }
 }

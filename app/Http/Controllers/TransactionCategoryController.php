@@ -126,6 +126,14 @@ class TransactionCategoryController extends Controller
     {
         $this->authorizeCompany($category);
 
+        $hasTransactions = \App\Models\Transaction::where('category_id', $category->id)->exists();
+        $hasReceivables = \App\Models\Receivable::where('category_id', $category->id)->exists();
+        $hasPayables = \App\Models\Payable::where('category_id', $category->id)->exists();
+
+        if ($hasTransactions || $hasReceivables || $hasPayables) {
+            return back()->with('error', 'Kategori tidak dapat dihapus karena sudah digunakan dalam transaksi.');
+        }
+
         $category->delete();
 
         return redirect()->route('categories.index')

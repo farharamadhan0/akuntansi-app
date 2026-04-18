@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CashBankType;
+use App\Traits\Auditable;
 use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class CashBankAccount extends Model
 {
-    use HasFactory, SoftDeletes, BelongsToCompany;
+    use HasFactory, SoftDeletes, BelongsToCompany, Auditable;
 
     protected $fillable = [
         'company_id',

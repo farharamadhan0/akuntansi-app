@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\TransactionStatus;
+use App\Traits\Auditable;
 use App\Traits\BelongsToCompany;
+use App\Traits\PreventsPostedDeletion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class JournalEntry extends Model
 {
-    use HasFactory, BelongsToCompany;
+    use HasFactory, BelongsToCompany, Auditable, PreventsPostedDeletion;
 
     protected $fillable = [
         'company_id',

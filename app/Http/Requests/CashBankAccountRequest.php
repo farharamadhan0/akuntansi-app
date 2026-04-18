@@ -15,8 +15,13 @@ class CashBankAccountRequest extends FormRequest
 
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+
         return [
-            'account_id' => ['required', 'exists:accounts,id'],
+            'account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+            ],
             'name' => ['required', 'string', 'max:100'],
             'type' => ['required', Rule::enum(CashBankType::class)],
             'bank_name' => ['nullable', 'string', 'max:100'],

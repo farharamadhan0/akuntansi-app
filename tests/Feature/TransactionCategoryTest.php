@@ -224,7 +224,7 @@ class TransactionCategoryTest extends TestCase
             ->assertRedirect('/master/kategori')
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('transaction_categories', ['id' => $category->id]);
+        $this->assertSoftDeleted('transaction_categories', ['id' => $category->id]);
     }
 
     public function test_delete_from_other_company_is_rejected(): void
