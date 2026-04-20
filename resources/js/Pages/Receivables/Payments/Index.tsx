@@ -106,7 +106,7 @@ export default function Index({ payments }: Props) {
                             {payments.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Belum ada pembayaran
+                                        Belum ada pembayaran piutang. Klik "Catat Pembayaran" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (

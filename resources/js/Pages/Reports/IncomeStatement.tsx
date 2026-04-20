@@ -109,7 +109,7 @@ export default function IncomeStatement({
                                         colSpan={2}
                                         className="text-gray-400 text-sm text-center py-4"
                                     >
-                                        Tidak ada pendapatan
+                                        Tidak ada pendapatan pada periode ini
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -165,7 +165,7 @@ export default function IncomeStatement({
                                         colSpan={2}
                                         className="text-gray-400 text-sm text-center py-4"
                                     >
-                                        Tidak ada beban
+                                        Tidak ada beban pada periode ini
                                     </TableCell>
                                 </TableRow>
                             ) : (

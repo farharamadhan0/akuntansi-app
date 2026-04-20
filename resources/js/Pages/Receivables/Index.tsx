@@ -196,7 +196,7 @@ export default function Index({ receivables, summary }: Props) {
                             {filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-gray-400 py-8">
-                                        Belum ada piutang
+                                        Belum ada data piutang. Klik "Buat Piutang" untuk mencatat tagihan.
                                     </TableCell>
                                 </TableRow>
                             ) : (

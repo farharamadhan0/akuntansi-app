@@ -272,8 +272,8 @@ export default function Show({ payment: p, journalEntries }: Props) {
                                 onChange={(e) => setVoidReason(e.target.value)}
                             />
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setShowVoidModal(false)}>
-                                    Batal
+                                <Button variant="outline" onClick={() => { setShowVoidModal(false); setVoidReason(''); }}>
+                                    Kembali
                                 </Button>
                                 <Button
                                     variant="destructive"

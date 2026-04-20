@@ -34,7 +34,7 @@ export default function Index({ categories }: { categories: Category[] }) {
     const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
     const handleDelete = (id: number) => {
-        if (confirm("Yakin ingin menghapus kategori ini?")) {
+        if (confirm("Yakin ingin menghapus kategori ini? Kategori yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
             router.delete(`/master/kategori/${id}`);
         }
     };
@@ -114,7 +114,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                         {filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                                        Belum ada kategori
+                                        Belum ada kategori. Klik "Tambah Kategori" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (

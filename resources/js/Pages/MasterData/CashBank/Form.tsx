@@ -155,7 +155,7 @@ export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
                         )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField label="Saldo Awal" error={errors.opening_balance}>
+                            <FormField label="Saldo Awal (Rp)" error={errors.opening_balance} hint="Saldo saat mulai menggunakan aplikasi">
                                 <Input
                                     type="number"
                                     placeholder="0"
@@ -165,7 +165,7 @@ export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
                                 />
                             </FormField>
 
-                            <FormField label="Tanggal Saldo Awal" error={errors.opening_balance_date}>
+                            <FormField label="Tanggal Saldo Awal" error={errors.opening_balance_date} hint="Tanggal pencatatan saldo awal">
                                 <Input
                                     type="date"
                                     value={data.opening_balance_date}

@@ -29,7 +29,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus akun ini?')) {
+        if (confirm('Yakin ingin menghapus akun kas/bank ini? Akun yang sudah digunakan dalam transaksi tidak dapat dihapus.')) {
             router.delete(`/master/kas-bank/${id}`);
         }
     };
@@ -77,7 +77,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                             {accounts.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                                        Belum ada akun kas/bank
+                                        Belum ada akun kas/bank. Klik "Tambah Akun" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (

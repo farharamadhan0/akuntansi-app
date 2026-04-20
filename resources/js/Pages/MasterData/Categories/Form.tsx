@@ -140,7 +140,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                                 onChange={(e) => setData('account_id', e.target.value)}
                                 className={`h-8 w-full min-w-0 rounded-none border bg-transparent px-2.5 py-1 text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 ${errors.account_id ? 'border-destructive' : 'border-input'}`}
                             >
-                                <option value="">Pilih akun...</option>
+                                <option value="">-- Pilih Akun --</option>
                                 {accounts.map((acc) => (
                                     <option key={acc.id} value={acc.id}>
                                         {acc.code} - {acc.name}
@@ -149,7 +149,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                             </select>
                         </FormField>
 
-                        <FormField label="Keterangan (Opsional)" error={errors.description}>
+                        <FormField label="Keterangan" error={errors.description} hint="Opsional – penjelasan singkat kategori ini">
                             <Textarea
                                 placeholder="Deskripsi singkat tentang kategori ini"
                                 value={data.description}

@@ -159,9 +159,12 @@ export default function Dashboard({
                             </Link>
                         </div>
                         {cashBankAccounts.length === 0 ? (
-                            <p className="text-sm text-gray-400 py-4 text-center">
-                                Belum ada akun kas/bank
-                            </p>
+                            <div className="text-center py-4">
+                                <p className="text-sm text-gray-400">Belum ada akun kas/bank</p>
+                                <Link href="/master/kas-bank/tambah" className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                                    + Tambah Kas/Bank
+                                </Link>
+                            </div>
                         ) : (
                             <div className="space-y-2">
                                 {cashBankAccounts.map((acc) => (
@@ -197,9 +200,10 @@ export default function Dashboard({
                             </Link>
                         </div>
                         {recentTransactions.length === 0 ? (
-                            <p className="text-sm text-gray-400 py-4 text-center">
-                                Belum ada transaksi
-                            </p>
+                            <div className="text-center py-4">
+                                <p className="text-sm text-gray-400">Belum ada transaksi bulan ini</p>
+                                <p className="text-xs text-gray-400 mt-1">Gunakan "Aksi Cepat" di atas untuk memulai</p>
+                            </div>
                         ) : (
                             <div className="space-y-2">
                                 {recentTransactions.map((t) => (

@@ -85,7 +85,7 @@ function FlowTable({ rows, type }: { rows: FlowRow[]; type: "in" | "out" }) {
                                     colSpan={3}
                                     className="text-gray-400 text-sm text-center py-4"
                                 >
-                                    Tidak ada data
+                                    Tidak ada arus kas pada periode ini
                                 </TableCell>
                             </TableRow>
                         ) : (

@@ -107,7 +107,7 @@ export default function ReceivableList({ rows, summary, filters }: Props) {
                             {rows.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Tidak ada piutang pada periode ini
+                                        Tidak ada data piutang pada periode ini. Ubah filter untuk melihat data lain.
                                     </TableCell>
                                 </TableRow>
                             ) : rows.map((r) => (

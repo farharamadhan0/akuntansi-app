@@ -82,7 +82,7 @@ export default function Create({ customers, categories }: Props) {
                                     value={data.customer_id}
                                     onChange={(e) => setData('customer_id', e.target.value)}
                                 >
-                                    <option value="">Pilih pelanggan...</option>
+                                    <option value="">-- Pilih Pelanggan --</option>
                                     {customers.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.code ? `[${c.code}] ` : ''}{c.name}
@@ -101,7 +101,7 @@ export default function Create({ customers, categories }: Props) {
                                     />
                                 </FormField>
 
-                                <FormField label="Jatuh Tempo" error={errors.due_date} required>
+                                <FormField label="Jatuh Tempo" error={errors.due_date} required hint="Batas waktu pelanggan harus membayar">
                                     <Input
                                         type="date"
                                         value={data.due_date}
@@ -124,20 +124,20 @@ export default function Create({ customers, categories }: Props) {
 
                             <FormField label="Keterangan" error={errors.description} required>
                                 <Textarea
-                                    placeholder="Deskripsi tagihan..."
+                                    placeholder="Contoh: Tagihan penjualan barang bulan April"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
                                 />
                             </FormField>
 
-                            <FormField label="Kategori" error={errors.category_id}>
+                            <FormField label="Kategori" error={errors.category_id} hint="Opsional">
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.category_id}
                                     onChange={(e) => setData('category_id', e.target.value)}
                                 >
-                                    <option value="">Tanpa kategori</option>
+                                    <option value="">-- Tanpa Kategori --</option>
                                     {categories.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name}
@@ -146,9 +146,9 @@ export default function Create({ customers, categories }: Props) {
                                 </select>
                             </FormField>
 
-                            <FormField label="Referensi" error={errors.reference}>
+                            <FormField label="Referensi" error={errors.reference} hint="Opsional – nomor invoice atau PO">
                                 <Input
-                                    placeholder="No. Invoice, PO, dll (opsional)"
+                                    placeholder="No. Invoice, PO, dll"
                                     value={data.reference}
                                     onChange={(e) => setData('reference', e.target.value)}
                                 />
@@ -157,9 +157,10 @@ export default function Create({ customers, categories }: Props) {
                             {/* Journal Info */}
                             <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm">
                                 <p className="font-medium text-blue-800 mb-1">Jurnal Otomatis</p>
-                                <p className="text-blue-700">
-                                    Sistem akan mencatat jurnal: Debit Piutang Usaha, Kredit Pendapatan.
-                                </p>
+                                <ul className="text-blue-700 space-y-0.5 mt-1">
+                                    <li>• <span className="font-medium">Debit</span> – Piutang Usaha</li>
+                                    <li>• <span className="font-medium">Kredit</span> – Pendapatan</li>
+                                </ul>
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4">

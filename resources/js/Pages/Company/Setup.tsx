@@ -35,7 +35,7 @@ export default function Setup() {
                         </div>
                         <h2 className="text-2xl font-bold">Buat Usaha Baru</h2>
                         <p className="text-muted-foreground mt-1">
-                            Isi data usaha untuk mulai mencatat keuangan
+                            Lengkapi data usaha Anda untuk mulai mencatat keuangan
                         </p>
                     </div>
 
@@ -60,7 +60,7 @@ export default function Setup() {
                             />
                         </FormField>
 
-                        <FormField label="NPWP (Opsional)" error={errors.tax_id}>
+                        <FormField label="NPWP (Opsional)" error={errors.tax_id} hint="Nomor Pokok Wajib Pajak usaha Anda">
                             <Input
                                 type="text"
                                 placeholder="00.000.000.0-000.000"

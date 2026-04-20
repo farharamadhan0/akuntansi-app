@@ -67,7 +67,7 @@ export default function Create({ suppliers, categories }: Props) {
                     <div>
                         <h1 className="text-xl font-bold text-gray-900">Catat Hutang</h1>
                         <p className="text-sm text-gray-500">
-                            Catat tagihan yang harus dibayar ke supplier
+                            Catat tagihan yang harus dibayar ke pemasok
                         </p>
                     </div>
                 </div>
@@ -75,13 +75,13 @@ export default function Create({ suppliers, categories }: Props) {
                 <Card>
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
-                            <FormField label="Supplier" error={errors.supplier_id} required>
+                            <FormField label="Pemasok" error={errors.supplier_id} required>
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.supplier_id}
                                     onChange={(e) => setData('supplier_id', e.target.value)}
                                 >
-                                    <option value="">Pilih supplier...</option>
+                                    <option value="">-- Pilih Pemasok --</option>
                                     {suppliers.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.code ? `[${s.code}] ` : ''}{s.name}
@@ -100,7 +100,7 @@ export default function Create({ suppliers, categories }: Props) {
                                     />
                                 </FormField>
 
-                                <FormField label="Jatuh Tempo" error={errors.due_date} required>
+                                <FormField label="Jatuh Tempo" error={errors.due_date} required hint="Batas waktu pembayaran ke pemasok">
                                     <Input
                                         type="date"
                                         value={data.due_date}
@@ -123,7 +123,7 @@ export default function Create({ suppliers, categories }: Props) {
 
                             <FormField label="Keterangan" error={errors.description} required>
                                 <Textarea
-                                    placeholder="Deskripsi hutang, mis: Pembelian bahan baku..."
+                                    placeholder="Contoh: Pembelian bahan baku bulan April"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
@@ -131,20 +131,20 @@ export default function Create({ suppliers, categories }: Props) {
                             </FormField>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <FormField label="Kategori Pengeluaran" error={errors.category_id}>
+                                <FormField label="Kategori Pengeluaran" error={errors.category_id} hint="Opsional">
                                     <select
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         value={data.category_id}
                                         onChange={(e) => setData('category_id', e.target.value)}
                                     >
-                                        <option value="">Tanpa kategori</option>
+                                        <option value="">-- Tanpa Kategori --</option>
                                         {categories.map((c) => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>
                                 </FormField>
 
-                                <FormField label="Referensi / No. Invoice" error={errors.reference}>
+                                <FormField label="Referensi / No. Invoice" error={errors.reference} hint="Opsional">
                                     <Input
                                         placeholder="No. PO, Invoice, dll"
                                         value={data.reference}
@@ -156,9 +156,10 @@ export default function Create({ suppliers, categories }: Props) {
                             {/* Journal Info */}
                             <div className="rounded-lg bg-orange-50 border border-orange-200 p-3 text-sm">
                                 <p className="font-medium text-orange-800">Jurnal Otomatis</p>
-                                <p className="text-orange-700">
-                                    Debit: Beban / Akun Pengeluaran | Kredit: Hutang Usaha
-                                </p>
+                                <ul className="text-orange-700 space-y-0.5 mt-1">
+                                    <li>• <span className="font-medium">Debit</span> – Beban / Akun Pengeluaran</li>
+                                    <li>• <span className="font-medium">Kredit</span> – Hutang Usaha</li>
+                                </ul>
                             </div>
 
                             <div className="flex gap-3 pt-2">

@@ -78,7 +78,7 @@ export default function Form({ customer }: Props) {
                                     />
                                 </FormField>
 
-                                <FormField label="Kode" error={errors.code}>
+                                <FormField label="Kode" error={errors.code} hint="Opsional – kode unik pelanggan">
                                     <Input
                                         placeholder="Contoh: CUST-001"
                                         value={data.code}
@@ -124,7 +124,7 @@ export default function Form({ customer }: Props) {
                                     />
                                 </FormField>
 
-                                <FormField label="Limit Kredit (Rp)" error={errors.credit_limit}>
+                                <FormField label="Limit Kredit (Rp)" error={errors.credit_limit} hint="Batas maksimal piutang pelanggan">
                                     <Input
                                         type="number"
                                         min="0"

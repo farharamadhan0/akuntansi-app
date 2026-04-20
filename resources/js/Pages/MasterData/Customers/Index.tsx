@@ -139,7 +139,7 @@ export default function Index({ customers, filters }: Props) {
                             {customers.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Belum ada pelanggan
+                                        Belum ada data pelanggan. Klik "Tambah Pelanggan" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -207,7 +207,7 @@ export default function Index({ customers, filters }: Props) {
                     <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
                         <h3 className="text-lg font-semibold mb-2">Hapus Pelanggan</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            Hapus <strong>{deleteTarget.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                            Hapus pelanggan <strong>{deleteTarget.name}</strong>? Pelanggan yang masih memiliki piutang aktif tidak dapat dihapus.
                         </p>
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setDeleteTarget(null)}>

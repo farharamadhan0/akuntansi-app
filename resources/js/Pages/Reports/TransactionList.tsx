@@ -118,7 +118,7 @@ export default function TransactionList({ rows, summary, filters }: Props) {
                             {rows.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Tidak ada transaksi pada periode ini
+                                        Tidak ada transaksi pada periode ini. Ubah filter tanggal untuk melihat data lain.
                                     </TableCell>
                                 </TableRow>
                             ) : rows.map((r) => (
@@ -136,8 +136,8 @@ export default function TransactionList({ rows, summary, filters }: Props) {
                                         </span>
                                     </TableCell>
                                     <TableCell className="max-w-48 truncate">{r.description}</TableCell>
-                                    <TableCell>{r.category ?? '—'}</TableCell>
-                                    <TableCell>{r.cash_bank ?? '—'}</TableCell>
+                                    <TableCell>{r.category ?? '-'}</TableCell>
+                                    <TableCell>{r.cash_bank ?? '-'}</TableCell>
                                     <TableCell className={`text-right font-medium ${r.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                         {fmt(r.amount)}
                                     </TableCell>

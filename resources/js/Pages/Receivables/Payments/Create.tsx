@@ -167,7 +167,7 @@ export default function Create({ receivables, cashBankAccounts, preselectedCusto
                                         value={data.cash_bank_account_id}
                                         onChange={(e) => setData('cash_bank_account_id', e.target.value)}
                                     >
-                                        <option value="">Pilih kas/bank...</option>
+                                        <option value="">-- Pilih Kas/Bank --</option>
                                         {cashBankAccounts.map((acc) => (
                                             <option key={acc.id} value={acc.id}>
                                                 {acc.name} ({acc.type === 'cash' ? 'Kas' : 'Bank'})
@@ -208,7 +208,7 @@ export default function Create({ receivables, cashBankAccounts, preselectedCusto
                                         setAllocations({});
                                     }}
                                 >
-                                    <option value="">Semua pelanggan</option>
+                                    <option value="">-- Semua Pelanggan --</option>
                                     {customers.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}

@@ -100,7 +100,7 @@ export default function Index({ payables, summary, filters }: Props) {
                         Hutang
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                        Kelola hutang kepada supplier
+                        Kelola tagihan yang harus dibayar ke pemasok
                     </p>
                 </div>
                 <Link href="/transaksi/hutang/buat">
@@ -173,7 +173,7 @@ export default function Index({ payables, summary, filters }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>No. Hutang</TableHead>
-                                <TableHead>Supplier</TableHead>
+                                <TableHead>Pemasok</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jatuh Tempo</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
@@ -186,7 +186,7 @@ export default function Index({ payables, summary, filters }: Props) {
                             {filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-gray-400 py-8">
-                                        Tidak ada hutang
+                                        Belum ada data hutang. Klik "Catat Hutang" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -200,7 +200,7 @@ export default function Index({ payables, summary, filters }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             <p className="font-medium">{p.supplier_name}</p>
-                                            <p className="text-xs text-gray-400 truncate max-w-40">
+                                            <p className="text-xs text-muted-foreground truncate max-w-40">
                                                 {p.description}
                                             </p>
                                         </TableCell>

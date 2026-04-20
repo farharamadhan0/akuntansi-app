@@ -162,7 +162,7 @@ export default function Show({ receivable: r, journalEntries }: Props) {
                             </div>
                             <div>
                                 <p className="text-gray-500">Kategori</p>
-                                <p className="font-medium text-gray-900">{r.category_name || '-'}</p>
+                                <p className="font-medium text-gray-900">{r.category_name || 'Tanpa kategori'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Tanggal</p>
@@ -288,8 +288,8 @@ export default function Show({ receivable: r, journalEntries }: Props) {
                                 onChange={(e) => setVoidReason(e.target.value)}
                             />
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setShowVoidModal(false)}>
-                                    Batal
+                                <Button variant="outline" onClick={() => { setShowVoidModal(false); setVoidReason(''); }}>
+                                    Kembali
                                 </Button>
                                 <Button
                                     variant="destructive"

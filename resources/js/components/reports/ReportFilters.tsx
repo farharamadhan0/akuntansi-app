@@ -20,11 +20,11 @@ export default function ReportFilters({ url, from, to, extra }: Props) {
     return (
         <div className="flex flex-wrap items-end gap-3 mb-5 p-4 bg-gray-50 rounded-lg border">
             <div>
-                <label className="block text-xs text-gray-500 mb-1">Dari</label>
+                <label className="block text-xs text-gray-500 mb-1">Dari Tanggal</label>
                 <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
             </div>
             <div>
-                <label className="block text-xs text-gray-500 mb-1">Sampai</label>
+                <label className="block text-xs text-gray-500 mb-1">Sampai Tanggal</label>
                 <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
             </div>
             {extra}

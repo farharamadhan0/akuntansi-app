@@ -155,7 +155,7 @@ export default function Show({ payable: p, journalEntries }: Props) {
                     <CardContent className="p-6 space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-gray-500">Supplier</p>
+                                <p className="text-gray-500">Pemasok</p>
                                 <p className="font-semibold text-gray-900">{p.supplier.name}</p>
                                 {p.supplier.phone && (
                                     <p className="text-gray-400 text-xs">{p.supplier.phone}</p>
@@ -163,7 +163,7 @@ export default function Show({ payable: p, journalEntries }: Props) {
                             </div>
                             <div>
                                 <p className="text-gray-500">Kategori</p>
-                                <p className="font-medium text-gray-900">{p.category_name ?? '-'}</p>
+                                <p className="font-medium text-gray-900">{p.category_name ?? 'Tanpa kategori'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Tanggal</p>
@@ -298,7 +298,7 @@ export default function Show({ payable: p, journalEntries }: Props) {
                                 onChange={(e) => setVoidReason(e.target.value)}
                             />
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setShowVoidModal(false)}>
+                                <Button variant="outline" onClick={() => { setShowVoidModal(false); setVoidReason(''); }}>
                                     Kembali
                                 </Button>
                                 <Button

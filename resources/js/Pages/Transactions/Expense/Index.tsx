@@ -180,7 +180,8 @@ export default function Index({ transactions }: Props) {
                                             size={40}
                                             className="mx-auto mb-2 text-gray-300"
                                         />
-                                        Belum ada transaksi uang keluar
+                                        <p>Belum ada transaksi uang keluar</p>
+                                        <p className="text-sm mt-1">Klik "Catat Uang Keluar" untuk mencatat pengeluaran pertama.</p>
                                     </TableCell>
                                 </TableRow>
                             ) : (

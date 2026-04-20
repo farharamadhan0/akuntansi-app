@@ -95,7 +95,7 @@ export default function PayableList({ rows, summary, filters }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>No. Hutang</TableHead>
-                                <TableHead>Supplier</TableHead>
+                                <TableHead>Pemasok</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jatuh Tempo</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
@@ -107,7 +107,7 @@ export default function PayableList({ rows, summary, filters }: Props) {
                             {rows.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Tidak ada hutang pada periode ini
+                                        Tidak ada data hutang pada periode ini. Ubah filter untuk melihat data lain.
                                     </TableCell>
                                 </TableRow>
                             ) : rows.map((r) => (
