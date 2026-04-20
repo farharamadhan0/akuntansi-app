@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\CashBankAccount;
 use App\Models\Transaction;
+use App\Models\Receivable;
+use App\Models\Payable;
 use App\Enums\TransactionType;
 use App\Enums\TransactionStatus;
+use App\Enums\PaymentStatus;
 use App\Services\AccountBalanceService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -51,6 +54,38 @@ class DashboardController extends Controller
 
         $totalCashBank = $cashBankAccounts->sum('balance');
 
+        // Receivable summary (outstanding)
+        $receivableOutstanding = Receivable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total_remaining')
+            ->selectRaw('COUNT(*) as total_count')
+            ->first();
+
+        $receivableOverdue = Receivable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->where('due_date', '<', now()->toDateString())
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total_remaining')
+            ->selectRaw('COUNT(*) as total_count')
+            ->first();
+
+        // Payable summary (outstanding)
+        $payableOutstanding = Payable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total_remaining')
+            ->selectRaw('COUNT(*) as total_count')
+            ->first();
+
+        $payableOverdue = Payable::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->where('payment_status', '!=', PaymentStatus::Paid)
+            ->where('due_date', '<', now()->toDateString())
+            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total_remaining')
+            ->selectRaw('COUNT(*) as total_count')
+            ->first();
+
         // Recent transactions (last 5 posted)
         $recentTransactions = Transaction::where('company_id', $companyId)
             ->where('status', TransactionStatus::Posted)
@@ -76,11 +111,17 @@ class DashboardController extends Controller
                 'expenseThisMonth' => (float) $expenseThisMonth,
                 'netProfit'        => (float) ($incomeThisMonth - $expenseThisMonth),
                 'totalCashBank'    => (float) $totalCashBank,
+                'receivableOutstanding' => (float) $receivableOutstanding->total_remaining,
+                'receivableOutstandingCount' => (int) $receivableOutstanding->total_count,
+                'receivableOverdue' => (float) $receivableOverdue->total_remaining,
+                'receivableOverdueCount' => (int) $receivableOverdue->total_count,
+                'payableOutstanding' => (float) $payableOutstanding->total_remaining,
+                'payableOutstandingCount' => (int) $payableOutstanding->total_count,
+                'payableOverdue' => (float) $payableOverdue->total_remaining,
+                'payableOverdueCount' => (int) $payableOverdue->total_count,
             ],
             'cashBankAccounts'    => $cashBankAccounts,
             'recentTransactions'  => $recentTransactions,
-            'company'             => auth()->user()->currentCompany,
-            'currentMonth'        => now()->translatedFormat('F Y'),
         ]);
     }
 }
