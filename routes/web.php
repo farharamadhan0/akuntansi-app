@@ -9,6 +9,7 @@ use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
@@ -45,6 +46,15 @@ Route::middleware('auth')->group(function () {
             Route::put('pelanggan/{customer}', [CustomerController::class, 'update'])->name('customers.update');
             Route::delete('pelanggan/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
             Route::post('pelanggan/{customer}/toggle', [CustomerController::class, 'toggleActive'])->name('customers.toggle');
+
+            // Master Data - Pemasok
+            Route::get('pemasok', [SupplierController::class, 'index'])->name('suppliers.index');
+            Route::get('pemasok/tambah', [SupplierController::class, 'create'])->name('suppliers.create');
+            Route::post('pemasok', [SupplierController::class, 'store'])->name('suppliers.store');
+            Route::get('pemasok/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+            Route::put('pemasok/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+            Route::delete('pemasok/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+            Route::post('pemasok/{supplier}/toggle', [SupplierController::class, 'toggleActive'])->name('suppliers.toggle');
 
         // Master Data - Kas & Bank
             Route::get('kas-bank', [CashBankAccountController::class, 'index'])->name('cash-bank.index');
