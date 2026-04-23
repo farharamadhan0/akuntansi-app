@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
-import { Plus, Eye, Wallet, AlertTriangle } from 'lucide-react';
+import { Plus, Eye, Wallet, AlertTriangle, Banknote } from 'lucide-react';
 
 interface Payable {
     id: number;
@@ -107,12 +107,25 @@ export default function Index({ payables, summary, filters }: Props) {
                         Kelola tagihan yang harus dibayar ke pemasok
                     </p>
                 </div>
-                <Link href="/transaksi/hutang/buat">
-                    <Button className="gap-1.5">
-                        <Plus size={18} />
-                        Catat Hutang
-                    </Button>
-                </Link>
+                <div className="flex gap-2">
+                    <Link href="/transaksi/hutang-bayar/catat">
+                        <Button variant="outline" className="gap-1.5">
+                            <Banknote size={18} />
+                            Bayar Hutang
+                        </Button>
+                    </Link>
+                    <Link href="/transaksi/hutang-bayar">
+                        <Button variant="outline" className="gap-1.5">
+                            Riwayat Pembayaran
+                        </Button>
+                    </Link>
+                    <Link href="/transaksi/hutang/buat">
+                        <Button className="gap-1.5">
+                            <Plus size={18} />
+                            Catat Hutang
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Summary Cards */}

@@ -14,6 +14,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
+use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -112,6 +113,13 @@ Route::middleware('auth')->group(function () {
             Route::post('piutang-bayar', [ReceivablePaymentController::class, 'store'])->name('receivable-payments.store');
             Route::get('piutang-bayar/{payment}', [ReceivablePaymentController::class, 'show'])->name('receivable-payments.show');
             Route::post('piutang-bayar/{payment}/batal', [ReceivablePaymentController::class, 'void'])->name('receivable-payments.void');
+
+            // Pembayaran Hutang
+            Route::get('hutang-bayar', [PayablePaymentController::class, 'index'])->name('payable-payments.index');
+            Route::get('hutang-bayar/catat', [PayablePaymentController::class, 'create'])->name('payable-payments.create');
+            Route::post('hutang-bayar', [PayablePaymentController::class, 'store'])->name('payable-payments.store');
+            Route::get('hutang-bayar/{payment}', [PayablePaymentController::class, 'show'])->name('payable-payments.show');
+            Route::post('hutang-bayar/{payment}/batal', [PayablePaymentController::class, 'void'])->name('payable-payments.void');
         });
 
         // Jurnal Umum
