@@ -8,6 +8,7 @@ use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
+use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PayableController;
@@ -111,6 +112,19 @@ Route::middleware('auth')->group(function () {
             Route::post('piutang-bayar', [ReceivablePaymentController::class, 'store'])->name('receivable-payments.store');
             Route::get('piutang-bayar/{payment}', [ReceivablePaymentController::class, 'show'])->name('receivable-payments.show');
             Route::post('piutang-bayar/{payment}/batal', [ReceivablePaymentController::class, 'void'])->name('receivable-payments.void');
+        });
+
+        // Jurnal Umum
+        Route::prefix('jurnal')->group(function () {
+            Route::get('/', [JournalEntryController::class, 'index'])->name('journals.index');
+            Route::get('buat', [JournalEntryController::class, 'create'])->name('journals.create');
+            Route::post('/', [JournalEntryController::class, 'store'])->name('journals.store');
+            Route::get('{journal}', [JournalEntryController::class, 'show'])->name('journals.show');
+            Route::get('{journal}/edit', [JournalEntryController::class, 'edit'])->name('journals.edit');
+            Route::put('{journal}', [JournalEntryController::class, 'update'])->name('journals.update');
+            Route::post('{journal}/posting', [JournalEntryController::class, 'post'])->name('journals.post');
+            Route::post('{journal}/batal', [JournalEntryController::class, 'void'])->name('journals.void');
+            Route::delete('{journal}', [JournalEntryController::class, 'destroy'])->name('journals.destroy');
         });
 
         // Laporan

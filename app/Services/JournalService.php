@@ -55,6 +55,109 @@ class JournalService
         });
     }
 
+    public function createManualDraft(int $companyId, array $data): JournalEntry
+    {
+        $this->validateLines($data['lines']);
+
+        return DB::transaction(function () use ($companyId, $data) {
+            $entry = JournalEntry::create([
+                'company_id' => $companyId,
+                'entry_number' => $this->numberGenerator->generateJournalNumber($companyId),
+                'date' => $data['date'],
+                'description' => $data['description'],
+                'source_type' => null,
+                'source_id' => null,
+                'is_manual' => true,
+                'is_adjusting' => (bool) ($data['is_adjusting'] ?? false),
+                'is_closing' => false,
+                'status' => TransactionStatus::Draft,
+                'created_by' => auth()->id(),
+            ]);
+
+            foreach ($data['lines'] as $line) {
+                JournalLine::create([
+                    'journal_entry_id' => $entry->id,
+                    'account_id' => $line['account_id'],
+                    'description' => $line['description'] ?? null,
+                    'debit' => $line['debit'] ?? 0,
+                    'credit' => $line['credit'] ?? 0,
+                ]);
+            }
+
+            return $entry->load('lines.account');
+        });
+    }
+
+    public function updateDraft(JournalEntry $entry, array $data): JournalEntry
+    {
+        if (! $entry->is_manual) {
+            throw new \Exception('Hanya jurnal manual yang dapat diedit.');
+        }
+
+        if ($entry->status !== TransactionStatus::Draft) {
+            throw new \Exception('Hanya jurnal draft yang dapat diedit.');
+        }
+
+        $this->validateLines($data['lines']);
+
+        return DB::transaction(function () use ($entry, $data) {
+            $entry->update([
+                'date' => $data['date'],
+                'description' => $data['description'],
+                'is_adjusting' => (bool) ($data['is_adjusting'] ?? false),
+            ]);
+
+            $entry->lines()->delete();
+
+            foreach ($data['lines'] as $line) {
+                JournalLine::create([
+                    'journal_entry_id' => $entry->id,
+                    'account_id' => $line['account_id'],
+                    'description' => $line['description'] ?? null,
+                    'debit' => $line['debit'] ?? 0,
+                    'credit' => $line['credit'] ?? 0,
+                ]);
+            }
+
+            return $entry->fresh()->load('lines.account');
+        });
+    }
+
+    public function post(JournalEntry $entry): JournalEntry
+    {
+        if ($entry->status !== TransactionStatus::Draft) {
+            throw new \Exception('Hanya jurnal draft yang dapat diposting.');
+        }
+
+        $lines = $entry->lines->map(fn($l) => [
+            'account_id' => $l->account_id,
+            'debit' => (float) $l->debit,
+            'credit' => (float) $l->credit,
+        ])->toArray();
+
+        $this->validateLines($lines);
+
+        $entry->update(['status' => TransactionStatus::Posted]);
+
+        return $entry->fresh();
+    }
+
+    public function deleteDraft(JournalEntry $entry): void
+    {
+        if ($entry->status !== TransactionStatus::Draft) {
+            throw new \Exception('Hanya jurnal draft yang dapat dihapus.');
+        }
+
+        if (! $entry->is_manual) {
+            throw new \Exception('Jurnal otomatis tidak dapat dihapus.');
+        }
+
+        DB::transaction(function () use ($entry) {
+            $entry->lines()->delete();
+            $entry->delete();
+        });
+    }
+
     public function voidEntry(JournalEntry $entry, string $reason): JournalEntry
     {
         if ($entry->status === TransactionStatus::Voided) {

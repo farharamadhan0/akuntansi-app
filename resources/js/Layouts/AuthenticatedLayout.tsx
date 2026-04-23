@@ -15,6 +15,7 @@ import {
     List,
     Truck,
     Building2,
+    BookOpen,
     ChevronDown,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
@@ -59,6 +60,7 @@ const navGroups: NavGroup[] = [
             { href: "/transaksi/uang-keluar", label: "Uang Keluar", icon: TrendingDown },
             { href: "/transaksi/piutang", label: "Piutang", icon: Users },
             { href: "/transaksi/hutang", label: "Hutang", icon: CreditCard },
+            { href: "/jurnal", label: "Jurnal Umum", icon: BookOpen },
         ],
     },
     {
