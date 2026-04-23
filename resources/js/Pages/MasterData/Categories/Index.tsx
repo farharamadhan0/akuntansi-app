@@ -12,6 +12,7 @@ import {
     TrendingDown,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { FilterTabs } from "@/components/ui/filter-tabs";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useState } from "react";
 
@@ -23,12 +24,6 @@ interface Category {
     is_active: boolean;
     account?: { code: string; name: string };
 }
-
-const FILTERS = [
-    { value: "all", label: "Semua" },
-    { value: "income", label: "Pemasukan" },
-    { value: "expense", label: "Pengeluaran" },
-];
 
 export default function Index({ categories }: { categories: Category[] }) {
     const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
@@ -74,31 +69,18 @@ export default function Index({ categories }: { categories: Category[] }) {
                 </Link>
             </div>
 
+            <FilterTabs<'all' | 'income' | 'expense'>
+                className="mb-4"
+                value={filter}
+                onChange={setFilter}
+                items={[
+                    { value: 'all', label: 'Semua', count: categories.length },
+                    { value: 'income', label: 'Pemasukan', count: categories.filter(c => c.type === 'income').length },
+                    { value: 'expense', label: 'Pengeluaran', count: categories.filter(c => c.type === 'expense').length },
+                ]}
+            />
+
             <Card>
-                <div className="px-6 py-4 border-b flex items-center gap-2">
-                    {FILTERS.map((f) => (
-                        <button
-                            key={f.value}
-                            onClick={() => setFilter(f.value as 'all' | 'income' | 'expense')}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                filter === f.value
-                                    ? "bg-gray-900 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                            }`}
-                        >
-                            {f.label}
-                            <span
-                                className={`ml-1.5 text-xs ${filter === f.value ? "text-gray-300" : "text-gray-400"}`}
-                            >
-                                {f.value === "all"
-                                    ? categories.length
-                                    : categories.filter(
-                                          (c) => c.type === f.value,
-                                      ).length}
-                            </span>
-                        </button>
-                    ))}
-                </div>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>

@@ -12,6 +12,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { FilterTabs } from '@/components/ui/filter-tabs';
 import { Plus, Eye, Wallet, AlertTriangle } from 'lucide-react';
 
 interface Payable {
@@ -65,7 +66,10 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ payables, summary, filters }: Props) {
-    const [paymentFilter, setPaymentFilter] = useState(filters.payment_status ?? '');
+    type PaymentFilter = '' | 'unpaid' | 'partial' | 'paid';
+    const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(
+        (filters.payment_status as PaymentFilter) ?? ''
+    );
 
     const filtered = paymentFilter
         ? payables.filter(p => p.payment_status === paymentFilter)
@@ -146,26 +150,17 @@ export default function Index({ payables, summary, filters }: Props) {
             </div>
 
             {/* Filter */}
-            <div className="flex gap-2 mb-4">
-                {(['', 'unpaid', 'partial', 'paid'] as const).map((s) => {
-                    const labels: Record<string, string> = {
-                        '': 'Semua',
-                        unpaid: 'Belum Bayar',
-                        partial: 'Sebagian',
-                        paid: 'Lunas',
-                    };
-                    return (
-                        <Button
-                            key={s}
-                            variant={paymentFilter === s ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setPaymentFilter(s)}
-                        >
-                            {labels[s]}
-                        </Button>
-                    );
-                })}
-            </div>
+            <FilterTabs
+                className="mb-4"
+                value={paymentFilter}
+                onChange={setPaymentFilter}
+                items={[
+                    { value: '', label: 'Semua', count: payables.length },
+                    { value: 'unpaid', label: 'Belum Bayar', count: payables.filter(p => p.payment_status === 'unpaid').length },
+                    { value: 'partial', label: 'Sebagian', count: payables.filter(p => p.payment_status === 'partial').length },
+                    { value: 'paid', label: 'Lunas', count: payables.filter(p => p.payment_status === 'paid').length },
+                ]}
+            />
 
             <Card>
                 <CardContent className="p-0">

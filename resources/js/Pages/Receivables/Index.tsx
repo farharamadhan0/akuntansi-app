@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Eye, Users, AlertTriangle, Banknote } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { FilterTabs } from '@/components/ui/filter-tabs';
 import { useState } from 'react';
 
 interface Receivable {
@@ -161,20 +162,24 @@ export default function Index({ receivables, summary }: Props) {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex gap-2 mb-4">
-                {(['all', 'outstanding', 'overdue'] as const).map((f) => (
-                    <Button
-                        key={f}
-                        variant={filter === f ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setFilter(f)}
-                    >
-                        {f === 'all' && 'Semua'}
-                        {f === 'outstanding' && 'Belum Lunas'}
-                        {f === 'overdue' && 'Jatuh Tempo'}
-                    </Button>
-                ))}
-            </div>
+            <FilterTabs<'all' | 'outstanding' | 'overdue'>
+                className="mb-4"
+                value={filter}
+                onChange={setFilter}
+                items={[
+                    { value: 'all', label: 'Semua', count: receivables.length },
+                    {
+                        value: 'outstanding',
+                        label: 'Belum Lunas',
+                        count: receivables.filter(r => r.status === 'posted' && r.payment_status !== 'paid').length,
+                    },
+                    {
+                        value: 'overdue',
+                        label: 'Jatuh Tempo',
+                        count: receivables.filter(r => r.is_overdue).length,
+                    },
+                ]}
+            />
 
             {/* Table */}
             <Card>

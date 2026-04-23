@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Eye, TrendingUp, ArrowUpCircle } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { FilterTabs } from '@/components/ui/filter-tabs';
 
 interface Transaction {
     id: number;
@@ -33,12 +34,6 @@ interface Transaction {
 interface Props {
     transactions: Transaction[];
 }
-
-const STATUS_FILTER = [
-    { value: 'all', label: 'Semua' },
-    { value: 'posted', label: 'Diposting' },
-    { value: 'voided', label: 'Dibatalkan' },
-];
 
 const statusBadge: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
@@ -130,31 +125,18 @@ export default function Index({ transactions }: Props) {
                 </Card>
             </div>
 
-            <Card>
-                {/* Filter tabs */}
-                <div className="px-6 py-4 border-b flex items-center gap-2">
-                    {STATUS_FILTER.map((f) => (
-                        <button
-                            key={f.value}
-                            onClick={() => setFilter(f.value as typeof filter)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                filter === f.value
-                                    ? 'bg-gray-900 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                        >
-                            {f.label}
-                            <span
-                                className={`ml-1.5 text-xs ${filter === f.value ? 'text-gray-300' : 'text-gray-400'}`}
-                            >
-                                {f.value === 'all'
-                                    ? transactions.length
-                                    : transactions.filter((t) => t.status === f.value).length}
-                            </span>
-                        </button>
-                    ))}
-                </div>
+            <FilterTabs<'all' | 'posted' | 'voided'>
+                className="mb-4"
+                value={filter}
+                onChange={setFilter}
+                items={[
+                    { value: 'all', label: 'Semua', count: transactions.length },
+                    { value: 'posted', label: 'Diposting', count: transactions.filter(t => t.status === 'posted').length },
+                    { value: 'voided', label: 'Dibatalkan', count: transactions.filter(t => t.status === 'voided').length },
+                ]}
+            />
 
+            <Card>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
