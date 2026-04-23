@@ -118,6 +118,11 @@ export default function Index({ receivables, summary }: Props) {
                             Terima Pembayaran
                         </Button>
                     </Link>
+                    <Link href="/transaksi/piutang-bayar">
+                        <Button variant="outline" className="gap-1.5">
+                            Riwayat Pembayaran
+                        </Button>
+                    </Link>
                     <Link href="/transaksi/piutang/buat">
                         <Button className="gap-1.5">
                             <Plus size={18} />
