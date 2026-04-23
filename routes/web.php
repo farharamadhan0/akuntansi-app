@@ -119,6 +119,7 @@ Route::middleware('auth')->group(function () {
             Route::get('piutang', [ReportController::class, 'receivableList'])->name('reports.receivables');
             Route::get('hutang', [ReportController::class, 'payableList'])->name('reports.payables');
             Route::get('laba-rugi', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
+            Route::get('neraca', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
             Route::get('arus-kas', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         });
     });

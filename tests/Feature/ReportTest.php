@@ -99,6 +99,11 @@ class ReportTest extends TestCase
         $this->get('/laporan/arus-kas')->assertOk();
     }
 
+    public function test_balance_sheet_page_loads(): void
+    {
+        $this->get('/laporan/neraca')->assertOk();
+    }
+
     public function test_unauthenticated_user_is_redirected_from_all_reports(): void
     {
         auth()->logout();
@@ -108,6 +113,7 @@ class ReportTest extends TestCase
             '/laporan/piutang',
             '/laporan/hutang',
             '/laporan/laba-rugi',
+            '/laporan/neraca',
             '/laporan/arus-kas',
         ];
 
@@ -346,6 +352,97 @@ class ReportTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
+    // Balance Sheet (Neraca)
+    // -----------------------------------------------------------------------
+
+    public function test_balance_sheet_is_balanced_after_income(): void
+    {
+        $this->postIncome(5000000);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        $this->assertTrue($props['is_balanced']);
+        $this->assertEquals($props['total_asset'], $props['total_liab_equity']);
+    }
+
+    public function test_balance_sheet_income_increases_asset_and_current_earnings(): void
+    {
+        $this->postIncome(5000000);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        // Cash (asset) naik sebesar pendapatan
+        $this->assertEquals(5000000, $props['total_asset']);
+        // Laba periode berjalan = pendapatan - beban = 5.000.000
+        $this->assertEquals(5000000, $props['current_earnings']);
+        $this->assertEquals(5000000, $props['total_equity']);
+    }
+
+    public function test_balance_sheet_expense_creates_loss(): void
+    {
+        $this->postIncome(3000000);
+        $this->postExpense(1000000);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        $this->assertEquals(2000000, $props['total_asset']);
+        $this->assertEquals(2000000, $props['current_earnings']);
+        $this->assertTrue($props['is_balanced']);
+    }
+
+    public function test_balance_sheet_payable_increases_liability(): void
+    {
+        $this->postPayable(1800000);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        $this->assertEquals(1800000, $props['total_liability']);
+        $this->assertTrue($props['is_balanced']);
+    }
+
+    public function test_balance_sheet_receivable_increases_asset(): void
+    {
+        $this->postReceivable(2500000);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        // Piutang adalah aset → total_asset naik sebesar piutang
+        $this->assertEquals(2500000, $props['total_asset']);
+        $this->assertTrue($props['is_balanced']);
+    }
+
+    public function test_balance_sheet_excludes_entries_after_as_of(): void
+    {
+        $this->postIncome(5000000);
+
+        // Gunakan tanggal kemarin sebagai as_of → transaksi hari ini belum masuk
+        $yesterday = now()->subDay()->format('Y-m-d');
+        $response  = $this->get("/laporan/neraca?as_of={$yesterday}");
+        $props     = $response->original->getData()['page']['props'];
+
+        $this->assertEquals(0, $props['total_asset']);
+        $this->assertEquals(0, $props['total_liability']);
+        $this->assertEquals(0, $props['current_earnings']);
+    }
+
+    public function test_balance_sheet_empty_when_no_transactions(): void
+    {
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        $this->assertEquals(0, $props['total_asset']);
+        $this->assertEquals(0, $props['total_liability']);
+        $this->assertEquals(0, $props['total_equity']);
+        $this->assertEquals(0, $props['current_earnings']);
+        $this->assertTrue($props['is_balanced']);
+    }
+
+    // -----------------------------------------------------------------------
     // Cross-company isolation
     // -----------------------------------------------------------------------
 
@@ -379,6 +476,23 @@ class ReportTest extends TestCase
         $props    = $response->original->getData()['page']['props'];
 
         $this->assertEquals(0, $props['total_revenue']);
+    }
+
+    public function test_balance_sheet_does_not_include_other_company_data(): void
+    {
+        $this->postIncome(5000000);
+
+        $otherUser = User::factory()->create();
+        app(CompanySetupService::class)->createCompany(['name' => 'PT Beda Neraca'], $otherUser);
+        $otherUser->refresh();
+
+        $this->actingAs($otherUser);
+
+        $response = $this->get("/laporan/neraca?as_of={$this->today}");
+        $props    = $response->original->getData()['page']['props'];
+
+        $this->assertEquals(0, $props['total_asset']);
+        $this->assertEquals(0, $props['current_earnings']);
     }
 
     // -----------------------------------------------------------------------

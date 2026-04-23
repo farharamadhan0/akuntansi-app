@@ -205,6 +205,100 @@ class ReportService
     }
 
     // -----------------------------------------------------------------------
+    // Neraca (Balance Sheet) — ledger-based, point-in-time
+    // -----------------------------------------------------------------------
+
+    public function balanceSheet(int $companyId, string $asOf): array
+    {
+        // Aggregate all posted journal lines up to and including $asOf
+        $lines = JournalLine::select(
+                'journal_lines.account_id',
+                DB::raw('SUM(journal_lines.debit) as total_debit'),
+                DB::raw('SUM(journal_lines.credit) as total_credit')
+            )
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.company_id', $companyId)
+            ->where('journal_entries.status', TransactionStatus::Posted)
+            ->whereDate('journal_entries.date', '<=', $asOf)
+            ->groupBy('journal_lines.account_id')
+            ->get()
+            ->keyBy('account_id');
+
+        $accounts = Account::where('company_id', $companyId)->get();
+
+        $asset       = [];
+        $liability   = [];
+        $equity      = [];
+        $revenueTotal = 0.0;
+        $expenseTotal = 0.0;
+
+        foreach ($accounts as $account) {
+            $line   = $lines[$account->id] ?? null;
+            $debit  = $line ? (float) $line->total_debit  : 0.0;
+            $credit = $line ? (float) $line->total_credit : 0.0;
+
+            switch ($account->type) {
+                case AccountType::Asset:
+                    $balance = $debit - $credit;
+                    if ($balance != 0.0) {
+                        $asset[] = $this->accountRow($account, $balance);
+                    }
+                    break;
+                case AccountType::Liability:
+                    $balance = $credit - $debit;
+                    if ($balance != 0.0) {
+                        $liability[] = $this->accountRow($account, $balance);
+                    }
+                    break;
+                case AccountType::Equity:
+                    $balance = $credit - $debit;
+                    if ($balance != 0.0) {
+                        $equity[] = $this->accountRow($account, $balance);
+                    }
+                    break;
+                case AccountType::Revenue:
+                    $revenueTotal += $credit - $debit;
+                    break;
+                case AccountType::Expense:
+                    $expenseTotal += $debit - $credit;
+                    break;
+            }
+        }
+
+        usort($asset,     fn($a, $b) => strcmp($a['account_code'], $b['account_code']));
+        usort($liability, fn($a, $b) => strcmp($a['account_code'], $b['account_code']));
+        usort($equity,    fn($a, $b) => strcmp($a['account_code'], $b['account_code']));
+
+        $currentEarnings = $revenueTotal - $expenseTotal;
+
+        $totalAsset     = array_sum(array_column($asset, 'amount'));
+        $totalLiability = array_sum(array_column($liability, 'amount'));
+        $totalEquity    = array_sum(array_column($equity, 'amount')) + $currentEarnings;
+
+        return [
+            'asset'             => $asset,
+            'liability'         => $liability,
+            'equity'            => $equity,
+            'current_earnings'  => $currentEarnings,
+            'total_asset'       => $totalAsset,
+            'total_liability'   => $totalLiability,
+            'total_equity'      => $totalEquity,
+            'total_liab_equity' => $totalLiability + $totalEquity,
+            'is_balanced'       => round($totalAsset, 2) === round($totalLiability + $totalEquity, 2),
+        ];
+    }
+
+    private function accountRow(Account $account, float $amount): array
+    {
+        return [
+            'account_id'   => $account->id,
+            'account_code' => $account->code,
+            'account_name' => $account->name,
+            'amount'       => $amount,
+        ];
+    }
+
+    // -----------------------------------------------------------------------
     // Arus Kas (Cash Flow) — ledger-based
     // -----------------------------------------------------------------------
 

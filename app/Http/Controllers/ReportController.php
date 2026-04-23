@@ -113,6 +113,29 @@ class ReportController extends Controller
         ]);
     }
 
+    public function balanceSheet(Request $request): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+        $asOf = $request->filled('as_of')
+            ? $request->as_of
+            : now()->endOfMonth()->format('Y-m-d');
+
+        $data = $this->reportService->balanceSheet($companyId, $asOf);
+
+        return Inertia::render('Reports/BalanceSheet', [
+            'asset'             => $data['asset'],
+            'liability'         => $data['liability'],
+            'equity'            => $data['equity'],
+            'current_earnings'  => $data['current_earnings'],
+            'total_asset'       => $data['total_asset'],
+            'total_liability'   => $data['total_liability'],
+            'total_equity'      => $data['total_equity'],
+            'total_liab_equity' => $data['total_liab_equity'],
+            'is_balanced'       => $data['is_balanced'],
+            'filters'           => ['as_of' => $asOf],
+        ]);
+    }
+
     public function cashFlow(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;

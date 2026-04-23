@@ -6,27 +6,45 @@ import { Search } from 'lucide-react';
 
 interface Props {
     url: string;
-    from: string;
-    to: string;
+    from?: string;
+    to?: string;
+    asOf?: string;
+    mode?: 'range' | 'asOf';
     extra?: React.ReactNode;
 }
 
-export default function ReportFilters({ url, from, to, extra }: Props) {
+export default function ReportFilters({ url, from = '', to = '', asOf = '', mode = 'range', extra }: Props) {
     const [dateFrom, setDateFrom] = useState(from);
     const [dateTo, setDateTo] = useState(to);
+    const [dateAsOf, setDateAsOf] = useState(asOf);
 
-    const apply = () => router.get(url, { from: dateFrom, to: dateTo }, { preserveScroll: true });
+    const apply = () => {
+        if (mode === 'asOf') {
+            router.get(url, { as_of: dateAsOf }, { preserveScroll: true });
+        } else {
+            router.get(url, { from: dateFrom, to: dateTo }, { preserveScroll: true });
+        }
+    };
 
     return (
         <div className="flex flex-wrap items-end gap-3 mb-5 p-4 bg-gray-50 rounded-lg border">
-            <div>
-                <label className="block text-xs text-gray-500 mb-1">Dari Tanggal</label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
-            </div>
-            <div>
-                <label className="block text-xs text-gray-500 mb-1">Sampai Tanggal</label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
-            </div>
+            {mode === 'asOf' ? (
+                <div>
+                    <label className="block text-xs text-gray-500 mb-1">Per Tanggal</label>
+                    <Input type="date" value={dateAsOf} onChange={(e) => setDateAsOf(e.target.value)} className="w-40" />
+                </div>
+            ) : (
+                <>
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1">Dari Tanggal</label>
+                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1">Sampai Tanggal</label>
+                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+                    </div>
+                </>
+            )}
             {extra}
             <Button onClick={apply} className="gap-1.5">
                 <Search size={16} />
