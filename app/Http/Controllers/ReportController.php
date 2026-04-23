@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use App\Services\GeneralLedgerService;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -150,6 +152,47 @@ class ReportController extends Controller
             'total_out' => $data['total_out'],
             'net_flow'  => $data['net_flow'],
             'filters'   => ['from' => $from, 'to' => $to],
+        ]);
+    }
+
+    public function generalLedger(Request $request, GeneralLedgerService $service): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+        [$from, $to] = $this->dateRange($request);
+
+        $accounts = Account::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name', 'type'])
+            ->map(fn (Account $a) => [
+                'id'    => $a->id,
+                'code'  => $a->code,
+                'name'  => $a->name,
+                'type'  => $a->type->value,
+                'label' => $a->code . ' — ' . $a->name,
+            ])
+            ->values();
+
+        $ledger = null;
+        if ($request->filled('account_id')) {
+            $ledger = $service->getLedger(
+                $companyId,
+                (int) $request->account_id,
+                $from,
+                $to,
+                (bool) $request->boolean('include_voided'),
+            );
+        }
+
+        return Inertia::render('Reports/GeneralLedger', [
+            'accounts' => $accounts,
+            'ledger'   => $ledger,
+            'filters'  => [
+                'from'           => $from,
+                'to'             => $to,
+                'account_id'     => $request->filled('account_id') ? (int) $request->account_id : null,
+                'include_voided' => (bool) $request->boolean('include_voided'),
+            ],
         ]);
     }
 

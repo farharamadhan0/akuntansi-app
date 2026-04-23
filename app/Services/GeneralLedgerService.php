@@ -1,0 +1,134 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\TransactionStatus;
+use App\Models\Account;
+use App\Models\JournalLine;
+
+class GeneralLedgerService
+{
+    /**
+     * Ambil data buku besar untuk satu akun pada periode tertentu.
+     *
+     * Return:
+     *  - account         : info akun
+     *  - opening_balance : saldo awal sebelum $from (sesuai normal_balance)
+     *  - lines           : array baris mutasi dengan running balance
+     *  - total_debit     : total debit dalam periode
+     *  - total_credit    : total kredit dalam periode
+     *  - closing_balance : saldo akhir setelah baris terakhir
+     */
+    public function getLedger(
+        int $companyId,
+        int $accountId,
+        string $from,
+        string $to,
+        bool $includeVoided = false
+    ): array {
+        /** @var Account $account */
+        $account = Account::where('company_id', $companyId)->findOrFail($accountId);
+
+        $statuses = $includeVoided
+            ? [TransactionStatus::Posted->value, TransactionStatus::Voided->value]
+            : [TransactionStatus::Posted->value];
+
+        // -------------------------------------------------------------
+        // Saldo awal = akumulasi seluruh mutasi sebelum $from
+        // -------------------------------------------------------------
+        $openingAgg = JournalLine::where('journal_lines.account_id', $accountId)
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.company_id', $companyId)
+            ->whereIn('journal_entries.status', $statuses)
+            ->whereDate('journal_entries.date', '<', $from)
+            ->selectRaw('COALESCE(SUM(journal_lines.debit),0) as d, COALESCE(SUM(journal_lines.credit),0) as c')
+            ->first();
+
+        $opening = $account->normal_balance === 'debit'
+            ? (float) $openingAgg->d - (float) $openingAgg->c
+            : (float) $openingAgg->c - (float) $openingAgg->d;
+
+        // -------------------------------------------------------------
+        // Baris mutasi dalam periode
+        // -------------------------------------------------------------
+        $lines = JournalLine::with([
+                'journalEntry:id,entry_number,date,description,status,source_type,source_id',
+            ])
+            ->where('journal_lines.account_id', $accountId)
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.company_id', $companyId)
+            ->whereIn('journal_entries.status', $statuses)
+            ->whereDate('journal_entries.date', '>=', $from)
+            ->whereDate('journal_entries.date', '<=', $to)
+            ->orderBy('journal_entries.date')
+            ->orderBy('journal_entries.entry_number')
+            ->orderBy('journal_lines.id')
+            ->select('journal_lines.*')
+            ->get();
+
+        $running     = $opening;
+        $totalDebit  = 0.0;
+        $totalCredit = 0.0;
+
+        $rows = $lines->map(function (JournalLine $line) use ($account, &$running, &$totalDebit, &$totalCredit) {
+            $debit  = (float) $line->debit;
+            $credit = (float) $line->credit;
+            $totalDebit  += $debit;
+            $totalCredit += $credit;
+
+            $running += $account->normal_balance === 'debit'
+                ? ($debit - $credit)
+                : ($credit - $debit);
+
+            $entry = $line->journalEntry;
+
+            return [
+                'line_id'         => $line->id,
+                'date'            => $entry->date->format('Y-m-d'),
+                'entry_id'        => $entry->id,
+                'entry_number'    => $entry->entry_number,
+                'description'     => $line->description ?: $entry->description,
+                'source_type'     => $entry->source_type,
+                'source_id'       => $entry->source_id,
+                'source_label'    => $this->sourceLabel($entry->source_type),
+                'status'          => $entry->status->value,
+                'debit'           => $debit,
+                'credit'          => $credit,
+                'running_balance' => $running,
+            ];
+        })->values()->all();
+
+        return [
+            'account' => [
+                'id'             => $account->id,
+                'code'           => $account->code,
+                'name'           => $account->name,
+                'type'           => $account->type->value,
+                'type_label'     => $account->type->label(),
+                'normal_balance' => $account->normal_balance,
+            ],
+            'opening_balance' => $opening,
+            'total_debit'     => $totalDebit,
+            'total_credit'    => $totalCredit,
+            'closing_balance' => $running,
+            'lines'           => $rows,
+        ];
+    }
+
+    protected function sourceLabel(?string $type): string
+    {
+        if (! $type) {
+            return 'Jurnal Manual';
+        }
+
+        return match (class_basename($type)) {
+            'Transaction'       => 'Transaksi',
+            'Receivable'        => 'Piutang',
+            'Payable'           => 'Hutang',
+            'ReceivablePayment' => 'Pelunasan Piutang',
+            'PayablePayment'    => 'Pembayaran Hutang',
+            'JournalEntry'      => 'Pembalikan Jurnal',
+            default             => class_basename($type),
+        };
+    }
+}

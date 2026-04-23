@@ -1,4 +1,4 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -123,10 +123,15 @@ export default function BalanceSheet({
                                 asset.map((a) => (
                                     <TableRow key={a.account_id}>
                                         <TableCell>
-                                            <span className="text-gray-400 text-xs">
-                                                {a.account_code}
-                                            </span>{" "}
-                                            {a.account_name}
+                                            <Link
+                                                href={`/laporan/buku-besar?account_id=${a.account_id}&to=${filters.as_of}`}
+                                                className="hover:underline hover:text-indigo-700"
+                                            >
+                                                <span className="text-gray-400 text-xs">
+                                                    {a.account_code}
+                                                </span>{" "}
+                                                {a.account_name}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="text-right text-blue-700">
                                             {fmt(a.amount)}
@@ -179,10 +184,15 @@ export default function BalanceSheet({
                                 liability.map((l) => (
                                     <TableRow key={l.account_id}>
                                         <TableCell>
-                                            <span className="text-gray-400 text-xs">
-                                                {l.account_code}
-                                            </span>{" "}
-                                            {l.account_name}
+                                            <Link
+                                                href={`/laporan/buku-besar?account_id=${l.account_id}&to=${filters.as_of}`}
+                                                className="hover:underline hover:text-indigo-700"
+                                            >
+                                                <span className="text-gray-400 text-xs">
+                                                    {l.account_code}
+                                                </span>{" "}
+                                                {l.account_name}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="text-right text-red-700">
                                             {fmt(l.amount)}
@@ -236,10 +246,15 @@ export default function BalanceSheet({
                                     {equity.map((e) => (
                                         <TableRow key={e.account_id}>
                                             <TableCell>
-                                                <span className="text-gray-400 text-xs">
-                                                    {e.account_code}
-                                                </span>{" "}
-                                                {e.account_name}
+                                                <Link
+                                                    href={`/laporan/buku-besar?account_id=${e.account_id}&to=${filters.as_of}`}
+                                                    className="hover:underline hover:text-indigo-700"
+                                                >
+                                                    <span className="text-gray-400 text-xs">
+                                                        {e.account_code}
+                                                    </span>{" "}
+                                                    {e.account_name}
+                                                </Link>
                                             </TableCell>
                                             <TableCell className="text-right text-amber-700">
                                                 {fmt(e.amount)}

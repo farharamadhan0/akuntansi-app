@@ -135,6 +135,7 @@ Route::middleware('auth')->group(function () {
             Route::get('laba-rugi', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
             Route::get('neraca', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
             Route::get('arus-kas', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
+            Route::get('buku-besar', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
         });
     });
 });

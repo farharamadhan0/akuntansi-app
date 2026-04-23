@@ -1,4 +1,4 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -116,10 +116,15 @@ export default function IncomeStatement({
                                 revenue.map((r) => (
                                     <TableRow key={r.account_id}>
                                         <TableCell>
-                                            <span className="text-gray-400 text-xs">
-                                                {r.account_code}
-                                            </span>{" "}
-                                            {r.account_name}
+                                            <Link
+                                                href={`/laporan/buku-besar?account_id=${r.account_id}&from=${filters.from}&to=${filters.to}`}
+                                                className="hover:underline hover:text-indigo-700"
+                                            >
+                                                <span className="text-gray-400 text-xs">
+                                                    {r.account_code}
+                                                </span>{" "}
+                                                {r.account_name}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="text-right text-green-700">
                                             {fmt(r.amount)}
@@ -172,10 +177,15 @@ export default function IncomeStatement({
                                 expense.map((e) => (
                                     <TableRow key={e.account_id}>
                                         <TableCell>
-                                            <span className="text-gray-400 text-xs">
-                                                {e.account_code}
-                                            </span>{" "}
-                                            {e.account_name}
+                                            <Link
+                                                href={`/laporan/buku-besar?account_id=${e.account_id}&from=${filters.from}&to=${filters.to}`}
+                                                className="hover:underline hover:text-indigo-700"
+                                            >
+                                                <span className="text-gray-400 text-xs">
+                                                    {e.account_code}
+                                                </span>{" "}
+                                                {e.account_name}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="text-right text-red-700">
                                             {fmt(e.amount)}

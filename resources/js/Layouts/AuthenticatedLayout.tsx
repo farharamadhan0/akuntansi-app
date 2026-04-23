@@ -78,6 +78,7 @@ const navGroups: NavGroup[] = [
             { href: "/laporan/transaksi", label: "Daftar Transaksi", icon: List },
             { href: "/laporan/piutang", label: "Daftar Piutang", icon: Users },
             { href: "/laporan/hutang", label: "Daftar Hutang", icon: CreditCard },
+            { href: "/laporan/buku-besar", label: "Buku Besar", icon: BookOpen },
             { href: "/laporan/laba-rugi", label: "Laba Rugi", icon: BarChart2 },
             { href: "/laporan/neraca", label: "Neraca", icon: Scale },
             { href: "/laporan/arus-kas", label: "Arus Kas", icon: TrendingUp },

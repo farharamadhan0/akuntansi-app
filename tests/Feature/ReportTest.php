@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\CashBankAccount;
 use App\Models\Customer;
 use App\Models\Supplier;
@@ -104,6 +105,11 @@ class ReportTest extends TestCase
         $this->get('/laporan/neraca')->assertOk();
     }
 
+    public function test_general_ledger_page_loads(): void
+    {
+        $this->get('/laporan/buku-besar')->assertOk();
+    }
+
     public function test_unauthenticated_user_is_redirected_from_all_reports(): void
     {
         auth()->logout();
@@ -115,6 +121,7 @@ class ReportTest extends TestCase
             '/laporan/laba-rugi',
             '/laporan/neraca',
             '/laporan/arus-kas',
+            '/laporan/buku-besar',
         ];
 
         foreach ($urls as $url) {
@@ -440,6 +447,97 @@ class ReportTest extends TestCase
         $this->assertEquals(0, $props['total_equity']);
         $this->assertEquals(0, $props['current_earnings']);
         $this->assertTrue($props['is_balanced']);
+    }
+
+    // -----------------------------------------------------------------------
+    // General Ledger (Buku Besar)
+    // -----------------------------------------------------------------------
+
+    public function test_general_ledger_without_account_id_shows_no_ledger(): void
+    {
+        $response = $this->get('/laporan/buku-besar');
+        $response->assertOk();
+
+        $props = $response->original->getData()['page']['props'];
+        $this->assertNull($props['ledger']);
+        $this->assertNotEmpty($props['accounts']);
+    }
+
+    public function test_general_ledger_shows_mutations_for_cash_account(): void
+    {
+        $this->postIncome(1_000_000);
+        $this->postExpense(400_000);
+
+        $cashAccount = $this->cashBank->account;
+
+        $response = $this->get(
+            "/laporan/buku-besar?account_id={$cashAccount->id}&from={$this->today}&to={$this->today}"
+        );
+        $response->assertOk();
+
+        $ledger = $response->original->getData()['page']['props']['ledger'];
+
+        $this->assertNotNull($ledger);
+        $this->assertEquals($cashAccount->id, $ledger['account']['id']);
+        $this->assertCount(2, $ledger['lines']);
+        $this->assertEquals(1_000_000, $ledger['total_debit']);
+        $this->assertEquals(400_000, $ledger['total_credit']);
+        $this->assertEquals(600_000, $ledger['closing_balance']);
+    }
+
+    public function test_general_ledger_running_balance_is_cumulative(): void
+    {
+        $this->postIncome(500_000);
+        $this->postIncome(300_000);
+
+        $cashAccount = $this->cashBank->account;
+
+        $response = $this->get(
+            "/laporan/buku-besar?account_id={$cashAccount->id}&from={$this->today}&to={$this->today}"
+        );
+        $ledger = $response->original->getData()['page']['props']['ledger'];
+
+        $this->assertEquals(500_000, $ledger['lines'][0]['running_balance']);
+        $this->assertEquals(800_000, $ledger['lines'][1]['running_balance']);
+        $this->assertEquals(800_000, $ledger['closing_balance']);
+    }
+
+    public function test_general_ledger_opening_balance_reflects_prior_activity(): void
+    {
+        // Simulasi aktivitas di masa lalu dengan menggeser tanggal entry.
+        $this->postIncome(1_000_000);
+
+        $cashAccount = $this->cashBank->account;
+
+        $tomorrow = now()->addDay()->format('Y-m-d');
+        $response = $this->get(
+            "/laporan/buku-besar?account_id={$cashAccount->id}&from={$tomorrow}&to={$tomorrow}"
+        );
+        $ledger = $response->original->getData()['page']['props']['ledger'];
+
+        // Aktivitas hari ini seharusnya masuk sebagai opening balance
+        $this->assertEquals(1_000_000, $ledger['opening_balance']);
+        $this->assertCount(0, $ledger['lines']);
+        $this->assertEquals(1_000_000, $ledger['closing_balance']);
+    }
+
+    public function test_general_ledger_excludes_other_company(): void
+    {
+        $this->postIncome(1_000_000);
+        $cashAccountId = $this->cashBank->account->id;
+
+        $otherUser = User::factory()->create();
+        app(CompanySetupService::class)->createCompany(['name' => 'PT Beda Buku Besar'], $otherUser);
+        $otherUser->refresh();
+
+        $this->actingAs($otherUser);
+
+        // Akun perusahaan lain tidak boleh bisa diakses
+        $response = $this->get(
+            "/laporan/buku-besar?account_id={$cashAccountId}&from={$this->today}&to={$this->today}"
+        );
+
+        $response->assertNotFound();
     }
 
     // -----------------------------------------------------------------------
