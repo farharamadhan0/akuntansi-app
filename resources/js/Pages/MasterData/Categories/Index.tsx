@@ -34,7 +34,7 @@ export default function Index({ categories }: { categories: Category[] }) {
     const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
     const handleDelete = (id: number) => {
-        if (confirm("Yakin ingin menghapus kategori ini? Kategori yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
+        if (confirm("Yakin ingin menghapus akun ini? Akun yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
             router.delete(`/master/kategori/${id}`);
         }
     };
@@ -50,26 +50,26 @@ export default function Index({ categories }: { categories: Category[] }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Kategori Transaksi" />
+            <Head title="Daftar Akun" />
 
             <Breadcrumb items={[
                 { label: 'Master Data' },
-                { label: 'Kategori' },
+                { label: 'Daftar Akun' },
             ]} />
 
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        Kategori Transaksi
+                        Daftar Akun
                     </h1>
                     <p className="text-gray-600">
-                        Kelola kategori pemasukan dan pengeluaran
+                        Kelola akun pemasukan dan pengeluaran
                     </p>
                 </div>
                 <Link href="/master/kategori/tambah">
                     <Button>
                         <Plus size={18} />
-                        Tambah Kategori
+                        Tambah Akun
                     </Button>
                 </Link>
             </div>
@@ -103,7 +103,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nama Kategori</TableHead>
+                                <TableHead>Nama Akun</TableHead>
                                 <TableHead>Jenis</TableHead>
                                 <TableHead>Akun Buku Besar</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
@@ -114,7 +114,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                         {filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                                        Belum ada kategori. Klik "Tambah Kategori" untuk memulai.
+                                        Belum ada akun. Klik "Tambah Akun" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (

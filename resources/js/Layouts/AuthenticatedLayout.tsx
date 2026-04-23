@@ -67,7 +67,7 @@ const navGroups: NavGroup[] = [
             { href: "/master/pelanggan", label: "Pelanggan", icon: UserCheck },
             { href: "/master/pemasok", label: "Pemasok", icon: Truck },
             { href: "/master/kas-bank", label: "Kas & Bank", icon: Wallet },
-            { href: "/master/kategori", label: "Kategori", icon: Tags },
+            { href: "/master/kategori", label: "Daftar Akun", icon: Tags },
         ],
     },
     {

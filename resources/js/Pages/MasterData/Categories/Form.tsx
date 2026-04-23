@@ -52,17 +52,17 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
 
     return (
         <AuthenticatedLayout>
-            <Head title={isEdit ? 'Edit Kategori' : 'Tambah Kategori'} />
+            <Head title={isEdit ? 'Edit Akun' : 'Tambah Akun'} />
 
             <Breadcrumb items={[
                 { label: 'Master Data' },
-                { label: 'Kategori', href: '/master/kategori' },
+                { label: 'Daftar Akun', href: '/master/kategori' },
                 { label: isEdit ? 'Edit' : 'Tambah' },
             ]} />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">
-                    {isEdit ? 'Edit Kategori' : 'Tambah Kategori'}
+                    {isEdit ? 'Edit Akun' : 'Tambah Akun'}
                 </h1>
             </div>
 
@@ -71,7 +71,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                     <form onSubmit={submit} className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">
-                                Jenis Kategori <span className="text-red-500">*</span>
+                                Jenis Akun <span className="text-red-500">*</span>
                             </label>
                             <div className="flex gap-4">
                                 <label className={`flex items-center gap-2 cursor-pointer p-3 rounded-lg border-2 ${
@@ -120,7 +120,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                             {errors.type && <p className="text-sm text-red-500">{errors.type}</p>}
                         </div>
 
-                        <FormField label="Nama Kategori" required error={errors.name}>
+                        <FormField label="Nama Akun" required error={errors.name}>
                             <Input
                                 placeholder={data.type === 'income' ? 'Contoh: Penjualan Produk' : 'Contoh: Biaya Listrik'}
                                 value={data.name}
@@ -133,7 +133,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                             label="Akun Buku Besar"
                             required
                             error={errors.account_id}
-                            hint="Transaksi dengan kategori ini akan dicatat ke akun yang dipilih"
+                            hint="Transaksi dengan akun ini akan dicatat ke akun buku besar yang dipilih"
                         >
                             <select
                                 value={data.account_id}
@@ -149,9 +149,9 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                             </select>
                         </FormField>
 
-                        <FormField label="Keterangan" error={errors.description} hint="Opsional – penjelasan singkat kategori ini">
+                        <FormField label="Keterangan" error={errors.description} hint="Opsional – penjelasan singkat akun ini">
                             <Textarea
-                                placeholder="Deskripsi singkat tentang kategori ini"
+                                placeholder="Deskripsi singkat tentang akun ini"
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
                                 aria-invalid={!!errors.description}
@@ -160,7 +160,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
 
                         <div className="flex gap-3 pt-4">
                             <Button type="submit" disabled={processing}>
-                                {isEdit ? 'Simpan Perubahan' : 'Tambah Kategori'}
+                                {isEdit ? 'Simpan Perubahan' : 'Tambah Akun'}
                             </Button>
                             <Link href="/master/kategori">
                                 <Button type="button" variant="outline">

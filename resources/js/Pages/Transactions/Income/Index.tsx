@@ -163,7 +163,7 @@ export default function Index({ transactions }: Props) {
                                 <TableHead>No. Transaksi</TableHead>
                                 <TableHead>Keterangan</TableHead>
                                 <TableHead>Kas/Bank</TableHead>
-                                <TableHead>Kategori</TableHead>
+                                <TableHead>Akun</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Aksi</TableHead>

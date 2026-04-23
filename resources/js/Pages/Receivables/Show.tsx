@@ -161,8 +161,8 @@ export default function Show({ receivable: r, journalEntries }: Props) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-gray-500">Kategori</p>
-                                <p className="font-medium text-gray-900">{r.category_name || 'Tanpa kategori'}</p>
+                                <p className="text-gray-500">Akun</p>
+                                <p className="font-medium text-gray-900">{r.category_name || 'Tanpa akun'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Tanggal</p>

@@ -162,10 +162,10 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
                                 />
                             </FormField>
 
-                            {/* Kategori & Pelanggan */}
+                            {/* Akun & Pelanggan */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
-                                    label="Kategori"
+                                    label="Akun"
                                     error={errors.category_id}
                                     hint="Opsional"
                                 >
@@ -175,7 +175,7 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
                                         onChange={(e) => setData('category_id', e.target.value)}
                                         aria-invalid={!!errors.category_id}
                                     >
-                                        <option value="">-- Tanpa Kategori --</option>
+                                        <option value="">-- Tanpa Akun --</option>
                                         {categories.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
                                                 {cat.name}
@@ -224,7 +224,7 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
                                 <p className="font-medium mb-1">Jurnal otomatis akan dibuat:</p>
                                 <ul className="space-y-0.5 text-green-700">
                                     <li>• <span className="font-medium">Debit</span> – Kas/Bank yang dipilih</li>
-                                    <li>• <span className="font-medium">Kredit</span> – Akun pendapatan (sesuai kategori)</li>
+                                    <li>• <span className="font-medium">Kredit</span> – Akun pendapatan (sesuai akun yang dipilih)</li>
                                 </ul>
                             </div>
                         </CardContent>

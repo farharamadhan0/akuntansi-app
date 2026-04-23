@@ -159,10 +159,10 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                 />
                             </FormField>
 
-                            {/* Kategori & Pemasok */}
+                            {/* Akun & Pemasok */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
-                                    label="Kategori Pengeluaran"
+                                    label="Akun Pengeluaran"
                                     error={errors.category_id}
                                     hint="Opsional"
                                 >
@@ -172,7 +172,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                         onChange={(e) => setData('category_id', e.target.value)}
                                         aria-invalid={!!errors.category_id}
                                     >
-                                        <option value="">-- Tanpa Kategori --</option>
+                                        <option value="">-- Tanpa Akun --</option>
                                         {categories.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
                                                 {cat.name}
@@ -220,7 +220,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                                 <p className="font-medium mb-1">Jurnal otomatis akan dibuat:</p>
                                 <ul className="space-y-0.5 text-red-700">
-                                    <li>• <span className="font-medium">Debit</span> – Akun beban (sesuai kategori)</li>
+                                    <li>• <span className="font-medium">Debit</span> – Akun beban (sesuai akun yang dipilih)</li>
                                     <li>• <span className="font-medium">Kredit</span> – Kas/Bank yang dipilih</li>
                                 </ul>
                             </div>
