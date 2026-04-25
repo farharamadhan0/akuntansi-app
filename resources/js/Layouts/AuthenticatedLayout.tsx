@@ -17,6 +17,7 @@ import {
     Building2,
     BookOpen,
     ChevronDown,
+    UserCog,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import {
@@ -36,7 +37,7 @@ import {
 } from "@/components/ui/sidebar";
 
 interface PageProps {
-    auth: { user: { name: string } };
+    auth: { user: { name: string; is_owner?: boolean } };
     company?: { name: string };
     [key: string]: unknown;
 }
@@ -50,6 +51,7 @@ interface NavItem {
 interface NavGroup {
     label: string;
     items: NavItem[];
+    ownerOnly?: boolean;
 }
 
 const navGroups: NavGroup[] = [
@@ -70,6 +72,13 @@ const navGroups: NavGroup[] = [
             { href: "/master/pemasok", label: "Pemasok", icon: Truck },
             { href: "/master/kas-bank", label: "Kas & Bank", icon: Wallet },
             { href: "/master/kategori", label: "Daftar Akun", icon: Tags },
+        ],
+    },
+    {
+        label: "Pengaturan",
+        ownerOnly: true,
+        items: [
+            { href: "/pengaturan/pengguna", label: "Pengguna", icon: UserCog },
         ],
     },
     {
@@ -134,7 +143,9 @@ function SidebarNav() {
                 </SidebarMenu>
 
                 {/* Grouped items */}
-                {navGroups.map((group) => (
+                {navGroups
+                    .filter((g) => !g.ownerOnly || auth.user.is_owner)
+                    .map((group) => (
                     <SidebarGroup key={group.label}>
                         <SidebarGroupLabel className="text-xs">{group.label}</SidebarGroupLabel>
                         <SidebarMenu>

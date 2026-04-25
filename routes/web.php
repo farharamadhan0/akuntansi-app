@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CashBankAccountController;
 use App\Http\Controllers\TransactionCategoryController;
@@ -133,6 +134,16 @@ Route::middleware('auth')->group(function () {
             Route::post('{journal}/posting', [JournalEntryController::class, 'post'])->name('journals.post');
             Route::post('{journal}/batal', [JournalEntryController::class, 'void'])->name('journals.void');
             Route::delete('{journal}', [JournalEntryController::class, 'destroy'])->name('journals.destroy');
+        });
+
+        // Pengaturan Pengguna (khusus Owner)
+        Route::middleware('is.owner')->prefix('pengaturan')->group(function () {
+            Route::get('pengguna', [CompanyUserController::class, 'index'])->name('users.index');
+            Route::get('pengguna/tambah', [CompanyUserController::class, 'create'])->name('users.create');
+            Route::post('pengguna', [CompanyUserController::class, 'store'])->name('users.store');
+            Route::get('pengguna/{user}/edit', [CompanyUserController::class, 'edit'])->name('users.edit');
+            Route::put('pengguna/{user}', [CompanyUserController::class, 'update'])->name('users.update');
+            Route::delete('pengguna/{user}', [CompanyUserController::class, 'destroy'])->name('users.destroy');
         });
 
         // Laporan

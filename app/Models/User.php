@@ -59,6 +59,20 @@ class User extends Authenticatable
         }
     }
 
+    public function isOwnerOf(?int $companyId = null): bool
+    {
+        $companyId ??= $this->current_company_id;
+        if (!$companyId) {
+            return false;
+        }
+
+        return $this->companyUsers()
+            ->where('company_id', $companyId)
+            ->where('is_active', true)
+            ->whereHas('role', fn ($q) => $q->where('name', 'Owner'))
+            ->exists();
+    }
+
     public function hasPermission(string $permission): bool
     {
         $companyUser = $this->companyUsers()

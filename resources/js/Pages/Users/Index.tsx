@@ -1,0 +1,172 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown } from 'lucide-react';
+
+interface Member {
+    id: number;
+    user_id: number;
+    name: string;
+    email: string;
+    role_id: number;
+    role_name: string;
+    is_active: boolean;
+    is_owner: boolean;
+    is_self: boolean;
+}
+
+interface Role {
+    id: number;
+    name: string;
+}
+
+interface Props {
+    members: Member[];
+    roles: Role[];
+}
+
+export default function Index({ members }: Props) {
+    const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+
+    const handleDelete = (member: Member) => {
+        router.delete(`/pengaturan/pengguna/${member.id}`, {
+            onFinish: () => setDeleteTarget(null),
+        });
+    };
+
+    return (
+        <AuthenticatedLayout>
+            <Head title="Pengguna" />
+
+            <Breadcrumb items={[
+                { label: 'Pengaturan' },
+                { label: 'Pengguna' },
+            ]} />
+
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <UsersIcon className="text-blue-500" size={26} />
+                        Pengguna
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        Kelola pengguna yang memiliki akses ke perusahaan ini
+                    </p>
+                </div>
+                <Link href="/pengaturan/pengguna/tambah">
+                    <Button className="gap-1.5">
+                        <Plus size={18} />
+                        Tambah Pengguna
+                    </Button>
+                </Link>
+            </div>
+
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nama</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="w-24">Aksi</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {members.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-gray-400 py-8">
+                                        Belum ada pengguna.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                members.map((m) => (
+                                    <TableRow key={m.id} className={!m.is_active ? 'opacity-60' : ''}>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-2">
+                                                {m.name}
+                                                {m.is_self && (
+                                                    <span className="text-xs text-gray-400">(Anda)</span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-gray-500">{m.email}</TableCell>
+                                        <TableCell>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
+                                                m.is_owner
+                                                    ? 'bg-amber-100 text-amber-700'
+                                                    : 'bg-blue-50 text-blue-700'
+                                            }`}>
+                                                {m.is_owner && <Crown size={12} />}
+                                                {m.role_name}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                {m.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {m.is_owner ? (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            ) : (
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={`/pengaturan/pengguna/${m.id}/edit`}>
+                                                        <Button variant="ghost" size="sm" title="Edit">
+                                                            <Pencil size={15} />
+                                                        </Button>
+                                                    </Link>
+                                                    {!m.is_self && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setDeleteTarget(m)}
+                                                            title="Hapus"
+                                                        >
+                                                            <Trash2 size={15} className="text-red-500" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {deleteTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
+                        <h3 className="text-lg font-semibold mb-2">Hapus Pengguna</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Hapus pengguna <strong>{deleteTarget.name}</strong> dari perusahaan ini? Akun pengguna tidak dihapus, hanya keanggotaannya.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                                Batal
+                            </Button>
+                            <Button variant="destructive" onClick={() => handleDelete(deleteTarget)}>
+                                Hapus
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </AuthenticatedLayout>
+    );
+}
