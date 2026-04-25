@@ -26,7 +26,6 @@ import {
     Sidebar,
     SidebarHeader,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
@@ -102,24 +101,8 @@ function isActive(href: string) {
 }
 
 function SidebarNav() {
-    const { auth, company } = usePage<PageProps>().props;
+    const { auth } = usePage<PageProps>().props;
     const { setOpen } = useSidebar();
-    const [showUserMenu, setShowUserMenu] = useState(false);
-    const userMenuRef = useRef<HTMLDivElement>(null);
-
-    const handleLogout = () => {
-        router.post("/logout");
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-                setShowUserMenu(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     return (
         <Sidebar className="md:w-54">
@@ -163,43 +146,78 @@ function SidebarNav() {
                     </SidebarGroup>
                 ))}
             </SidebarContent>
+        </Sidebar>
+    );
+}
 
-            <SidebarFooter>
-                {company && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-sidebar-foreground/50">
-                        <Building2 size={14} />
-                        <span className="truncate">{company.name}</span>
+function TopBar() {
+    const { auth, company } = usePage<PageProps>().props;
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    const handleLogout = () => {
+        router.post("/logout");
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background px-4 md:px-8 py-3">
+            <div className="flex items-center gap-2 md:hidden">
+                <SidebarTrigger />
+                <span className="text-sm font-bold text-primary-600">Akuntansi</span>
+            </div>
+
+            <div className="flex-1" />
+
+            {company && (
+                <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-600 border border-border rounded-md bg-gray-50">
+                    <Building2 size={14} className="text-gray-500" />
+                    <span className="truncate max-w-[200px] font-medium">{company.name}</span>
+                </div>
+            )}
+
+            <div className="relative" ref={userMenuRef}>
+                <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                    <Avatar className="w-7 h-7">
+                        <AvatarFallback className="text-xs">
+                            {auth.user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline truncate max-w-[140px]">{auth.user.name}</span>
+                    <ChevronDown size={14} />
+                </button>
+
+                {showUserMenu && (
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-border py-1 z-50">
+                        <div className="px-3 py-2 border-b border-border sm:hidden">
+                            <div className="text-sm font-medium text-gray-800 truncate">{auth.user.name}</div>
+                            {company && (
+                                <div className="text-xs text-gray-500 truncate">{company.name}</div>
+                            )}
+                        </div>
+                        <button
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            onClick={handleLogout}
+                        >
+                            <LogOut size={16} />
+                            Keluar
+                        </button>
                     </div>
                 )}
-
-                <div className="relative" ref={userMenuRef}>
-                    <button
-                        onClick={() => setShowUserMenu(!showUserMenu)}
-                        className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-colors"
-                    >
-                        <Avatar className="w-7 h-7">
-                            <AvatarFallback className="text-xs">
-                                {auth.user.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="flex-1 truncate text-left">{auth.user.name}</span>
-                        <ChevronDown size={14} />
-                    </button>
-
-                    {showUserMenu && (
-                        <div className="absolute bottom-full left-0 mb-1 w-full bg-white rounded-lg shadow-lg border border-sidebar-border py-1 z-50">
-                            <button
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                onClick={handleLogout}
-                            >
-                                <LogOut size={16} />
-                                Keluar
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </SidebarFooter>
-        </Sidebar>
+            </div>
+        </header>
     );
 }
 
@@ -211,11 +229,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
 
                 {/* Main content area */}
                 <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-                    {/* Mobile top bar */}
-                    <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border bg-background px-4 py-3 md:hidden">
-                        <SidebarTrigger />
-                        <span className="text-sm font-bold text-primary-600">Akuntansi</span>
-                    </header>
+                    <TopBar />
 
                     <main className="flex-1 px-4 md:px-8 py-8 w-full">
                         {children}
