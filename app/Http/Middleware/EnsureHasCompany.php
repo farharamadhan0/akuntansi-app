@@ -13,7 +13,16 @@ class EnsureHasCompany
         $user = $request->user();
 
         if (!$user->current_company_id) {
-            return redirect()->route('company.setup');
+            $firstCompanyId = $user->companies()
+                ->wherePivot('is_active', true)
+                ->value('companies.id');
+
+            if (!$firstCompanyId) {
+                return redirect()->route('company.setup');
+            }
+
+            $user->update(['current_company_id' => $firstCompanyId]);
+            $user->refresh();
         }
 
         $belongsToCompany = $user->companies()
@@ -22,8 +31,15 @@ class EnsureHasCompany
             ->exists();
 
         if (!$belongsToCompany) {
-            $user->update(['current_company_id' => null]);
-            return redirect()->route('company.setup');
+            $firstCompanyId = $user->companies()
+                ->wherePivot('is_active', true)
+                ->value('companies.id');
+
+            $user->update(['current_company_id' => $firstCompanyId]);
+
+            if (!$firstCompanyId) {
+                return redirect()->route('company.setup');
+            }
         }
 
         return $next($request);
