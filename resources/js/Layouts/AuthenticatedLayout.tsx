@@ -18,6 +18,7 @@ import {
     BookOpen,
     ChevronDown,
     UserCog,
+    ShieldCheck,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import {
@@ -78,6 +79,7 @@ const navGroups: NavGroup[] = [
         ownerOnly: true,
         items: [
             { href: "/pengaturan/pengguna", label: "Pengguna", icon: UserCog },
+            { href: "/pengaturan/role", label: "Role", icon: ShieldCheck },
         ],
     },
     {

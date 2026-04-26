@@ -17,6 +17,7 @@ use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
 use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
 // Guest routes
@@ -144,6 +145,14 @@ Route::middleware('auth')->group(function () {
             Route::get('pengguna/{user}/edit', [CompanyUserController::class, 'edit'])->name('users.edit');
             Route::put('pengguna/{user}', [CompanyUserController::class, 'update'])->name('users.update');
             Route::delete('pengguna/{user}', [CompanyUserController::class, 'destroy'])->name('users.destroy');
+
+            // Role kustom
+            Route::get('role', [RoleController::class, 'index'])->name('roles.index');
+            Route::get('role/tambah', [RoleController::class, 'create'])->name('roles.create');
+            Route::post('role', [RoleController::class, 'store'])->name('roles.store');
+            Route::get('role/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+            Route::put('role/{role}', [RoleController::class, 'update'])->name('roles.update');
+            Route::delete('role/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
         });
 
         // Laporan
