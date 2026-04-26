@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CompanyUser;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,15 +36,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $permissions = [];
+        if ($user && $user->current_company_id) {
+            $membership = CompanyUser::with('role:id,permissions')
+                ->where('company_id', $user->current_company_id)
+                ->where('user_id', $user->id)
+                ->first();
+            $permissions = $membership?->role?->permissions ?? [];
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'current_company_id' => $request->user()->current_company_id,
-                    'is_owner' => $request->user()->isOwnerOf(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'current_company_id' => $user->current_company_id,
+                    'is_owner' => $user->isOwnerOf(),
+                    'permissions' => $permissions,
                 ] : null,
             ],
             'company' => $request->user()?->currentCompany ? [

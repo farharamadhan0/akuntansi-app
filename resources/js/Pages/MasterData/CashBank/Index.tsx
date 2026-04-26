@@ -5,6 +5,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Wallet, Building } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 
 interface CashBankAccount {
     id: number;
@@ -20,6 +21,7 @@ interface CashBankAccount {
 }
 
 export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
+    const { can } = usePermissions();
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -52,12 +54,14 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                     <h1 className="text-2xl font-bold text-gray-900">Kas & Bank</h1>
                     <p className="text-gray-600">Kelola akun kas dan rekening bank</p>
                 </div>
-                <Link href="/master/kas-bank/tambah">
-                    <Button>
-                        <Plus size={18} />
-                        Tambah Akun
-                    </Button>
-                </Link>
+                {can('cash_bank.create') && (
+                    <Link href="/master/kas-bank/tambah">
+                        <Button>
+                            <Plus size={18} />
+                            Tambah Akun
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <Card>
@@ -131,31 +135,37 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex justify-center gap-1">
-                                                <Link href={`/master/kas-bank/${account.id}/edit`}>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <Pencil size={16} />
+                                                {can('cash_bank.edit') && (
+                                                    <Link href={`/master/kas-bank/${account.id}/edit`}>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <Pencil size={16} />
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                                {can('cash_bank.edit') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => handleToggle(account.id)}
+                                                    >
+                                                        {account.is_active ? (
+                                                            <ToggleRight size={16} className="text-green-600" />
+                                                        ) : (
+                                                            <ToggleLeft size={16} className="text-gray-400" />
+                                                        )}
                                                     </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => handleToggle(account.id)}
-                                                >
-                                                    {account.is_active ? (
-                                                        <ToggleRight size={16} className="text-green-600" />
-                                                    ) : (
-                                                        <ToggleLeft size={16} className="text-gray-400" />
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(account.id)}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </Button>
+                                                )}
+                                                {can('cash_bank.delete') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => handleDelete(account.id)}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

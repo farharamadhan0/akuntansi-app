@@ -14,6 +14,7 @@ import { Plus, Eye, Users, AlertTriangle, Banknote } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 import { useState } from 'react';
+import { usePermissions } from '@/lib/permissions';
 
 interface Receivable {
     id: number;
@@ -64,6 +65,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ receivables, summary }: Props) {
+    const { can } = usePermissions();
     const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue'>('all');
 
     const filtered = receivables.filter((r) => {
@@ -112,23 +114,27 @@ export default function Index({ receivables, summary }: Props) {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/transaksi/piutang-bayar/catat">
-                        <Button variant="outline" className="gap-1.5">
-                            <Banknote size={18} />
-                            Terima Pembayaran
-                        </Button>
-                    </Link>
+                    {can('receivables.edit') && (
+                        <Link href="/transaksi/piutang-bayar/catat">
+                            <Button variant="outline" className="gap-1.5">
+                                <Banknote size={18} />
+                                Terima Pembayaran
+                            </Button>
+                        </Link>
+                    )}
                     <Link href="/transaksi/piutang-bayar">
                         <Button variant="outline" className="gap-1.5">
                             Riwayat Pembayaran
                         </Button>
                     </Link>
-                    <Link href="/transaksi/piutang/buat">
-                        <Button className="gap-1.5">
-                            <Plus size={18} />
-                            Buat Piutang
-                        </Button>
-                    </Link>
+                    {can('receivables.create') && (
+                        <Link href="/transaksi/piutang/buat">
+                            <Button className="gap-1.5">
+                                <Plus size={18} />
+                                Buat Piutang
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             </div>
 

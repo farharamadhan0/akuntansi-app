@@ -14,6 +14,7 @@ import {
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { usePermissions } from "@/lib/permissions";
 import { useState } from "react";
 
 interface Category {
@@ -26,6 +27,7 @@ interface Category {
 }
 
 export default function Index({ categories }: { categories: Category[] }) {
+    const { can } = usePermissions();
     const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
     const handleDelete = (id: number) => {
@@ -61,12 +63,14 @@ export default function Index({ categories }: { categories: Category[] }) {
                         Kelola akun pemasukan dan pengeluaran
                     </p>
                 </div>
-                <Link href="/master/kategori/tambah">
-                    <Button>
-                        <Plus size={18} />
-                        Tambah Akun
-                    </Button>
-                </Link>
+                {can('accounts.create') && (
+                    <Link href="/master/kategori/tambah">
+                        <Button>
+                            <Plus size={18} />
+                            Tambah Akun
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <FilterTabs<'all' | 'income' | 'expense'>
@@ -132,31 +136,37 @@ export default function Index({ categories }: { categories: Category[] }) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex justify-center gap-1">
-                                                <Link href={`/master/kategori/${cat.id}/edit`}>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <Pencil size={16} />
+                                                {can('accounts.edit') && (
+                                                    <Link href={`/master/kategori/${cat.id}/edit`}>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <Pencil size={16} />
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                                {can('accounts.edit') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => handleToggle(cat.id)}
+                                                    >
+                                                        {cat.is_active ? (
+                                                            <ToggleRight size={16} className="text-green-600" />
+                                                        ) : (
+                                                            <ToggleLeft size={16} className="text-gray-400" />
+                                                        )}
                                                     </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => handleToggle(cat.id)}
-                                                >
-                                                    {cat.is_active ? (
-                                                        <ToggleRight size={16} className="text-green-600" />
-                                                    ) : (
-                                                        <ToggleLeft size={16} className="text-gray-400" />
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(cat.id)}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </Button>
+                                                )}
+                                                {can('accounts.delete') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => handleDelete(cat.id)}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

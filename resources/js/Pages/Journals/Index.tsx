@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,6 +72,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ entries }: Props) {
+    const { can } = usePermissions();
     const { props } = usePage<{ flash?: { success?: string; error?: string } }>();
     const flashSuccess = props.flash?.success;
     const flashError = props.flash?.error;
@@ -110,12 +112,14 @@ export default function Index({ entries }: Props) {
                         Catat jurnal manual, penyesuaian, dan lihat semua jurnal akuntansi
                     </p>
                 </div>
-                <Link href="/jurnal/buat">
-                    <Button className="gap-2">
-                        <Plus size={16} />
-                        Buat Jurnal Baru
-                    </Button>
-                </Link>
+                {can('journals.create') && (
+                    <Link href="/jurnal/buat">
+                        <Button className="gap-2">
+                            <Plus size={16} />
+                            Buat Jurnal Baru
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             {flashSuccess && (

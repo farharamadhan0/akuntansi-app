@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,6 +67,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ payables, summary, filters }: Props) {
+    const { can } = usePermissions();
     type PaymentFilter = '' | 'unpaid' | 'partial' | 'paid';
     const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(
         (filters.payment_status as PaymentFilter) ?? ''
@@ -108,23 +110,27 @@ export default function Index({ payables, summary, filters }: Props) {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/transaksi/hutang-bayar/catat">
-                        <Button variant="outline" className="gap-1.5">
-                            <Banknote size={18} />
-                            Bayar Hutang
-                        </Button>
-                    </Link>
+                    {can('payables.edit') && (
+                        <Link href="/transaksi/hutang-bayar/catat">
+                            <Button variant="outline" className="gap-1.5">
+                                <Banknote size={18} />
+                                Bayar Hutang
+                            </Button>
+                        </Link>
+                    )}
                     <Link href="/transaksi/hutang-bayar">
                         <Button variant="outline" className="gap-1.5">
                             Riwayat Pembayaran
                         </Button>
                     </Link>
-                    <Link href="/transaksi/hutang/buat">
-                        <Button className="gap-1.5">
-                            <Plus size={18} />
-                            Catat Hutang
-                        </Button>
-                    </Link>
+                    {can('payables.create') && (
+                        <Link href="/transaksi/hutang/buat">
+                            <Button className="gap-1.5">
+                                <Plus size={18} />
+                                Catat Hutang
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             </div>
 

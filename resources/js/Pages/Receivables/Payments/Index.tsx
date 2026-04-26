@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +48,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ payments }: Props) {
+    const { can } = usePermissions();
     const statusBadge = (status: string, label: string) => {
         const colors: Record<string, string> = {
             draft: 'bg-gray-100 text-gray-600',
@@ -80,12 +82,14 @@ export default function Index({ payments }: Props) {
                         Riwayat penerimaan pembayaran dari pelanggan
                     </p>
                 </div>
-                <Link href="/transaksi/piutang-bayar/catat">
-                    <Button className="gap-1.5">
-                        <Plus size={18} />
-                        Catat Pembayaran
-                    </Button>
-                </Link>
+                {can('receivables.edit') && (
+                    <Link href="/transaksi/piutang-bayar/catat">
+                        <Button className="gap-1.5">
+                            <Plus size={18} />
+                            Catat Pembayaran
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <Card>

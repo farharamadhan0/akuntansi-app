@@ -1,5 +1,6 @@
 import { Link, usePage, router } from "@inertiajs/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { usePermissions } from "@/lib/permissions";
 import {
     LogOut,
     LayoutDashboard,
@@ -46,6 +47,7 @@ interface NavItem {
     href: string;
     label: string;
     icon: React.ElementType;
+    permission?: string;
 }
 
 interface NavGroup {
@@ -58,20 +60,20 @@ const navGroups: NavGroup[] = [
     {
         label: "Transaksi",
         items: [
-            { href: "/transaksi/uang-masuk", label: "Uang Masuk", icon: TrendingUp },
-            { href: "/transaksi/uang-keluar", label: "Uang Keluar", icon: TrendingDown },
-            { href: "/transaksi/piutang", label: "Piutang", icon: Users },
-            { href: "/transaksi/hutang", label: "Hutang", icon: CreditCard },
-            { href: "/jurnal", label: "Jurnal Umum", icon: BookOpen },
+            { href: "/transaksi/uang-masuk", label: "Uang Masuk", icon: TrendingUp, permission: "income.view" },
+            { href: "/transaksi/uang-keluar", label: "Uang Keluar", icon: TrendingDown, permission: "expense.view" },
+            { href: "/transaksi/piutang", label: "Piutang", icon: Users, permission: "receivables.view" },
+            { href: "/transaksi/hutang", label: "Hutang", icon: CreditCard, permission: "payables.view" },
+            { href: "/jurnal", label: "Jurnal Umum", icon: BookOpen, permission: "journals.view" },
         ],
     },
     {
         label: "Master Data",
         items: [
-            { href: "/master/pelanggan", label: "Pelanggan", icon: UserCheck },
-            { href: "/master/pemasok", label: "Pemasok", icon: Truck },
-            { href: "/master/kas-bank", label: "Kas & Bank", icon: Wallet },
-            { href: "/master/kategori", label: "Daftar Akun", icon: Tags },
+            { href: "/master/pelanggan", label: "Pelanggan", icon: UserCheck, permission: "customers.view" },
+            { href: "/master/pemasok", label: "Pemasok", icon: Truck, permission: "suppliers.view" },
+            { href: "/master/kas-bank", label: "Kas & Bank", icon: Wallet, permission: "cash_bank.view" },
+            { href: "/master/kategori", label: "Daftar Akun", icon: Tags, permission: "accounts.view" },
         ],
     },
     {
@@ -85,13 +87,13 @@ const navGroups: NavGroup[] = [
     {
         label: "Laporan",
         items: [
-            { href: "/laporan/transaksi", label: "Daftar Transaksi", icon: List },
-            { href: "/laporan/piutang", label: "Daftar Piutang", icon: Users },
-            { href: "/laporan/hutang", label: "Daftar Hutang", icon: CreditCard },
-            { href: "/laporan/buku-besar", label: "Buku Besar", icon: BookOpen },
-            { href: "/laporan/laba-rugi", label: "Laba Rugi", icon: BarChart2 },
-            { href: "/laporan/neraca", label: "Neraca", icon: Scale },
-            { href: "/laporan/arus-kas", label: "Arus Kas", icon: TrendingUp },
+            { href: "/laporan/transaksi", label: "Daftar Transaksi", icon: List, permission: "reports.transactions" },
+            { href: "/laporan/piutang", label: "Daftar Piutang", icon: Users, permission: "reports.receivables" },
+            { href: "/laporan/hutang", label: "Daftar Hutang", icon: CreditCard, permission: "reports.payables" },
+            { href: "/laporan/buku-besar", label: "Buku Besar", icon: BookOpen, permission: "reports.general_ledger" },
+            { href: "/laporan/laba-rugi", label: "Laba Rugi", icon: BarChart2, permission: "reports.income_statement" },
+            { href: "/laporan/neraca", label: "Neraca", icon: Scale, permission: "reports.balance_sheet" },
+            { href: "/laporan/arus-kas", label: "Arus Kas", icon: TrendingUp, permission: "reports.cash_flow" },
         ],
     },
 ];
@@ -105,6 +107,19 @@ function isActive(href: string) {
 function SidebarNav() {
     const { auth } = usePage<PageProps>().props;
     const { setOpen } = useSidebar();
+    const { can, isOwner } = usePermissions();
+
+    const visibleGroups = navGroups
+        .filter((g) => !g.ownerOnly || auth.user.is_owner)
+        .map((g) => ({
+            ...g,
+            items: g.ownerOnly
+                ? g.items
+                : g.items.filter((i) => !i.permission || can(i.permission)),
+        }))
+        .filter((g) => g.items.length > 0);
+
+    const showDashboard = isOwner || can("dashboard.view");
 
     return (
         <Sidebar className="md:w-54">
@@ -116,21 +131,21 @@ function SidebarNav() {
 
             <SidebarContent>
                 {/* Dashboard */}
-                <SidebarMenu className="mb-4">
-                    <SidebarMenuItem>
-                        <Link href="/" className="block" onClick={() => setOpen(false)}>
-                            <SidebarMenuButton isActive={isActive("/")}>
-                                <LayoutDashboard size={18} />
-                                Dashboard
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                </SidebarMenu>
+                {showDashboard && (
+                    <SidebarMenu className="mb-4">
+                        <SidebarMenuItem>
+                            <Link href="/" className="block" onClick={() => setOpen(false)}>
+                                <SidebarMenuButton isActive={isActive("/")}>
+                                    <LayoutDashboard size={18} />
+                                    Dashboard
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                )}
 
                 {/* Grouped items */}
-                {navGroups
-                    .filter((g) => !g.ownerOnly || auth.user.is_owner)
-                    .map((group) => (
+                {visibleGroups.map((group) => (
                     <SidebarGroup key={group.label}>
                         <SidebarGroupLabel className="text-xs">{group.label}</SidebarGroupLabel>
                         <SidebarMenu>

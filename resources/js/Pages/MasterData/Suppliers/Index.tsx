@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ function formatCurrency(value: number) {
 }
 
 export default function Index({ suppliers, filters }: Props) {
+    const { can } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
 
@@ -83,12 +85,14 @@ export default function Index({ suppliers, filters }: Props) {
                         Kelola daftar pemasok / supplier usaha Anda
                     </p>
                 </div>
-                <Link href="/master/pemasok/tambah">
-                    <Button className="gap-1.5">
-                        <Plus size={18} />
-                        Tambah Pemasok
-                    </Button>
-                </Link>
+                {can('suppliers.create') && (
+                    <Link href="/master/pemasok/tambah">
+                        <Button className="gap-1.5">
+                            <Plus size={18} />
+                            Tambah Pemasok
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             {/* Filters */}
@@ -167,30 +171,36 @@ export default function Index({ suppliers, filters }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1">
-                                                <Link href={`/master/pemasok/${s.id}/edit`}>
-                                                    <Button variant="ghost" size="sm" title="Edit">
-                                                        <Pencil size={15} />
+                                                {can('suppliers.edit') && (
+                                                    <Link href={`/master/pemasok/${s.id}/edit`}>
+                                                        <Button variant="ghost" size="sm" title="Edit">
+                                                            <Pencil size={15} />
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                                {can('suppliers.edit') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleToggle(s)}
+                                                        title={s.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                                    >
+                                                        {s.is_active
+                                                            ? <ToggleRight size={15} className="text-green-600" />
+                                                            : <ToggleLeft size={15} className="text-gray-400" />
+                                                        }
                                                     </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleToggle(s)}
-                                                    title={s.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                                >
-                                                    {s.is_active
-                                                        ? <ToggleRight size={15} className="text-green-600" />
-                                                        : <ToggleLeft size={15} className="text-gray-400" />
-                                                    }
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => setDeleteTarget(s)}
-                                                    title="Hapus"
-                                                >
-                                                    <Trash2 size={15} className="text-red-500" />
-                                                </Button>
+                                                )}
+                                                {can('suppliers.delete') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setDeleteTarget(s)}
+                                                        title="Hapus"
+                                                    >
+                                                        <Trash2 size={15} className="text-red-500" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

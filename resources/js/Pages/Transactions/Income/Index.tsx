@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +60,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Index({ transactions }: Props) {
+    const { can } = usePermissions();
     const [filter, setFilter] = useState<'all' | 'posted' | 'voided'>('all');
 
     const filtered =
@@ -87,12 +89,14 @@ export default function Index({ transactions }: Props) {
                         Catat semua pemasukan ke kas atau rekening bank
                     </p>
                 </div>
-                <Link href="/transaksi/uang-masuk/catat">
-                    <Button className="gap-2">
-                        <Plus size={16} />
-                        Catat Uang Masuk
-                    </Button>
-                </Link>
+                {can('income.create') && (
+                    <Link href="/transaksi/uang-masuk/catat">
+                        <Button className="gap-2">
+                            <Plus size={16} />
+                            Catat Uang Masuk
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             {/* Summary card */}
