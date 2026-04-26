@@ -35,6 +35,7 @@ class CompanyUserService
                     'name' => $data['name'],
                     'email' => $data['email'],
                     'password' => Hash::make($data['password']),
+                    'current_company_id' => $company->id,
                 ]);
             }
 
@@ -44,6 +45,10 @@ class CompanyUserService
                 'role_id' => $data['role_id'],
                 'is_active' => $data['is_active'] ?? true,
             ]);
+
+            if (!$user->current_company_id) {
+                $user->update(['current_company_id' => $company->id]);
+            }
 
             return $user;
         });
