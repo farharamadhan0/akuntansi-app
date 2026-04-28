@@ -18,7 +18,10 @@ use App\Http\Controllers\ReceivablePaymentController;
 use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -32,16 +35,29 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
-    
+
+    // Email Verification
+    Route::get('email/verify', function () {
+        return Inertia::render('Auth/VerifyEmail');
+    })->name('verification.notice');
+
+    Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect()->route('company.setup');
+    })->middleware('signed')->name('verification.verify');
+
+    Route::post('email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware('throttle:6,1')->name('verification.send');
+
     // Company setup (for users without a company)
-    Route::get('company/setup', [CompanyController::class, 'create'])->name('company.setup');
-    Route::post('company/setup', [CompanyController::class, 'store']);
-    
+    Route::get('company/setup', [CompanyController::class, 'create'])->middleware('verified')->name('company.setup');
+    Route::post('company/setup', [CompanyController::class, 'store'])->middleware('verified');
+
     // Routes requiring active company
-    Route::middleware('has.company')->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])
-            ->middleware('permission:dashboard.view')
-            ->name('dashboard');
+    Route::middleware(['verified', 'has.company'])->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         
         // Master Data - Pelanggan
         Route::prefix('master')->group(function () {

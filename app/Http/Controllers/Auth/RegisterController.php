@@ -28,6 +28,8 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('company.setup');
+        $user->sendEmailVerificationNotification();
+
+        return redirect()->route('verification.notice');
     }
 }
