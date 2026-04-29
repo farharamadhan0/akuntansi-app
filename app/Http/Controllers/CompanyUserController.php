@@ -38,9 +38,12 @@ class CompanyUserController extends Controller
             ])
             ->values();
 
+        $nonOwnerCount = $members->filter(fn ($m) => !$m['is_owner'])->count();
+
         return Inertia::render('Users/Index', [
             'members' => $members,
             'roles' => $this->assignableRoles($companyId),
+            'can_add_member' => $nonOwnerCount < 3,
         ]);
     }
 

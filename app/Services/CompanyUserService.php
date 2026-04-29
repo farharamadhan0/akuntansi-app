@@ -15,6 +15,7 @@ class CompanyUserService
     public function invite(Company $company, array $data): User
     {
         $this->guardNotOwnerRole($company, $data['role_id']);
+        $this->guardMemberLimit($company);
 
         return DB::transaction(function () use ($company, $data) {
             $user = User::where('email', $data['email'])->first();
@@ -92,6 +93,19 @@ class CompanyUserService
         }
 
         $member->delete();
+    }
+
+    protected function guardMemberLimit(Company $company, int $limit = 3): void
+    {
+        $nonOwnerCount = CompanyUser::where('company_id', $company->id)
+            ->whereHas('role', fn ($q) => $q->where('name', '!=', 'Owner'))
+            ->count();
+
+        if ($nonOwnerCount >= $limit) {
+            throw ValidationException::withMessages([
+                'email' => "Perusahaan ini sudah mencapai batas maksimal {$limit} pengguna.",
+            ]);
+        }
     }
 
     protected function guardNotOwnerRole(Company $company, int $roleId): void

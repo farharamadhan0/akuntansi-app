@@ -34,9 +34,10 @@ interface Role {
 interface Props {
     members: Member[];
     roles: Role[];
+    can_add_member: boolean;
 }
 
-export default function Index({ members }: Props) {
+export default function Index({ members, can_add_member }: Props) {
     const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
 
     const handleDelete = (member: Member) => {
@@ -64,12 +65,19 @@ export default function Index({ members }: Props) {
                         Kelola pengguna yang memiliki akses ke perusahaan ini
                     </p>
                 </div>
-                <Link href="/pengaturan/pengguna/tambah">
-                    <Button className="gap-1.5">
-                        <Plus size={18} />
-                        Tambah Pengguna
-                    </Button>
-                </Link>
+                <div className="flex flex-col items-end gap-1">
+                    <Link href={can_add_member ? '/pengaturan/pengguna/tambah' : '#'}
+                        onClick={(e) => !can_add_member && e.preventDefault()}
+                    >
+                        <Button className="gap-1.5" disabled={!can_add_member}>
+                            <Plus size={18} />
+                            Tambah Pengguna
+                        </Button>
+                    </Link>
+                    {!can_add_member && (
+                        <p className="text-xs text-gray-400">Batas maksimal 3 pengguna tercapai</p>
+                    )}
+                </div>
             </div>
 
             <Card>
