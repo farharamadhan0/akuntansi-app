@@ -1,5 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -8,6 +8,19 @@ export default function VerifyEmail() {
     const { flash } = usePage<{ flash: { status?: string } }>().props;
     const { post, processing } = useForm({});
     const { post: logout, processing: loggingOut } = useForm({});
+    const [cooldown, setCooldown] = useState(0);
+
+    useEffect(() => {
+        if (flash?.status === 'verification-link-sent') {
+            setCooldown(60);
+        }
+    }, [flash?.status]);
+
+    useEffect(() => {
+        if (cooldown <= 0) return;
+        const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [cooldown]);
 
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -41,8 +54,12 @@ export default function VerifyEmail() {
                     )}
 
                     <form onSubmit={submit} className="space-y-4">
-                        <Button type="submit" className="w-full" disabled={processing}>
-                            {processing ? 'Mengirim...' : 'Kirim Ulang Email Verifikasi'}
+                        <Button type="submit" className="w-full" disabled={processing || cooldown > 0}>
+                            {processing
+                                ? 'Mengirim...'
+                                : cooldown > 0
+                                    ? `Kirim ulang dalam ${cooldown} detik`
+                                    : 'Kirim Ulang Email Verifikasi'}
                         </Button>
                     </form>
 

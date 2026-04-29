@@ -37,6 +37,8 @@ class CompanyUserService
                     'password' => Hash::make($data['password']),
                     'current_company_id' => $company->id,
                 ]);
+
+                $user->sendEmailVerificationNotification();
             }
 
             CompanyUser::create([

@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { FormField } from '@/components/ui/form-field';
 import GuestLayout from '@/Layouts/GuestLayout';
 
 export default function Login() {
+    const { flash } = usePage<{ flash: { status?: string } }>().props;
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
@@ -28,6 +29,12 @@ export default function Login() {
                     <h2 className="text-2xl font-bold text-center mb-6">
                         Masuk ke Akun
                     </h2>
+
+                    {flash?.status === 'email-verified' && (
+                        <div className="mb-4 p-3 rounded-md bg-green-50 border border-green-200 text-sm text-green-700 text-center">
+                            Email kamu berhasil diverifikasi. Silakan masuk.
+                        </div>
+                    )}
 
                     <form onSubmit={submit} className="space-y-4">
                         <FormField label="Email" required error={errors.email}>

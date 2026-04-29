@@ -18,10 +18,34 @@ use App\Http\Controllers\ReceivablePaymentController;
 use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Email Verification (tidak perlu login)
+Route::get('email/verify/{id}/{hash}', function (Request $request, string $id, string $hash) {
+    abort_unless(
+        $request->hasValidSignature(),
+        403,
+        'Link verifikasi tidak valid atau sudah kedaluwarsa.'
+    );
+
+    $user = User::findOrFail($id);
+
+    abort_if(
+        ! hash_equals(sha1($user->getEmailForVerification()), $hash),
+        403,
+        'Link verifikasi tidak valid.'
+    );
+
+    if (! $user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+
+    return redirect()->route('login')->with('status', 'email-verified');
+})->middleware('signed')->name('verification.verify');
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -37,14 +61,17 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     // Email Verification
-    Route::get('email/verify', function () {
+    Route::get('email/verify', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended(
+                $request->user()->current_company_id
+                    ? route('dashboard')
+                    : route('company.setup')
+            );
+        }
         return Inertia::render('Auth/VerifyEmail');
     })->name('verification.notice');
 
-    Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-        return redirect()->route('company.setup');
-    })->middleware('signed')->name('verification.verify');
 
     Route::post('email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();
