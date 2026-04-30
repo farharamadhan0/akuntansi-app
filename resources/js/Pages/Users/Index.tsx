@@ -25,6 +25,7 @@ interface Member {
     is_owner: boolean;
     is_self: boolean;
     is_verified: boolean;
+    last_login: number | null;
 }
 
 interface Role {
@@ -91,13 +92,14 @@ export default function Index({ members, can_add_member }: Props) {
                                 <TableHead>Role</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Verified</TableHead>
+                                <TableHead>Terakhir Login</TableHead>
                                 <TableHead className="w-24">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {members.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
                                         Belum ada pengguna.
                                     </TableCell>
                                 </TableRow>
@@ -132,6 +134,15 @@ export default function Index({ members, can_add_member }: Props) {
                                             <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-600'}`}>
                                                 {m.is_verified ? 'Terverifikasi' : 'Belum'}
                                             </span>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                                            {m.last_login
+                                                ? new Date(m.last_login * 1000).toLocaleString('id-ID', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit',
+                                                })
+                                                : <span className="text-gray-300">—</span>
+                                            }
                                         </TableCell>
                                         <TableCell>
                                             {m.is_owner ? (

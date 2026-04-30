@@ -7,6 +7,7 @@ use App\Models\CompanyUser;
 use App\Models\Role;
 use App\Services\CompanyUserService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +19,19 @@ class CompanyUserController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        $members = CompanyUser::with(['user:id,name,email,email_verified_at', 'role:id,name'])
+        $companyMembers = CompanyUser::with(['user:id,name,email,email_verified_at', 'role:id,name'])
             ->where('company_id', $companyId)
-            ->get()
+            ->get();
+
+        $userIds = $companyMembers->pluck('user_id');
+
+        $lastLogins = DB::table('sessions')
+            ->whereIn('user_id', $userIds)
+            ->selectRaw('user_id, MAX(last_activity) as last_activity')
+            ->groupBy('user_id')
+            ->pluck('last_activity', 'user_id');
+
+        $members = $companyMembers
             ->map(fn (CompanyUser $m) => [
                 'id' => $m->id,
                 'user_id' => $m->user_id,
@@ -32,6 +43,7 @@ class CompanyUserController extends Controller
                 'is_owner' => $m->role->name === 'Owner',
                 'is_self' => $m->user_id === auth()->id(),
                 'is_verified' => !is_null($m->user->email_verified_at),
+                'last_login' => $lastLogins[$m->user_id] ?? null,
             ])
             ->sortBy([
                 fn ($a, $b) => $b['is_owner'] <=> $a['is_owner'],
