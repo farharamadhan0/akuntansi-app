@@ -24,6 +24,7 @@ interface Member {
     is_active: boolean;
     is_owner: boolean;
     is_self: boolean;
+    is_verified: boolean;
 }
 
 interface Role {
@@ -89,13 +90,14 @@ export default function Index({ members, can_add_member }: Props) {
                                 <TableHead>Email</TableHead>
                                 <TableHead>Role</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Verified</TableHead>
                                 <TableHead className="w-24">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {members.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
                                         Belum ada pengguna.
                                     </TableCell>
                                 </TableRow>
@@ -124,6 +126,11 @@ export default function Index({ members, can_add_member }: Props) {
                                         <TableCell>
                                             <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                                                 {m.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-600'}`}>
+                                                {m.is_verified ? 'Terverifikasi' : 'Belum'}
                                             </span>
                                         </TableCell>
                                         <TableCell>

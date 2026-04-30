@@ -18,7 +18,7 @@ class CompanyUserController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        $members = CompanyUser::with(['user:id,name,email', 'role:id,name'])
+        $members = CompanyUser::with(['user:id,name,email,email_verified_at', 'role:id,name'])
             ->where('company_id', $companyId)
             ->get()
             ->map(fn (CompanyUser $m) => [
@@ -31,6 +31,7 @@ class CompanyUserController extends Controller
                 'is_active' => $m->is_active,
                 'is_owner' => $m->role->name === 'Owner',
                 'is_self' => $m->user_id === auth()->id(),
+                'is_verified' => !is_null($m->user->email_verified_at),
             ])
             ->sortBy([
                 fn ($a, $b) => $b['is_owner'] <=> $a['is_owner'],
