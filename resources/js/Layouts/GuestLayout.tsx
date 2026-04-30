@@ -8,11 +8,11 @@ export default function GuestLayout({ children }: { children: ReactNode }) {
                 <div className="text-center mb-8">
                     <Link href="/">
                         <h1 className="text-3xl font-bold text-primary-600">
-                            Akuntansi
+                            Emwal
                         </h1>
                     </Link>
                     <p className="mt-2 text-gray-600">
-                        Aplikasi Pembukuan Sederhana
+                        Solusi Pencatatan Keuangan
                     </p>
                 </div>
                 {children}

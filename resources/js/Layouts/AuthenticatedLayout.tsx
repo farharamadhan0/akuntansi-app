@@ -125,7 +125,7 @@ function SidebarNav() {
         <Sidebar className="md:w-54">
             <SidebarHeader>
                 <Link href="/" className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-primary-600">Akuntansi</span>
+                    <span className="text-lg font-bold text-primary-600">Emwal</span>
                 </Link>
             </SidebarHeader>
 
@@ -190,7 +190,7 @@ function TopBar() {
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background px-4 md:px-8 py-3">
             <div className="flex items-center gap-2 md:hidden">
                 <SidebarTrigger />
-                <span className="text-sm font-bold text-primary-600">Akuntansi</span>
+                <span className="text-sm font-bold text-primary-600">Emwal</span>
             </div>
 
             <div className="flex-1" />
