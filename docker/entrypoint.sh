@@ -13,6 +13,11 @@ while ! pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USER
 done
 echo "PostgreSQL is up!"
 
+# Create .env file if not exists (needed for artisan commands)
+if [ ! -f /var/www/.env ]; then
+    touch /var/www/.env
+fi
+
 # Generate APP_KEY if not set
 if [ -z "$APP_KEY" ]; then
     echo "Generating APP_KEY..."
