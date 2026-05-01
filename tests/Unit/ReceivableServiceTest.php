@@ -102,6 +102,53 @@ class ReceivableServiceTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
+    // create() — credit limit
+    // -----------------------------------------------------------------------
+
+    public function test_create_succeeds_when_customer_has_no_credit_limit(): void
+    {
+        $this->customer->update(['credit_limit' => null]);
+
+        $receivable = $this->service->create($this->payload(['amount' => 999999999]));
+
+        $this->assertInstanceOf(Receivable::class, $receivable);
+    }
+
+    public function test_create_succeeds_when_amount_is_within_credit_limit(): void
+    {
+        $this->customer->update(['credit_limit' => 2000000]);
+
+        $receivable = $this->service->create($this->payload(['amount' => 2000000]));
+
+        $this->assertInstanceOf(Receivable::class, $receivable);
+    }
+
+    public function test_create_throws_when_amount_exceeds_credit_limit(): void
+    {
+        $this->customer->update(['credit_limit' => 500000]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/limit kredit/i');
+
+        $this->service->create($this->payload(['amount' => 600000]));
+    }
+
+    public function test_create_throws_when_outstanding_plus_new_amount_exceeds_credit_limit(): void
+    {
+        $this->customer->update(['credit_limit' => 1500000]);
+
+        // First receivable: 1.000.000 — still within limit
+        $first = $this->service->create($this->payload(['amount' => 1000000]));
+        $this->service->post($first);
+
+        // Second receivable: 600.000 — total 1.600.000 > limit 1.500.000
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/limit kredit/i');
+
+        $this->service->create($this->payload(['amount' => 600000, 'reference' => 'INV-UNIT-002']));
+    }
+
+    // -----------------------------------------------------------------------
     // post()
     // -----------------------------------------------------------------------
 
