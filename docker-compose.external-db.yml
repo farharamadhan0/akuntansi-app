@@ -23,7 +23,7 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: ${APP_URL:-http://localhost}
+      APP_URL: ${APP_URL:-https://app.emwal.id}
       APP_KEY: ${APP_KEY}
       DB_CONNECTION: pgsql
       # Gunakan host.docker.internal untuk akses host machine
@@ -46,6 +46,17 @@ services:
     volumes:
       - ./storage:/var/www/storage
       - ./bootstrap/cache:/var/www/bootstrap/cache
+
+  # Caddy reverse proxy (SSL termination)
+  caddy:
+    image: caddy:2-alpine
+    network_mode: host
+    container_name: akuntansi-caddy
+    restart: unless-stopped
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
   # Queue Worker
   queue:
@@ -93,3 +104,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./storage:/var/www/storage
+
+volumes:
+  caddy_data:
+  caddy_config:
