@@ -6,8 +6,7 @@ mkdir -p /var/log/supervisor
 mkdir -p /var/www/storage/logs
 
 # Wait for PostgreSQL to be ready
-echo "Waiting for PostgreSQL..."
-while ! pg_isready -h "${DB_HOST:-postgres}" -p "${DB_PORT:-5432}" -U "${DB_USERNAME:-postgres}" > /dev/null 2>&1; do
+while ! nc -z "${DB_HOST:-postgres}" "${DB_PORT:-5432}" > /dev/null 2>&1; do
     echo "PostgreSQL is unavailable - sleeping"
     sleep 1
 done
