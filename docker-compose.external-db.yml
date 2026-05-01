@@ -47,17 +47,6 @@ services:
       - ./storage:/var/www/storage
       - ./bootstrap/cache:/var/www/bootstrap/cache
 
-  # Caddy reverse proxy (SSL termination)
-  caddy:
-    image: caddy:2-alpine
-    network_mode: host
-    container_name: akuntansi-caddy
-    restart: unless-stopped
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-
   # Queue Worker
   queue:
     network_mode: host
@@ -104,7 +93,3 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./storage:/var/www/storage
-
-volumes:
-  caddy_data:
-  caddy_config:
