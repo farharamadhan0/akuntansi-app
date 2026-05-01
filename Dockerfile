@@ -4,6 +4,7 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \
+    postgresql-client \
     postgresql-dev \
     libzip-dev \
     libpng-dev \
