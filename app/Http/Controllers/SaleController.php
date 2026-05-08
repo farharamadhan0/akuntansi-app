@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Services\SaleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,8 +38,6 @@ class SaleController extends Controller
                 'customer_name' => $sale->customer?->name,
                 'cash_bank_name' => $sale->cashBankAccount?->name,
                 'total_amount' => (float) $sale->total_amount,
-                'status' => $sale->status->value,
-                'status_label' => $sale->status->label(),
             ]);
 
         return Inertia::render('Sales/Index', [
@@ -60,11 +59,19 @@ class SaleController extends Controller
 
     public function store(SaleRequest $request): RedirectResponse
     {
-        $sale = $this->saleService->create($request->validated());
-        $this->saleService->post($sale);
+        try {
+            $sale = DB::transaction(function () use ($request) {
+                $sale = $this->saleService->create($request->validated());
+                return $this->saleService->post($sale);
+            });
 
-        return redirect()->route('sales.show', $sale)
-            ->with('success', 'Penjualan berhasil dicatat.');
+            return redirect()->route('sales.show', $sale)
+                ->with('success', 'Penjualan berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function show(Sale $sale): Response
@@ -104,10 +111,14 @@ class SaleController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $this->saleService->void($sale, $request->reason);
+        try {
+            $this->saleService->void($sale, $request->reason);
 
-        return redirect()->route('sales.show', $sale)
-            ->with('success', 'Penjualan berhasil dibatalkan.');
+            return redirect()->route('sales.show', $sale)
+                ->with('success', 'Penjualan berhasil dibatalkan.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     protected function authorizeCompany(Sale $sale): void

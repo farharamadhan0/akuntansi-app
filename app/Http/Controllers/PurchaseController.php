@@ -60,11 +60,17 @@ class PurchaseController extends Controller
 
     public function store(PurchaseRequest $request): RedirectResponse
     {
-        $purchase = $this->purchaseService->create($request->validated());
-        $this->purchaseService->post($purchase);
+        try {
+            $purchase = $this->purchaseService->create($request->validated());
+            $this->purchaseService->post($purchase);
 
-        return redirect()->route('purchases.show', $purchase)
-            ->with('success', 'Pembelian berhasil dicatat.');
+            return redirect()->route('purchases.show', $purchase)
+                ->with('success', 'Pembelian berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function show(Purchase $purchase): Response
@@ -104,10 +110,14 @@ class PurchaseController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $this->purchaseService->void($purchase, $request->reason);
+        try {
+            $this->purchaseService->void($purchase, $request->reason);
 
-        return redirect()->route('purchases.show', $purchase)
-            ->with('success', 'Pembelian berhasil dibatalkan.');
+            return redirect()->route('purchases.show', $purchase)
+                ->with('success', 'Pembelian berhasil dibatalkan.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     protected function authorizeCompany(Purchase $purchase): void

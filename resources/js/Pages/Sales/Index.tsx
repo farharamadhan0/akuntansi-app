@@ -16,7 +16,6 @@ interface Sale {
     customer_name?: string | null;
     cash_bank_name?: string | null;
     total_amount: number;
-    status_label: string;
 }
 
 interface Props {
@@ -60,12 +59,11 @@ export default function Index({ sales }: Props) {
                                 <TableHead>Partner</TableHead>
                                 <TableHead>Pembayaran</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
-                                <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {sales.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Belum ada penjualan.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">Belum ada penjualan.</TableCell></TableRow>
                             ) : sales.map((sale) => (
                                 <TableRow key={sale.id}>
                                     <TableCell><Link href={`/transaksi/penjualan/${sale.id}`} className="font-mono text-sm text-primary hover:underline">{sale.sale_number}</Link></TableCell>
@@ -73,7 +71,6 @@ export default function Index({ sales }: Props) {
                                     <TableCell>{sale.customer_name ?? sale.cash_bank_name ?? '-'}</TableCell>
                                     <TableCell>{sale.payment_type === 'cash' ? 'Tunai' : 'Kredit'}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(sale.total_amount)}</TableCell>
-                                    <TableCell>{sale.status_label}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

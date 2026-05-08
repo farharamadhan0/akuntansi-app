@@ -56,11 +56,17 @@ class StockAdjustmentController extends Controller
 
     public function store(StockAdjustmentRequest $request): RedirectResponse
     {
-        $adjustment = $this->stockAdjustmentService->create($request->validated());
-        $this->stockAdjustmentService->post($adjustment);
+        try {
+            $adjustment = $this->stockAdjustmentService->create($request->validated());
+            $this->stockAdjustmentService->post($adjustment);
 
-        return redirect()->route('stock-adjustments.show', $adjustment)
-            ->with('success', 'Penyesuaian stok berhasil dicatat.');
+            return redirect()->route('stock-adjustments.show', $adjustment)
+                ->with('success', 'Penyesuaian stok berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function show(StockAdjustment $stockAdjustment): Response
@@ -97,10 +103,14 @@ class StockAdjustmentController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
-        $this->stockAdjustmentService->void($stockAdjustment, $request->reason);
+        try {
+            $this->stockAdjustmentService->void($stockAdjustment, $request->reason);
 
-        return redirect()->route('stock-adjustments.show', $stockAdjustment)
-            ->with('success', 'Penyesuaian stok berhasil dibatalkan.');
+            return redirect()->route('stock-adjustments.show', $stockAdjustment)
+                ->with('success', 'Penyesuaian stok berhasil dibatalkan.');
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     protected function authorizeCompany(StockAdjustment $stockAdjustment): void
