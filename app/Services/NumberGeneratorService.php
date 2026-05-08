@@ -7,6 +7,10 @@ use App\Models\Receivable;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\JournalEntry;
+use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\Sale;
+use App\Models\StockAdjustment;
 use Illuminate\Support\Facades\DB;
 
 class NumberGeneratorService
@@ -43,6 +47,26 @@ class NumberGeneratorService
     public function generateJournalNumber(int $companyId): string
     {
         return $this->generate($companyId, 'JE', JournalEntry::class, 'entry_number');
+    }
+
+    public function generateProductNumber(int $companyId): string
+    {
+        return $this->generate($companyId, 'PRD', Product::class, 'product_code');
+    }
+
+    public function generatePurchaseNumber(int $companyId): string
+    {
+        return $this->generate($companyId, 'PUR', Purchase::class, 'purchase_number');
+    }
+
+    public function generateSaleNumber(int $companyId): string
+    {
+        return $this->generate($companyId, 'SAL', Sale::class, 'sale_number');
+    }
+
+    public function generateStockAdjustmentNumber(int $companyId): string
+    {
+        return $this->generate($companyId, 'ADJ', StockAdjustment::class, 'adjustment_number');
     }
 
     protected function generate(int $companyId, string $prefix, string $model, string $column): string

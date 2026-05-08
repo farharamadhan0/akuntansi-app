@@ -68,6 +68,10 @@ class CompanySetupService
                 'suppliers.view', 'suppliers.create', 'suppliers.edit', 'suppliers.delete',
                 'cash_bank.view', 'cash_bank.create', 'cash_bank.edit', 'cash_bank.delete',
                 'accounts.view', 'accounts.create', 'accounts.edit', 'accounts.delete',
+                'products.view', 'products.create', 'products.edit', 'products.delete',
+                'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete',
+                'sales.view', 'sales.create', 'sales.edit', 'sales.delete',
+                'inventory_adjustments.view', 'inventory_adjustments.create', 'inventory_adjustments.edit', 'inventory_adjustments.delete',
                 'reports.transactions', 'reports.receivables', 'reports.payables',
                 'reports.general_ledger', 'reports.income_statement',
                 'reports.balance_sheet', 'reports.cash_flow',
@@ -88,6 +92,10 @@ class CompanySetupService
                 'suppliers.view',
                 'cash_bank.view',
                 'accounts.view',
+                'products.view',
+                'purchases.view', 'purchases.create',
+                'sales.view', 'sales.create',
+                'inventory_adjustments.view', 'inventory_adjustments.create',
             ],
             'is_system' => true,
         ]);
@@ -117,6 +125,7 @@ class CompanySetupService
             ['code' => '1110', 'name' => 'Kas', 'type' => AccountType::Asset, 'subtype' => 'cash', 'parent_code' => '1100', 'is_system' => true],
             ['code' => '1120', 'name' => 'Bank', 'type' => AccountType::Asset, 'subtype' => 'bank', 'parent_code' => '1100', 'is_system' => true],
             ['code' => '1130', 'name' => 'Piutang Usaha', 'type' => AccountType::Asset, 'subtype' => 'receivable', 'parent_code' => '1100', 'is_system' => true],
+            ['code' => '1140', 'name' => 'Persediaan', 'type' => AccountType::Asset, 'subtype' => 'inventory', 'parent_code' => '1100', 'is_system' => true],
             ['code' => '1200', 'name' => 'Aset Tetap', 'type' => AccountType::Asset, 'subtype' => 'fixed_asset', 'parent_code' => '1000'],
             
             // KEWAJIBAN (2xxx)
@@ -137,6 +146,7 @@ class CompanySetupService
             
             // BEBAN (5xxx)
             ['code' => '5000', 'name' => 'Beban', 'type' => AccountType::Expense, 'subtype' => null, 'is_system' => true],
+            ['code' => '5050', 'name' => 'Harga Pokok Penjualan', 'type' => AccountType::Expense, 'subtype' => 'cogs', 'parent_code' => '5000', 'is_system' => true],
             ['code' => '5100', 'name' => 'Beban Operasional', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5000', 'is_system' => true],
             ['code' => '5110', 'name' => 'Beban Gaji', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5100'],
             ['code' => '5120', 'name' => 'Beban Sewa', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5100'],
@@ -144,6 +154,7 @@ class CompanySetupService
             ['code' => '5140', 'name' => 'Beban Telepon & Internet', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5100'],
             ['code' => '5150', 'name' => 'Beban Transportasi', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5100'],
             ['code' => '5160', 'name' => 'Beban Perlengkapan', 'type' => AccountType::Expense, 'subtype' => 'operating_expense', 'parent_code' => '5100'],
+            ['code' => '5170', 'name' => 'Selisih Stok', 'type' => AccountType::Expense, 'subtype' => 'inventory_adjustment', 'parent_code' => '5100', 'is_system' => true],
             ['code' => '5200', 'name' => 'Beban Lain-lain', 'type' => AccountType::Expense, 'subtype' => 'other_expense', 'parent_code' => '5000'],
         ];
 

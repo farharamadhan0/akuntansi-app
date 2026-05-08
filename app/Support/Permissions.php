@@ -63,6 +63,22 @@ class Permissions
                 'label' => 'Daftar Akun',
                 'actions' => $crud,
             ],
+            'products' => [
+                'label' => 'Produk',
+                'actions' => $crud,
+            ],
+            'purchases' => [
+                'label' => 'Pembelian',
+                'actions' => $crud,
+            ],
+            'sales' => [
+                'label' => 'Penjualan',
+                'actions' => $crud,
+            ],
+            'inventory_adjustments' => [
+                'label' => 'Penyesuaian Stok',
+                'actions' => $crud,
+            ],
             'reports' => [
                 'label' => 'Laporan',
                 'actions' => [

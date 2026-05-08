@@ -55,6 +55,26 @@ class Account extends Model
         return $this->hasMany(JournalLine::class);
     }
 
+    public function inventoryProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'inventory_account_id');
+    }
+
+    public function revenueProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'revenue_account_id');
+    }
+
+    public function expenseProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'expense_account_id');
+    }
+
+    public function cogsProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'cogs_account_id');
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

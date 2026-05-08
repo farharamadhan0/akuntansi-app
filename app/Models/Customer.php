@@ -47,6 +47,11 @@ class Customer extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

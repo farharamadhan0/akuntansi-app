@@ -18,6 +18,10 @@ use App\Http\Controllers\ReceivablePaymentController;
 use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\StockAdjustmentController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -122,6 +126,15 @@ Route::middleware('auth')->group(function () {
             Route::put('kategori/{category}', [TransactionCategoryController::class, 'update'])->middleware('permission:accounts.edit')->name('categories.update');
             Route::delete('kategori/{category}', [TransactionCategoryController::class, 'destroy'])->middleware('permission:accounts.delete')->name('categories.destroy');
             Route::post('kategori/{category}/toggle', [TransactionCategoryController::class, 'toggleActive'])->middleware('permission:accounts.edit')->name('categories.toggle');
+
+            // Master Data - Produk
+            Route::get('produk', [ProductController::class, 'index'])->middleware('permission:products.view')->name('products.index');
+            Route::get('produk/tambah', [ProductController::class, 'create'])->middleware('permission:products.create')->name('products.create');
+            Route::post('produk', [ProductController::class, 'store'])->middleware('permission:products.create')->name('products.store');
+            Route::get('produk/{product}', [ProductController::class, 'show'])->middleware('permission:products.view')->name('products.show');
+            Route::get('produk/{product}/edit', [ProductController::class, 'edit'])->middleware('permission:products.edit')->name('products.edit');
+            Route::put('produk/{product}', [ProductController::class, 'update'])->middleware('permission:products.edit')->name('products.update');
+            Route::post('produk/{product}/toggle', [ProductController::class, 'toggleActive'])->middleware('permission:products.edit')->name('products.toggle');
         });
 
         // Transaksi
@@ -167,6 +180,27 @@ Route::middleware('auth')->group(function () {
             Route::post('hutang-bayar', [PayablePaymentController::class, 'store'])->middleware('permission:payables.edit')->name('payable-payments.store');
             Route::get('hutang-bayar/{payment}', [PayablePaymentController::class, 'show'])->middleware('permission:payables.view')->name('payable-payments.show');
             Route::post('hutang-bayar/{payment}/batal', [PayablePaymentController::class, 'void'])->middleware('permission:payables.delete')->name('payable-payments.void');
+
+            // Pembelian
+            Route::get('pembelian', [PurchaseController::class, 'index'])->middleware('permission:purchases.view')->name('purchases.index');
+            Route::get('pembelian/buat', [PurchaseController::class, 'create'])->middleware('permission:purchases.create')->name('purchases.create');
+            Route::post('pembelian', [PurchaseController::class, 'store'])->middleware('permission:purchases.create')->name('purchases.store');
+            Route::get('pembelian/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchases.view')->name('purchases.show');
+            Route::post('pembelian/{purchase}/batal', [PurchaseController::class, 'void'])->middleware('permission:purchases.delete')->name('purchases.void');
+
+            // Penjualan
+            Route::get('penjualan', [SaleController::class, 'index'])->middleware('permission:sales.view')->name('sales.index');
+            Route::get('penjualan/buat', [SaleController::class, 'create'])->middleware('permission:sales.create')->name('sales.create');
+            Route::post('penjualan', [SaleController::class, 'store'])->middleware('permission:sales.create')->name('sales.store');
+            Route::get('penjualan/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view')->name('sales.show');
+            Route::post('penjualan/{sale}/batal', [SaleController::class, 'void'])->middleware('permission:sales.delete')->name('sales.void');
+
+            // Penyesuaian Stok
+            Route::get('stok-penyesuaian', [StockAdjustmentController::class, 'index'])->middleware('permission:inventory_adjustments.view')->name('stock-adjustments.index');
+            Route::get('stok-penyesuaian/buat', [StockAdjustmentController::class, 'create'])->middleware('permission:inventory_adjustments.create')->name('stock-adjustments.create');
+            Route::post('stok-penyesuaian', [StockAdjustmentController::class, 'store'])->middleware('permission:inventory_adjustments.create')->name('stock-adjustments.store');
+            Route::get('stok-penyesuaian/{stockAdjustment}', [StockAdjustmentController::class, 'show'])->middleware('permission:inventory_adjustments.view')->name('stock-adjustments.show');
+            Route::post('stok-penyesuaian/{stockAdjustment}/batal', [StockAdjustmentController::class, 'void'])->middleware('permission:inventory_adjustments.delete')->name('stock-adjustments.void');
         });
 
         // Jurnal Umum
