@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface Customer { id: number; name: string; code?: string; }
 interface CashBankAccount { id: number; name: string; }
-interface Product { id: number; product_code: string; name: string; unit: string; sales_price: number; }
+interface Product { id: number; product_code: string; name: string; unit: string; sales_price: number; is_stock_tracked: boolean; current_stock?: string; }
 interface Flash { error?: string; }
 interface Props { customers: Customer[]; cashBankAccounts: CashBankAccount[]; products: Product[]; }
 interface ItemRow { product_id: string; description: string; quantity: string; unit: string; unit_price: string; discount_amount: string; tax_amount: string; }
@@ -120,7 +120,14 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
                                             <FormField label="Produk" error={errors[`items.${index}.product_id` as keyof typeof errors] as string}>
                                                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
                                                     <option value="">-- Pilih Produk --</option>
-                                                    {products.map((product) => <option key={product.id} value={product.id}>{product.product_code} - {product.name}</option>)}
+                                                    {products.map((product) => {
+                                                        console.log(product);
+                                                        return (
+                                                        <option key={product.id} value={product.id}>
+                                                            {product.product_code} - {product.name}
+                                                            {product.is_stock_tracked ? ` (Stok: ${Number(product.current_stock).toFixed(2)})` : ''}
+                                                        </option>
+                                                    )})}
                                                 </select>
                                             </FormField>
                                         </div>
