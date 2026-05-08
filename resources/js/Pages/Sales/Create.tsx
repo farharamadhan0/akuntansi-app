@@ -54,6 +54,13 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
     const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
     const removeItem = (index: number) => syncItems(items.filter((_, idx) => idx !== index));
 
+    const handlePaymentTypeChange = (value: string) => {
+        setData('payment_type', value);
+        if (value === 'cash') {
+            setData('due_date', '');
+        }
+    };
+
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post('/transaksi/penjualan');
@@ -75,7 +82,7 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
                     <Card>
                         <CardContent className="grid gap-4 p-6 md:grid-cols-2">
                             <FormField label="Jenis Pembayaran" error={errors.payment_type} required>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => setData('payment_type', e.target.value)}>
+                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => handlePaymentTypeChange(e.target.value)}>
                                     <option value="cash">Tunai</option>
                                     <option value="credit">Kredit</option>
                                 </select>
@@ -96,7 +103,7 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
                                 </select>
                             </FormField>
                             <FormField label="Jatuh Tempo" error={errors.due_date}>
-                                <Input type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
+                                <Input disabled={data.payment_type === 'cash'} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
                             </FormField>
                             <FormField label="Referensi" error={errors.reference}>
                                 <Input value={data.reference} onChange={(e) => setData('reference', e.target.value)} />
