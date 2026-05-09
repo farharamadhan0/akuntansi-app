@@ -13,6 +13,7 @@ interface Sale {
     date: string;
     due_date?: string | null;
     payment_type: string;
+    receivable_payment_status?: 'unpaid' | 'partial' | 'paid' | null;
     customer_name?: string | null;
     cash_bank_name?: string | null;
     total_amount: number;
@@ -24,6 +25,36 @@ interface Props {
 
 function formatCurrency(value: number) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+}
+
+function formatPaymentType(sale: Sale) {
+    if (sale.payment_type === 'cash') {
+        return 'Tunai';
+    }
+
+    const statusLabel: Record<'unpaid' | 'partial' | 'paid', string> = {
+        unpaid: 'belum lunas',
+        partial: 'lunas sebagian',
+        paid: 'lunas',
+    };
+
+    const statusColor: Record<'unpaid' | 'partial' | 'paid', string> = {
+        'unpaid': 'bg-red-100 text-red-700',
+        'partial': 'bg-yellow-100 text-yellow-700',
+        'paid': 'bg-green-100 text-green-700',
+    };
+
+    const status = sale.receivable_payment_status ? statusLabel[sale.receivable_payment_status] : 'belum lunas';
+    const statusColorClass = sale.receivable_payment_status ? statusColor[sale.receivable_payment_status] : 'bg-gray-100 text-gray-700';
+
+     return (
+        <div className='flex gap-2 items-center'>
+            <span>Kredit</span>
+            <span className={`px-2 py-0.5 text-xs rounded-full ${statusColorClass}`}>
+                {status}
+            </span>
+        </div>
+    );  
 }
 
 export default function Index({ sales }: Props) {
@@ -70,7 +101,7 @@ export default function Index({ sales }: Props) {
                                     <TableCell className="font-mono text-sm">{sale.sale_number}</TableCell>
                                     <TableCell>{sale.date}</TableCell>
                                     <TableCell>{sale.customer_name ?? sale.cash_bank_name ?? '-'}</TableCell>
-                                    <TableCell>{sale.payment_type === 'cash' ? 'Tunai' : 'Kredit'}</TableCell>
+                                    <TableCell>{formatPaymentType(sale)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(sale.total_amount)}</TableCell>
                                     <TableCell className="flex justify-center">
                                         <Link href={`/transaksi/penjualan/${sale.id}`}>

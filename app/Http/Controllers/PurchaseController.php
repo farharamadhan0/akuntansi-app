@@ -24,7 +24,7 @@ class PurchaseController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $purchases = Purchase::where('company_id', $companyId)
-            ->with(['supplier:id,name', 'cashBankAccount:id,name'])
+            ->with(['supplier:id,name', 'cashBankAccount:id,name', 'payable:id,payment_status'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -34,6 +34,7 @@ class PurchaseController extends Controller
                 'date' => $purchase->date->format('Y-m-d'),
                 'due_date' => $purchase->due_date?->format('Y-m-d'),
                 'payment_type' => $purchase->payment_type,
+                'payable_payment_status' => $purchase->payable?->payment_status?->value,
                 'supplier_name' => $purchase->supplier?->name,
                 'cash_bank_name' => $purchase->cashBankAccount?->name,
                 'total_amount' => (float) $purchase->total_amount,

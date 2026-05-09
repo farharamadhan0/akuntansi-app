@@ -25,7 +25,7 @@ class SaleController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $sales = Sale::where('company_id', $companyId)
-            ->with(['customer:id,name', 'cashBankAccount:id,name'])
+            ->with(['customer:id,name', 'cashBankAccount:id,name', 'receivable:id,payment_status'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -35,6 +35,7 @@ class SaleController extends Controller
                 'date' => $sale->date->format('Y-m-d'),
                 'due_date' => $sale->due_date?->format('Y-m-d'),
                 'payment_type' => $sale->payment_type,
+                'receivable_payment_status' => $sale->receivable?->payment_status?->value,
                 'customer_name' => $sale->customer?->name,
                 'cash_bank_name' => $sale->cashBankAccount?->name,
                 'total_amount' => (float) $sale->total_amount,
