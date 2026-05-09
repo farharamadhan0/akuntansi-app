@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/lib/permissions';
-import { Plus, ShoppingCart } from 'lucide-react';
+import { Eye, Plus, ShoppingCart } from 'lucide-react';
 
 interface Purchase {
     id: number;
@@ -62,19 +62,27 @@ export default function Index({ purchases }: Props) {
                                 <TableHead>Pembayaran</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {purchases.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Belum ada pembelian.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Belum ada pembelian.</TableCell></TableRow>
                             ) : purchases.map((purchase) => (
                                 <TableRow key={purchase.id}>
-                                    <TableCell><Link href={`/transaksi/pembelian/${purchase.id}`} className="font-mono text-sm text-primary hover:underline">{purchase.purchase_number}</Link></TableCell>
+                                    <TableCell>{purchase.purchase_number}</TableCell>
                                     <TableCell>{purchase.date}</TableCell>
                                     <TableCell>{purchase.supplier_name ?? purchase.cash_bank_name ?? '-'}</TableCell>
                                     <TableCell>{purchase.payment_type === 'cash' ? 'Tunai' : 'Kredit'}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(purchase.total_amount)}</TableCell>
                                     <TableCell>{purchase.status_label}</TableCell>
+                                    <TableCell className="flex justify-center">
+                                        <Link href={`/transaksi/pembelian/${purchase.id}`}>
+                                            <Button variant="ghost" size="sm">
+                                                <Eye size={16} />
+                                            </Button>
+                                        </Link>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

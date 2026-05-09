@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface Supplier { id: number; name: string; code?: string; }
 interface CashBankAccount { id: number; name: string; }
-interface Product { id: number; product_code: string; name: string; unit: string; purchase_price: number; }
+interface Product { id: number; product_code: string; name: string; unit: string; purchase_price: number; is_stock_tracked: boolean; current_stock?: string; }
 interface Flash { error?: string; }
 interface Props { suppliers: Supplier[]; cashBankAccounts: CashBankAccount[]; products: Product[]; }
 interface ItemRow { product_id: string; description: string; quantity: string; unit: string; unit_price: string; discount_amount: string; tax_amount: string; }
@@ -54,6 +54,13 @@ export default function Create({ suppliers, cashBankAccounts, products }: Props)
     const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
     const removeItem = (index: number) => syncItems(items.filter((_, idx) => idx !== index));
 
+    const handlePaymentTypeChange = (value: string) => {
+        setData('payment_type', value);
+        if (value === 'cash') {
+            setData('due_date', '');
+        }
+    };
+
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post('/transaksi/pembelian');
@@ -75,7 +82,7 @@ export default function Create({ suppliers, cashBankAccounts, products }: Props)
                     <Card>
                         <CardContent className="grid gap-4 p-6 md:grid-cols-2">
                             <FormField label="Jenis Pembayaran" error={errors.payment_type} required>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => setData('payment_type', e.target.value)}>
+                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => handlePaymentTypeChange(e.target.value)}>
                                     <option value="cash">Tunai</option>
                                     <option value="credit">Kredit</option>
                                 </select>
@@ -96,7 +103,7 @@ export default function Create({ suppliers, cashBankAccounts, products }: Props)
                                 </select>
                             </FormField>
                             <FormField label="Jatuh Tempo" error={errors.due_date}>
-                                <Input type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
+                                <Input disabled={data.payment_type === 'cash'} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
                             </FormField>
                             <FormField label="Referensi" error={errors.reference}>
                                 <Input value={data.reference} onChange={(e) => setData('reference', e.target.value)} />
@@ -120,7 +127,12 @@ export default function Create({ suppliers, cashBankAccounts, products }: Props)
                                             <FormField label="Produk" error={errors[`items.${index}.product_id` as keyof typeof errors] as string}>
                                                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
                                                     <option value="">-- Pilih Produk --</option>
-                                                    {products.map((product) => <option key={product.id} value={product.id}>{product.product_code} - {product.name}</option>)}
+                                                    {products.map((product) => (
+                                                        <option key={product.id} value={product.id}>
+                                                            {product.product_code} - {product.name}
+                                                            {product.is_stock_tracked ? ` (Stok: ${Number(product.current_stock).toFixed(2)} ${product.unit})` : ''}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                             </FormField>
                                         </div>
@@ -154,3 +166,4 @@ export default function Create({ suppliers, cashBankAccounts, products }: Props)
         </AuthenticatedLayout>
     );
 }
+

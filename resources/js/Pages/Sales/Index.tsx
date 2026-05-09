@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/lib/permissions';
-import { Plus, ScanLine } from 'lucide-react';
+import { Eye, Plus, ScanLine } from 'lucide-react';
 
 interface Sale {
     id: number;
@@ -59,6 +59,7 @@ export default function Index({ sales }: Props) {
                                 <TableHead>Partner</TableHead>
                                 <TableHead>Pembayaran</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
+                                <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -66,11 +67,18 @@ export default function Index({ sales }: Props) {
                                 <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">Belum ada penjualan.</TableCell></TableRow>
                             ) : sales.map((sale) => (
                                 <TableRow key={sale.id}>
-                                    <TableCell><Link href={`/transaksi/penjualan/${sale.id}`} className="font-mono text-sm text-primary hover:underline">{sale.sale_number}</Link></TableCell>
+                                    <TableCell className="font-mono text-sm">{sale.sale_number}</TableCell>
                                     <TableCell>{sale.date}</TableCell>
                                     <TableCell>{sale.customer_name ?? sale.cash_bank_name ?? '-'}</TableCell>
                                     <TableCell>{sale.payment_type === 'cash' ? 'Tunai' : 'Kredit'}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(sale.total_amount)}</TableCell>
+                                    <TableCell className="flex justify-center">
+                                        <Link href={`/transaksi/penjualan/${sale.id}`}>
+                                            <Button variant="ghost" size="sm">
+                                                <Eye size={16} />
+                                            </Button>
+                                        </Link>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

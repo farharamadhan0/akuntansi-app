@@ -127,14 +127,12 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
                                             <FormField label="Produk" error={errors[`items.${index}.product_id` as keyof typeof errors] as string}>
                                                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
                                                     <option value="">-- Pilih Produk --</option>
-                                                    {products.map((product) => {
-                                                        console.log(product);
-                                                        return (
+                                                    {products.map((product) => (
                                                         <option key={product.id} value={product.id}>
                                                             {product.product_code} - {product.name}
-                                                            {product.is_stock_tracked ? ` (Stok: ${Number(product.current_stock).toFixed(2)})` : ''}
+                                                            {product.is_stock_tracked ? ` (Stok: ${Number(product.current_stock).toFixed(2)} ${product.unit})` : ''}
                                                         </option>
-                                                    )})}
+                                                    ))}
                                                 </select>
                                             </FormField>
                                         </div>

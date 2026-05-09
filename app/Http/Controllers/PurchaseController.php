@@ -54,7 +54,7 @@ class PurchaseController extends Controller
             'purchase' => null,
             'suppliers' => Supplier::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name', 'code']),
             'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
-            'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked']),
+            'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
         ]);
     }
 
