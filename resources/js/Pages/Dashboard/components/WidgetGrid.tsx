@@ -1,4 +1,4 @@
-import { type WidgetLayoutItem } from "../widgets/registry";
+import { type WidgetLayoutItem, type WidgetSize } from "../widgets/registry";
 import SummaryCards from "../widgets/SummaryCards";
 import TrendChart from "../widgets/TrendChart";
 import TopExpense from "../widgets/TopExpense";
@@ -8,12 +8,14 @@ import CashBankCard from "../widgets/CashBankCard";
 import RecentTransactions from "../widgets/RecentTransactions";
 import type { DashboardData } from "../types";
 
-const SIZE_CLASS: Record<string, string> = {
-    full: "col-span-full",
-    "2/3": "lg:col-span-2",
-    "1/3": "lg:col-span-1",
-    "1/2": "lg:col-span-1",
-};
+function getColSpan(size: WidgetSize): number {
+    switch (size) {
+        case "full": return 6;
+        case "2/3": return 4;
+        case "1/3": return 2;
+        case "1/2": return 3;
+    }
+}
 
 function renderWidget(widgetId: string, data: DashboardData) {
     switch (widgetId) {
@@ -65,20 +67,26 @@ interface WidgetGridProps {
     data: DashboardData;
 }
 
+const COL_SPAN_CLASS: Record<number, string> = {
+    2: "lg:col-span-2",
+    3: "lg:col-span-3",
+    4: "lg:col-span-4",
+    6: "lg:col-span-6",
+};
+
 export default function WidgetGrid({ layout, data }: WidgetGridProps) {
     const visible = layout
         .filter((w) => w.visible)
         .sort((a, b) => a.order - b.order);
 
-    // Group widgets into rows based on their sizes
+    // Group widgets into rows (max 6 cols per row)
     const rows: WidgetLayoutItem[][] = [];
     let currentRow: WidgetLayoutItem[] = [];
     let currentRowSpan = 0;
 
     for (const widget of visible) {
-        const span = widget.size === "full" ? 3 : widget.size === "2/3" ? 2 : widget.size === "1/3" ? 1 : 1.5;
+        const span = getColSpan(widget.size);
 
-        // "full" always gets its own row
         if (widget.size === "full") {
             if (currentRow.length > 0) {
                 rows.push(currentRow);
@@ -89,8 +97,7 @@ export default function WidgetGrid({ layout, data }: WidgetGridProps) {
             continue;
         }
 
-        // Check if adding this widget exceeds 3 cols
-        if (currentRowSpan + span > 3) {
+        if (currentRowSpan + span > 6) {
             rows.push(currentRow);
             currentRow = [];
             currentRowSpan = 0;
@@ -99,8 +106,7 @@ export default function WidgetGrid({ layout, data }: WidgetGridProps) {
         currentRow.push(widget);
         currentRowSpan += span;
 
-        // Row is complete at 3 cols
-        if (currentRowSpan >= 3) {
+        if (currentRowSpan >= 6) {
             rows.push(currentRow);
             currentRow = [];
             currentRowSpan = 0;
@@ -114,14 +120,7 @@ export default function WidgetGrid({ layout, data }: WidgetGridProps) {
     return (
         <div className="space-y-4">
             {rows.map((row, rowIdx) => {
-                // Determine grid columns based on content
                 const isFull = row.length === 1 && row[0].size === "full";
-                const hasTwoThird = row.some((w) => w.size === "2/3");
-                const gridCols = isFull
-                    ? ""
-                    : hasTwoThird
-                        ? "grid grid-cols-1 lg:grid-cols-3 gap-4"
-                        : "grid grid-cols-1 lg:grid-cols-2 gap-4";
 
                 if (isFull) {
                     return (
@@ -132,11 +131,14 @@ export default function WidgetGrid({ layout, data }: WidgetGridProps) {
                 }
 
                 return (
-                    <div key={rowIdx} className={gridCols}>
+                    <div
+                        key={rowIdx}
+                        className="grid grid-cols-1 lg:grid-cols-6 gap-4"
+                    >
                         {row.map((widget) => (
                             <div
                                 key={widget.widgetId}
-                                className={SIZE_CLASS[widget.size] || ""}
+                                className={COL_SPAN_CLASS[getColSpan(widget.size)] || ""}
                             >
                                 {renderWidget(widget.widgetId, data)}
                             </div>

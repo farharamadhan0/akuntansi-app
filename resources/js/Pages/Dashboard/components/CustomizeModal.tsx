@@ -23,6 +23,7 @@ import {
     WIDGET_REGISTRY,
     getDefaultLayout,
     type WidgetLayoutItem,
+    type WidgetSize,
 } from "../widgets/registry";
 
 interface CustomizeModalProps {
@@ -32,12 +33,74 @@ interface CustomizeModalProps {
     onClose: () => void;
 }
 
+const SIZE_OPTIONS: { value: WidgetSize; label: string }[] = [
+    { value: "full", label: "Penuh" },
+    { value: "1/2", label: "1/2" },
+    { value: "2/3", label: "2/3" },
+    { value: "1/3", label: "1/3" },
+];
+
+function SizeIcon({ cols, filled }: { cols: number; filled: number }) {
+    return (
+        <div className="flex gap-px">
+            {Array.from({ length: cols }).map((_, i) => (
+                <div
+                    key={i}
+                    className={`h-3 rounded-sm ${
+                        i < filled ? "bg-blue-500" : "bg-gray-200"
+                    }`}
+                    style={{ width: `${12 / cols}px` }}
+                />
+            ))}
+        </div>
+    );
+}
+
+function getSizeIcon(size: WidgetSize) {
+    switch (size) {
+        case "full": return <SizeIcon cols={1} filled={1} />;
+        case "1/2": return <SizeIcon cols={2} filled={1} />;
+        case "2/3": return <SizeIcon cols={3} filled={2} />;
+        case "1/3": return <SizeIcon cols={3} filled={1} />;
+    }
+}
+
+function SizeSelector({
+    value,
+    onChange,
+}: {
+    value: WidgetSize;
+    onChange: (size: WidgetSize) => void;
+}) {
+    return (
+        <div className="flex gap-0.5 shrink-0">
+            {SIZE_OPTIONS.map((opt) => (
+                <button
+                    key={opt.value}
+                    type="button"
+                    title={opt.label}
+                    onClick={() => onChange(opt.value)}
+                    className={`flex items-center justify-center w-7 h-6 rounded border text-[10px] font-medium transition-colors ${
+                        value === opt.value
+                            ? "border-blue-400 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                    }`}
+                >
+                    {getSizeIcon(opt.value)}
+                </button>
+            ))}
+        </div>
+    );
+}
+
 function SortableItem({
     item,
     onToggle,
+    onSizeChange,
 }: {
     item: WidgetLayoutItem;
     onToggle: (widgetId: string) => void;
+    onSizeChange: (widgetId: string, size: WidgetSize) => void;
 }) {
     const meta = WIDGET_REGISTRY.find((w) => w.id === item.widgetId);
     const {
@@ -91,6 +154,94 @@ function SortableItem({
                     {meta.description}
                 </p>
             </div>
+
+            {/* Size selector - only shown when visible */}
+            {item.visible && (
+                <SizeSelector
+                    value={item.size}
+                    onChange={(size) => onSizeChange(item.widgetId, size)}
+                />
+            )}
+        </div>
+    );
+}
+
+function LayoutPreview({ items }: { items: WidgetLayoutItem[] }) {
+    const visible = items.filter((w) => w.visible);
+
+    const rows: WidgetLayoutItem[][] = [];
+    let currentRow: WidgetLayoutItem[] = [];
+    let currentRowSpan = 0;
+
+    for (const widget of visible) {
+        const span =
+            widget.size === "full" ? 6 :
+            widget.size === "2/3" ? 4 :
+            widget.size === "1/3" ? 2 :
+            3; // 1/2
+
+        if (widget.size === "full") {
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+                currentRow = [];
+                currentRowSpan = 0;
+            }
+            rows.push([widget]);
+            continue;
+        }
+
+        if (currentRowSpan + span > 6) {
+            rows.push(currentRow);
+            currentRow = [];
+            currentRowSpan = 0;
+        }
+
+        currentRow.push(widget);
+        currentRowSpan += span;
+
+        if (currentRowSpan >= 6) {
+            rows.push(currentRow);
+            currentRow = [];
+            currentRowSpan = 0;
+        }
+    }
+
+    if (currentRow.length > 0) {
+        rows.push(currentRow);
+    }
+
+    const getColSpan = (size: WidgetSize) => {
+        switch (size) {
+            case "full": return 6;
+            case "2/3": return 4;
+            case "1/3": return 2;
+            case "1/2": return 3;
+        }
+    };
+
+    const getMeta = (widgetId: string) =>
+        WIDGET_REGISTRY.find((w) => w.id === widgetId);
+
+    return (
+        <div className="space-y-1">
+            {rows.map((row, rowIdx) => (
+                <div key={rowIdx} className="grid grid-cols-6 gap-1">
+                    {row.map((widget) => {
+                        const meta = getMeta(widget.widgetId);
+                        return (
+                            <div
+                                key={widget.widgetId}
+                                className="bg-blue-100 border border-blue-200 rounded px-1.5 py-1 text-[9px] text-blue-700 font-medium truncate text-center"
+                                style={{
+                                    gridColumn: `span ${getColSpan(widget.size)}`,
+                                }}
+                            >
+                                {meta?.label ?? widget.widgetId}
+                            </div>
+                        );
+                    })}
+                </div>
+            ))}
         </div>
     );
 }
@@ -133,6 +284,14 @@ export default function CustomizeModal({
         );
     };
 
+    const changeSize = (widgetId: string, size: WidgetSize) => {
+        setItems((prev) =>
+            prev.map((item) =>
+                item.widgetId === widgetId ? { ...item, size } : item
+            )
+        );
+    };
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -162,7 +321,7 @@ export default function CustomizeModal({
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[85vh] flex flex-col">
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b">
                     <div>
@@ -170,8 +329,8 @@ export default function CustomizeModal({
                             Sesuaikan Dashboard
                         </h2>
                         <p className="text-xs text-gray-400 mt-0.5">
-                            Drag untuk mengubah urutan, toggle untuk
-                            menampilkan/menyembunyikan
+                            Drag untuk mengubah urutan, atur lebar grid tiap
+                            widget
                         </p>
                     </div>
                     <button
@@ -180,6 +339,14 @@ export default function CustomizeModal({
                     >
                         <X size={16} className="text-gray-400" />
                     </button>
+                </div>
+
+                {/* Live Preview */}
+                <div className="px-5 pt-3 pb-2 border-b bg-gray-50/50">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">
+                        Preview Layout
+                    </p>
+                    <LayoutPreview items={items} />
                 </div>
 
                 {/* Body */}
@@ -199,6 +366,7 @@ export default function CustomizeModal({
                                         key={item.widgetId}
                                         item={item}
                                         onToggle={toggleVisibility}
+                                        onSizeChange={changeSize}
                                     />
                                 ))}
                             </div>
