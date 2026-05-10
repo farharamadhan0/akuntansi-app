@@ -2,44 +2,24 @@ import { Link, usePage, router } from "@inertiajs/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePermissions } from "@/lib/permissions";
 import {
+    topNavCategories,
+    contextualSidebarItems,
+    quickActions,
+    getActiveCategoryKey,
+    isSidebarItemActive,
+    type NavItem,
+    type TopNavCategory,
+} from "@/lib/navigation.config";
+import {
     LogOut,
-    LayoutDashboard,
-    Wallet,
-    Package,
-    ShoppingCart,
-    ScanLine,
-    Boxes,
-    Tags,
-    TrendingUp,
-    TrendingDown,
-    Users,
-    UserCheck,
-    CreditCard,
-    BarChart2,
-    Scale,
-    List,
-    Truck,
     Building2,
-    BookOpen,
     ChevronDown,
-    UserCog,
-    ShieldCheck,
+    Plus,
+    Menu,
+    X,
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
-import {
-    SidebarProvider,
-    SidebarLayout,
-    Sidebar,
-    SidebarHeader,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuItem,
-    SidebarMenuButton,
-    SidebarTrigger,
-    useSidebar,
-} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
@@ -47,135 +27,316 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-interface NavItem {
-    href: string;
-    label: string;
-    icon: React.ElementType;
-    permission?: string;
-}
+// ============================================================================
+// Top Navigation Component
+// ============================================================================
 
-interface NavGroup {
-    label: string;
-    items: NavItem[];
-    ownerOnly?: boolean;
-}
-
-const navGroups: NavGroup[] = [
-    {
-        label: "Transaksi",
-        items: [
-            { href: "/transaksi/uang-masuk", label: "Uang Masuk", icon: TrendingUp, permission: "income.view" },
-            { href: "/transaksi/uang-keluar", label: "Uang Keluar", icon: TrendingDown, permission: "expense.view" },
-            { href: "/transaksi/piutang", label: "Piutang", icon: Users, permission: "receivables.view" },
-            { href: "/transaksi/hutang", label: "Hutang", icon: CreditCard, permission: "payables.view" },
-            { href: "/transaksi/pembelian", label: "Pembelian", icon: ShoppingCart, permission: "purchases.view" },
-            { href: "/transaksi/penjualan", label: "Penjualan", icon: ScanLine, permission: "sales.view" },
-            { href: "/transaksi/stok-penyesuaian", label: "Penyesuaian Stok", icon: Boxes, permission: "inventory_adjustments.view" },
-            { href: "/jurnal", label: "Jurnal Umum", icon: BookOpen, permission: "journals.view" },
-        ],
-    },
-    {
-        label: "Master Data",
-        items: [
-            { href: "/master/pelanggan", label: "Pelanggan", icon: UserCheck, permission: "customers.view" },
-            { href: "/master/pemasok", label: "Pemasok", icon: Truck, permission: "suppliers.view" },
-            { href: "/master/produk", label: "Produk", icon: Package, permission: "products.view" },
-            { href: "/master/kas-bank", label: "Kas & Bank", icon: Wallet, permission: "cash_bank.view" },
-            { href: "/master/kategori", label: "Daftar Akun", icon: Tags, permission: "accounts.view" },
-        ],
-    },
-    {
-        label: "Pengaturan",
-        ownerOnly: true,
-        items: [
-            { href: "/pengaturan/pengguna", label: "Pengguna", icon: UserCog },
-            { href: "/pengaturan/role", label: "Role", icon: ShieldCheck },
-        ],
-    },
-    {
-        label: "Laporan",
-        items: [
-            { href: "/laporan/transaksi", label: "Daftar Transaksi", icon: List, permission: "reports.transactions" },
-            { href: "/laporan/piutang", label: "Daftar Piutang", icon: Users, permission: "reports.receivables" },
-            { href: "/laporan/hutang", label: "Daftar Hutang", icon: CreditCard, permission: "reports.payables" },
-            { href: "/laporan/buku-besar", label: "Buku Besar", icon: BookOpen, permission: "reports.general_ledger" },
-            { href: "/laporan/laba-rugi", label: "Laba Rugi", icon: BarChart2, permission: "reports.income_statement" },
-            { href: "/laporan/neraca", label: "Neraca", icon: Scale, permission: "reports.balance_sheet" },
-            { href: "/laporan/arus-kas", label: "Arus Kas", icon: TrendingUp, permission: "reports.cash_flow" },
-        ],
-    },
-];
-
-function isActive(href: string) {
-    const currentPath = window.location.pathname;
-    if (href === "/") return currentPath === "/";
-    return currentPath.startsWith(href);
-}
-
-function SidebarNav() {
+function TopNavigation({
+    activeCategoryKey,
+    onMobileMenuToggle,
+    isMobileMenuOpen,
+}: {
+    activeCategoryKey: string;
+    onMobileMenuToggle: () => void;
+    isMobileMenuOpen: boolean;
+}) {
     const { auth } = usePage<PageProps>().props;
-    const { setOpen } = useSidebar();
     const { can, isOwner } = usePermissions();
 
-    const visibleGroups = navGroups
-        .filter((g) => !g.ownerOnly || auth.user.is_owner)
-        .map((g) => ({
-            ...g,
-            items: g.ownerOnly
-                ? g.items
-                : g.items.filter((i) => !i.permission || can(i.permission)),
-        }))
-        .filter((g) => g.items.length > 0);
-
-    const showDashboard = isOwner || can("dashboard.view");
+    const visibleCategories = topNavCategories.filter((cat) => {
+        if (cat.ownerOnly && !auth.user.is_owner) return false;
+        if (cat.permission && !isOwner && !can(cat.permission)) return false;
+        return true;
+    });
 
     return (
-        <Sidebar className="md:w-54">
-            <SidebarHeader>
-                <Link href="/" className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-primary-600">Emwal</span>
+        <nav className="hidden md:flex items-center gap-1">
+            {visibleCategories.map((category) => (
+                <Link
+                    key={category.key}
+                    href={category.href}
+                    className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                        activeCategoryKey === category.key
+                            ? "bg-primary/10 text-primary"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    )}
+                >
+                    <category.icon size={16} />
+                    <span>{category.label}</span>
                 </Link>
-            </SidebarHeader>
-
-            <SidebarContent>
-                {/* Dashboard */}
-                {showDashboard && (
-                    <SidebarMenu className="mb-4">
-                        <SidebarMenuItem>
-                            <Link href="/" className="block" onClick={() => setOpen(false)}>
-                                <SidebarMenuButton isActive={isActive("/")}>
-                                    <LayoutDashboard size={18} />
-                                    Dashboard
-                                </SidebarMenuButton>
-                            </Link>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                )}
-
-                {/* Grouped items */}
-                {visibleGroups.map((group) => (
-                    <SidebarGroup key={group.label}>
-                        <SidebarGroupLabel className="text-xs">{group.label}</SidebarGroupLabel>
-                        <SidebarMenu>
-                            {group.items.map((item) => (
-                                <SidebarMenuItem key={item.href}>
-                                    <Link href={item.href} className="block" onClick={() => setOpen(false)}>
-                                        <SidebarMenuButton isActive={isActive(item.href)}>
-                                            <item.icon size={18} />
-                                            {item.label}
-                                        </SidebarMenuButton>
-                                    </Link>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroup>
-                ))}
-            </SidebarContent>
-        </Sidebar>
+            ))}
+        </nav>
     );
 }
 
-function TopBar() {
+// ============================================================================
+// Quick Action Button Component
+// ============================================================================
+
+function QuickActionButton() {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const { can, isOwner } = usePermissions();
+
+    const visibleActions = quickActions.filter((action) => {
+        if (!action.permission) return true;
+        return isOwner || can(action.permission);
+    });
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    if (visibleActions.length === 0) return null;
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
+            >
+                <Plus size={16} />
+                <span className="hidden sm:inline">Tambah</span>
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    {visibleActions.map((action) => (
+                        <Link
+                            key={action.key}
+                            href={action.href}
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                            <action.icon size={16} className="text-gray-500" />
+                            {action.label}
+                        </Link>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================================
+// Contextual Sidebar Component
+// ============================================================================
+
+function ContextualSidebar({
+    activeCategoryKey,
+    onItemClick,
+}: {
+    activeCategoryKey: string;
+    onItemClick?: () => void;
+}) {
+    const { auth } = usePage<PageProps>().props;
+    const { can, isOwner } = usePermissions();
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+
+    const sidebarItems = contextualSidebarItems[activeCategoryKey] ?? [];
+
+    const visibleItems = sidebarItems.filter((item) => {
+        if (item.ownerOnly && !auth.user.is_owner) return false;
+        if (item.permission && !isOwner && !can(item.permission)) return false;
+        return true;
+    });
+
+    if (visibleItems.length === 0) return null;
+
+    return (
+        <aside className="w-56 border-r border-gray-200 bg-gray-50/50 shrink-0">
+            <div className="p-4">
+                <ul className="space-y-1">
+                    {visibleItems.map((item) => {
+                        const isActive = isSidebarItemActive(item.href, pathname);
+                        const Icon = item.icon;
+
+                        if (item.disabled) {
+                            return (
+                                <li key={item.key}>
+                                    <span
+                                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-400 cursor-not-allowed rounded-md"
+                                        title="Segera hadir"
+                                    >
+                                        <Icon size={18} />
+                                        {item.label}
+                                    </span>
+                                </li>
+                            );
+                        }
+
+                        return (
+                            <li key={item.key}>
+                                <Link
+                                    href={item.href}
+                                    onClick={onItemClick}
+                                    className={cn(
+                                        "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                        isActive
+                                            ? "bg-primary/10 text-primary"
+                                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                    )}
+                                >
+                                    <Icon size={18} />
+                                    {item.label}
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
+        </aside>
+    );
+}
+
+// ============================================================================
+// Mobile Navigation Drawer
+// ============================================================================
+
+function MobileNavDrawer({
+    isOpen,
+    onClose,
+    activeCategoryKey,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    activeCategoryKey: string;
+}) {
+    const { auth } = usePage<PageProps>().props;
+    const { can, isOwner } = usePermissions();
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+
+    const visibleCategories = topNavCategories.filter((cat) => {
+        if (cat.ownerOnly && !auth.user.is_owner) return false;
+        if (cat.permission && !isOwner && !can(cat.permission)) return false;
+        return true;
+    });
+
+    const sidebarItems = contextualSidebarItems[activeCategoryKey] ?? [];
+    const visibleSidebarItems = sidebarItems.filter((item) => {
+        if (item.ownerOnly && !auth.user.is_owner) return false;
+        if (item.permission && !isOwner && !can(item.permission)) return false;
+        return true;
+    });
+
+    if (!isOpen) return null;
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                onClick={onClose}
+            />
+
+            {/* Drawer */}
+            <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl md:hidden flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+                    <Link href="/" className="text-lg font-bold text-primary" onClick={onClose}>
+                        Emwal
+                    </Link>
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-md"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Categories */}
+                <div className="px-4 py-3 border-b border-gray-200">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                        Menu Utama
+                    </p>
+                    <div className="space-y-1">
+                        {visibleCategories.map((category) => (
+                            <Link
+                                key={category.key}
+                                href={category.href}
+                                onClick={onClose}
+                                className={cn(
+                                    "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                    activeCategoryKey === category.key
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-gray-600 hover:bg-gray-100"
+                                )}
+                            >
+                                <category.icon size={18} />
+                                {category.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Contextual Items */}
+                {visibleSidebarItems.length > 0 && (
+                    <div className="flex-1 overflow-y-auto px-4 py-3">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                            {topNavCategories.find((c) => c.key === activeCategoryKey)?.label ?? "Menu"}
+                        </p>
+                        <div className="space-y-1">
+                            {visibleSidebarItems.map((item) => {
+                                const isActive = isSidebarItemActive(item.href, pathname);
+                                const Icon = item.icon;
+
+                                if (item.disabled) {
+                                    return (
+                                        <span
+                                            key={item.key}
+                                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-400 cursor-not-allowed rounded-md"
+                                        >
+                                            <Icon size={18} />
+                                            {item.label}
+                                        </span>
+                                    );
+                                }
+
+                                return (
+                                    <Link
+                                        key={item.key}
+                                        href={item.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                            "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                            isActive
+                                                ? "bg-primary/10 text-primary"
+                                                : "text-gray-600 hover:bg-gray-100"
+                                        )}
+                                    >
+                                        <Icon size={18} />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </>
+    );
+}
+
+// ============================================================================
+// Header Component
+// ============================================================================
+
+function Header({
+    activeCategoryKey,
+    onMobileMenuToggle,
+    isMobileMenuOpen,
+}: {
+    activeCategoryKey: string;
+    onMobileMenuToggle: () => void;
+    isMobileMenuOpen: boolean;
+}) {
     const { auth, company } = usePage<PageProps>().props;
     const [showUserMenu, setShowUserMenu] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -195,21 +356,41 @@ function TopBar() {
     }, []);
 
     return (
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background px-4 md:px-8 py-3">
-            <div className="flex items-center gap-2 md:hidden">
-                <SidebarTrigger />
-                <span className="text-sm font-bold text-primary-600">Emwal</span>
-            </div>
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-gray-200 bg-white px-4 md:px-6 py-3">
+            {/* Mobile menu button */}
+            <button
+                onClick={onMobileMenuToggle}
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-md md:hidden"
+            >
+                <Menu size={20} />
+            </button>
+
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 me-4">
+                <span className="text-lg font-bold text-primary">Emwal</span>
+            </Link>
+
+            {/* Top Navigation (Desktop) */}
+            <TopNavigation
+                activeCategoryKey={activeCategoryKey}
+                onMobileMenuToggle={onMobileMenuToggle}
+                isMobileMenuOpen={isMobileMenuOpen}
+            />
 
             <div className="flex-1" />
 
+            {/* Quick Action Button */}
+            <QuickActionButton />
+
+            {/* Tenant Selector */}
             {company && (
-                <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-600 border border-border rounded-md bg-gray-50">
+                <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-md bg-gray-50">
                     <Building2 size={14} className="text-gray-500" />
                     <span className="truncate max-w-[200px] font-medium">{company.name}</span>
                 </div>
             )}
 
+            {/* User Menu */}
             <div className="relative" ref={userMenuRef}>
                 <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -225,8 +406,8 @@ function TopBar() {
                 </button>
 
                 {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-border py-1 z-50">
-                        <div className="px-3 py-2 border-b border-border sm:hidden">
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <div className="px-3 py-2 border-b border-gray-200 sm:hidden">
                             <div className="text-sm font-medium text-gray-800 truncate">{auth.user.name}</div>
                             {company && (
                                 <div className="text-xs text-gray-500 truncate">{company.name}</div>
@@ -246,21 +427,45 @@ function TopBar() {
     );
 }
 
+// ============================================================================
+// Main Layout Component
+// ============================================================================
+
 export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    const activeCategoryKey = getActiveCategoryKey(pathname);
+
     return (
-        <SidebarProvider>
-            <SidebarLayout>
-                <SidebarNav />
+        <div className="min-h-screen bg-gray-50">
+            {/* Header with Top Navigation */}
+            <Header
+                activeCategoryKey={activeCategoryKey}
+                onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                isMobileMenuOpen={isMobileMenuOpen}
+            />
 
-                {/* Main content area */}
-                <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-                    <TopBar />
+            {/* Mobile Navigation Drawer */}
+            <MobileNavDrawer
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+                activeCategoryKey={activeCategoryKey}
+            />
 
-                    <main className="flex-1 px-4 md:px-8 py-8 w-full">
-                        {children}
-                    </main>
+            {/* Main Content Area with Contextual Sidebar */}
+            <div className="flex">
+                {/* Contextual Sidebar (Desktop) */}
+                <div className="hidden md:block">
+                    <div className="sticky top-[61px] h-[calc(100vh-61px)]">
+                        <ContextualSidebar activeCategoryKey={activeCategoryKey} />
+                    </div>
                 </div>
-            </SidebarLayout>
-        </SidebarProvider>
+
+                {/* Main Content */}
+                <main className="flex-1 px-4 md:px-8 py-6 min-h-[calc(100vh-61px)]">
+                    {children}
+                </main>
+            </div>
+        </div>
     );
 }

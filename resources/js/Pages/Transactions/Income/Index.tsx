@@ -100,7 +100,7 @@ export default function Index({ transactions }: Props) {
             </div>
 
             {/* Summary card */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <Card>
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="p-2 bg-green-50 rounded-lg">
