@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     // Routes requiring active company
     Route::middleware(['verified', 'has.company'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
         
         // Master Data - Pelanggan
         Route::prefix('master')->group(function () {

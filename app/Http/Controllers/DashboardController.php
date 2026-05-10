@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CashBankAccount;
+use App\Models\DashboardPreference;
 use App\Models\Transaction;
 use App\Models\Receivable;
 use App\Models\Payable;
@@ -12,6 +13,8 @@ use App\Enums\PaymentStatus;
 use App\Services\AccountBalanceService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -184,7 +187,13 @@ class DashboardController extends Controller
                 'category_name'      => $t->category?->name,
             ]);
 
+        // Load user dashboard layout preference
+        $preference = DashboardPreference::where('user_id', auth()->id())
+            ->where('company_id', $companyId)
+            ->first();
+
         return Inertia::render('Dashboard/Index', [
+            'layout' => $preference?->layout,
             'currentMonth' => $currentMonth,
             'stats' => [
                 'incomeThisMonth'  => $incomeThisMonth,
@@ -237,6 +246,29 @@ class DashboardController extends Controller
             'total' => (float) ($row->total_remaining ?? 0),
             'count' => (int) ($row->total_count ?? 0),
         ];
+    }
+
+    public function savePreferences(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'layout' => 'required|array',
+            'layout.*.widgetId' => 'required|string',
+            'layout.*.visible' => 'required|boolean',
+            'layout.*.order' => 'required|integer|min:1',
+            'layout.*.size' => 'required|string|in:full,2/3,1/3,1/2',
+        ]);
+
+        DashboardPreference::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'company_id' => auth()->user()->current_company_id,
+            ],
+            [
+                'layout' => $request->layout,
+            ]
+        );
+
+        return back();
     }
 
     /**
