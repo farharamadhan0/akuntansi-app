@@ -118,7 +118,86 @@ class CompanySetupService
 
     protected function createDefaultChartOfAccounts(Company $company): void
     {
-        $accounts = [
+        $this->syncSystemAccounts($company);
+    }
+
+    /**
+     * Ensure all default chart-of-accounts entries exist for the given company.
+     * Missing accounts will be created; existing ones (matched by code) are left intact.
+     * Returns the number of accounts created.
+     */
+    public function syncSystemAccounts(Company $company): int
+    {
+        $accounts = $this->defaultChartOfAccounts();
+
+        $existing = Account::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
+            ->get();
+
+        $byCode = $existing->keyBy('code');
+        $bySystemSubtype = $existing
+            ->filter(fn ($a) => $a->is_system && $a->subtype !== null)
+            ->keyBy('subtype');
+
+        $created = 0;
+
+        foreach ($accounts as $accountData) {
+            $desiredCode = $accountData['code'];
+            $subtype = $accountData['subtype'] ?? null;
+            $isSystem = $accountData['is_system'] ?? false;
+
+            // Identity match:
+            //  - System accounts with a subtype are identified by subtype (any code).
+            //  - All other accounts (including system-but-null-subtype roots) are
+            //    identified by code.
+            $alreadyExists = ($isSystem && $subtype !== null)
+                ? $bySystemSubtype->has($subtype)
+                : $byCode->has($desiredCode);
+
+            if ($alreadyExists) {
+                continue;
+            }
+
+            // Resolve a free code: prefer the configured one, otherwise append a numeric suffix.
+            $code = $desiredCode;
+            if ($byCode->has($code)) {
+                $suffix = 1;
+                while ($byCode->has($desiredCode . '-' . $suffix)) {
+                    $suffix++;
+                }
+                $code = $desiredCode . '-' . $suffix;
+            }
+
+            $parentId = null;
+            if (isset($accountData['parent_code']) && $byCode->has($accountData['parent_code'])) {
+                $parentId = $byCode->get($accountData['parent_code'])->id;
+            }
+
+            $account = Account::create([
+                'company_id' => $company->id,
+                'parent_id' => $parentId,
+                'code' => $code,
+                'name' => $accountData['name'],
+                'type' => $accountData['type'],
+                'subtype' => $subtype,
+                'normal_balance' => $accountData['type']->normalBalance(),
+                'is_system' => $isSystem,
+                'is_active' => true,
+            ]);
+
+            $byCode->put($code, $account);
+            if ($isSystem && $subtype !== null) {
+                $bySystemSubtype->put($subtype, $account);
+            }
+            $created++;
+        }
+
+        return $created;
+    }
+
+    protected function defaultChartOfAccounts(): array
+    {
+        return [
             // ASET (1xxx)
             ['code' => '1000', 'name' => 'Aset', 'type' => AccountType::Asset, 'subtype' => null, 'is_system' => true],
             ['code' => '1100', 'name' => 'Aset Lancar', 'type' => AccountType::Asset, 'subtype' => 'current_asset', 'parent_code' => '1000'],
@@ -127,23 +206,23 @@ class CompanySetupService
             ['code' => '1130', 'name' => 'Piutang Usaha', 'type' => AccountType::Asset, 'subtype' => 'receivable', 'parent_code' => '1100', 'is_system' => true],
             ['code' => '1140', 'name' => 'Persediaan', 'type' => AccountType::Asset, 'subtype' => 'inventory', 'parent_code' => '1100', 'is_system' => true],
             ['code' => '1200', 'name' => 'Aset Tetap', 'type' => AccountType::Asset, 'subtype' => 'fixed_asset', 'parent_code' => '1000'],
-            
+
             // KEWAJIBAN (2xxx)
             ['code' => '2000', 'name' => 'Kewajiban', 'type' => AccountType::Liability, 'subtype' => null, 'is_system' => true],
             ['code' => '2100', 'name' => 'Kewajiban Lancar', 'type' => AccountType::Liability, 'subtype' => 'current_liability', 'parent_code' => '2000'],
             ['code' => '2110', 'name' => 'Hutang Usaha', 'type' => AccountType::Liability, 'subtype' => 'payable', 'parent_code' => '2100', 'is_system' => true],
             ['code' => '2200', 'name' => 'Kewajiban Jangka Panjang', 'type' => AccountType::Liability, 'subtype' => 'long_term_liability', 'parent_code' => '2000'],
-            
+
             // MODAL (3xxx)
             ['code' => '3000', 'name' => 'Modal', 'type' => AccountType::Equity, 'subtype' => null, 'is_system' => true],
             ['code' => '3100', 'name' => 'Modal Pemilik', 'type' => AccountType::Equity, 'subtype' => 'owner_equity', 'parent_code' => '3000', 'is_system' => true],
             ['code' => '3200', 'name' => 'Laba Ditahan', 'type' => AccountType::Equity, 'subtype' => 'retained_earnings', 'parent_code' => '3000', 'is_system' => true],
-            
+
             // PENDAPATAN (4xxx)
             ['code' => '4000', 'name' => 'Pendapatan', 'type' => AccountType::Revenue, 'subtype' => null, 'is_system' => true],
             ['code' => '4100', 'name' => 'Pendapatan Usaha', 'type' => AccountType::Revenue, 'subtype' => 'operating_revenue', 'parent_code' => '4000', 'is_system' => true],
             ['code' => '4200', 'name' => 'Pendapatan Lain-lain', 'type' => AccountType::Revenue, 'subtype' => 'other_revenue', 'parent_code' => '4000'],
-            
+
             // BEBAN (5xxx)
             ['code' => '5000', 'name' => 'Beban', 'type' => AccountType::Expense, 'subtype' => null, 'is_system' => true],
             ['code' => '5050', 'name' => 'Harga Pokok Penjualan', 'type' => AccountType::Expense, 'subtype' => 'cogs', 'parent_code' => '5000', 'is_system' => true],
@@ -157,29 +236,6 @@ class CompanySetupService
             ['code' => '5170', 'name' => 'Selisih Stok', 'type' => AccountType::Expense, 'subtype' => 'inventory_adjustment', 'parent_code' => '5100', 'is_system' => true],
             ['code' => '5200', 'name' => 'Beban Lain-lain', 'type' => AccountType::Expense, 'subtype' => 'other_expense', 'parent_code' => '5000'],
         ];
-
-        $createdAccounts = [];
-
-        foreach ($accounts as $accountData) {
-            $parentId = null;
-            if (isset($accountData['parent_code']) && isset($createdAccounts[$accountData['parent_code']])) {
-                $parentId = $createdAccounts[$accountData['parent_code']]->id;
-            }
-
-            $account = Account::create([
-                'company_id' => $company->id,
-                'parent_id' => $parentId,
-                'code' => $accountData['code'],
-                'name' => $accountData['name'],
-                'type' => $accountData['type'],
-                'subtype' => $accountData['subtype'],
-                'normal_balance' => $accountData['type']->normalBalance(),
-                'is_system' => $accountData['is_system'] ?? false,
-                'is_active' => true,
-            ]);
-
-            $createdAccounts[$accountData['code']] = $account;
-        }
     }
 
     protected function createDefaultCashAccount(Company $company): void
