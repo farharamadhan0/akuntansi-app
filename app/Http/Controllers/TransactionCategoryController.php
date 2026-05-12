@@ -17,7 +17,6 @@ class TransactionCategoryController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $categories = TransactionCategory::where('company_id', $companyId)
-            ->with('account:id,code,name')
             ->orderBy('type')
             ->orderBy('name')
             ->get()
@@ -28,8 +27,6 @@ class TransactionCategoryController extends Controller
                 'type_label' => $cat->type === 'income' ? 'Pemasukan' : 'Pengeluaran',
                 'description' => $cat->description,
                 'is_active' => $cat->is_active,
-                'account_name' => $cat->account->name,
-                'account_code' => $cat->account->code,
             ]);
 
         return Inertia::render('MasterData/Categories/Index', [

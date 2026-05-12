@@ -8,8 +8,6 @@ import {
     Trash2,
     ToggleLeft,
     ToggleRight,
-    TrendingUp,
-    TrendingDown,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { FilterTabs } from "@/components/ui/filter-tabs";
@@ -23,7 +21,6 @@ interface Category {
     type: 'income' | 'expense';
     description?: string;
     is_active: boolean;
-    account?: { code: string; name: string };
 }
 
 export default function Index({ categories }: { categories: Category[] }) {
@@ -91,7 +88,6 @@ export default function Index({ categories }: { categories: Category[] }) {
                             <TableRow>
                                 <TableHead>Nama Akun</TableHead>
                                 <TableHead>Jenis</TableHead>
-                                <TableHead>Akun Buku Besar</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Aksi</TableHead>
                             </TableRow>
@@ -120,10 +116,6 @@ export default function Index({ categories }: { categories: Category[] }) {
                                             }`}>
                                                 {cat.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                             </span>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            <p>{cat.account?.name}</p>
-                                            <p className="text-xs text-muted-foreground">{cat.account?.code}</p>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
