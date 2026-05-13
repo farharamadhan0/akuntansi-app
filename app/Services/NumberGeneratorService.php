@@ -77,7 +77,7 @@ class NumberGeneratorService
         $lastNumber = $model::withoutGlobalScope('company')
             ->where('company_id', $companyId)
             ->where($column, 'like', $pattern)
-            ->orderByRaw("CAST(RIGHT({$column}, 4) AS INTEGER) DESC")
+            ->orderByRaw("CAST(SUBSTR({$column}, LENGTH({$column}) - 3, 4) AS INTEGER) DESC")
             ->value($column);
 
         if ($lastNumber) {
