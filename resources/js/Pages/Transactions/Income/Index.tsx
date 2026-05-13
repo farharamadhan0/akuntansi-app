@@ -107,7 +107,7 @@ export default function Index({ transactions }: Props) {
                             <ArrowUpCircle className="text-green-600" size={22} />
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground">Total Diposting</p>
+                            <p className="text-xs text-muted-foreground">Total Uang Masuk</p>
                             <p className="text-lg font-bold text-green-700">
                                 {formatCurrency(totalPosted)}
                             </p>
