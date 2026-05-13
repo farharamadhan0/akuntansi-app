@@ -275,6 +275,7 @@ class PurchaseService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Liability)
             ->where('subtype', 'payable')
+            ->where('is_system', true)
             ->firstOrFail()
             ->id;
     }
@@ -284,6 +285,7 @@ class PurchaseService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'operating_expense')
+            ->where('is_system', true)
             ->firstOrFail()
             ->id;
     }

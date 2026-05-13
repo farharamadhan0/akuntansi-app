@@ -123,6 +123,7 @@ class IncomeService
         return Account::where('company_id', $transaction->company_id)
             ->where('type', AccountType::Revenue)
             ->where('subtype', 'operating_revenue')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 }

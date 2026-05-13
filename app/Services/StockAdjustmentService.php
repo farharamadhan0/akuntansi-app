@@ -174,6 +174,7 @@ class StockAdjustmentService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Asset)
             ->where('subtype', 'inventory')
+            ->where('is_system', true)
             ->firstOrFail()
             ->id;
     }
@@ -183,6 +184,7 @@ class StockAdjustmentService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'inventory_adjustment')
+            ->where('is_system', true)
             ->firstOrFail()
             ->id;
     }

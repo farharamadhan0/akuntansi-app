@@ -146,6 +146,7 @@ class ReceivableService
         return Account::where('company_id', $receivable->company_id)
             ->where('type', AccountType::Asset)
             ->where('subtype', 'receivable')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 
@@ -158,6 +159,7 @@ class ReceivableService
         return Account::where('company_id', $receivable->company_id)
             ->where('type', AccountType::Revenue)
             ->where('subtype', 'operating_revenue')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 }

@@ -80,6 +80,7 @@ class ProductService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Asset)
             ->where('subtype', 'inventory')
+            ->where('is_system', true)
             ->value('id');
     }
 
@@ -88,6 +89,7 @@ class ProductService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Revenue)
             ->where('subtype', 'operating_revenue')
+            ->where('is_system', true)
             ->value('id');
     }
 
@@ -96,6 +98,7 @@ class ProductService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'operating_expense')
+            ->where('is_system', true)
             ->value('id');
     }
 
@@ -104,6 +107,7 @@ class ProductService
         return Account::where('company_id', $companyId)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'cogs')
+            ->where('is_system', true)
             ->value('id');
     }
 }

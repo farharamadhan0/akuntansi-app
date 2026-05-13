@@ -130,6 +130,7 @@ class PayableService
         return Account::where('company_id', $payable->company_id)
             ->where('type', AccountType::Liability)
             ->where('subtype', 'payable')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 
@@ -142,6 +143,7 @@ class PayableService
         return Account::where('company_id', $payable->company_id)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'operating_expense')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 }

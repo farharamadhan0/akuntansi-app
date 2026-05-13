@@ -123,6 +123,7 @@ class ExpenseService
         return Account::where('company_id', $transaction->company_id)
             ->where('type', AccountType::Expense)
             ->where('subtype', 'operating_expense')
+            ->where('is_system', true)
             ->firstOrFail();
     }
 }

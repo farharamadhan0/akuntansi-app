@@ -142,6 +142,7 @@ class PaymentService
         $receivableAccount = Account::where('company_id', $payment->company_id)
             ->where('type', AccountType::Asset)
             ->where('subtype', 'receivable')
+            ->where('is_system', true)
             ->firstOrFail();
 
         $journalLines = [
@@ -173,6 +174,7 @@ class PaymentService
         $payableAccount = Account::where('company_id', $payment->company_id)
             ->where('type', AccountType::Liability)
             ->where('subtype', 'payable')
+            ->where('is_system', true)
             ->firstOrFail();
 
         $journalLines = [
