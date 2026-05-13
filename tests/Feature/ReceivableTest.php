@@ -50,7 +50,7 @@ class ReceivableTest extends TestCase
             ->where('type', 'income')
             ->first();
 
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
     }
 
     // -----------------------------------------------------------------------

@@ -21,8 +21,6 @@ interface CashBankData {
     type: string;
     bank_name: string;
     account_number: string;
-    opening_balance: number;
-    opening_balance_date: string;
 }
 
 interface CashBankType {
@@ -34,9 +32,19 @@ interface FormProps {
     cashBank?: CashBankData;
     ledgerAccounts: LedgerAccount[];
     types: CashBankType[];
+    canEditOpeningBalance: boolean;
+    openingBalance: number;
+    openingBalanceDate: string | null;
 }
 
-export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
+export default function Form({
+    cashBank,
+    ledgerAccounts,
+    types,
+    canEditOpeningBalance,
+    openingBalance,
+    openingBalanceDate,
+}: FormProps) {
     const isEdit = !!cashBank;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -45,8 +53,8 @@ export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
         type: cashBank?.type || 'cash',
         bank_name: cashBank?.bank_name || '',
         account_number: cashBank?.account_number || '',
-        opening_balance: cashBank?.opening_balance || 0,
-        opening_balance_date: cashBank?.opening_balance_date || new Date().toISOString().split('T')[0],
+        opening_balance: openingBalance ?? 0,
+        opening_balance_date: openingBalanceDate || new Date().toISOString().split('T')[0],
     });
 
     const submit = (e: FormEvent<HTMLFormElement>) => {
@@ -154,25 +162,38 @@ export default function Form({ cashBank, ledgerAccounts, types }: FormProps) {
                             </>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField label="Saldo Awal (Rp)" error={errors.opening_balance} hint="Saldo saat mulai menggunakan aplikasi">
-                                <Input
-                                    type="number"
-                                    placeholder="0"
-                                    value={data.opening_balance}
-                                    onChange={(e) => setData('opening_balance', Number(e.target.value))}
-                                    aria-invalid={!!errors.opening_balance}
-                                />
-                            </FormField>
+                        <div className="border-t pt-4">
+                            <div className="mb-2">
+                                <h3 className="text-sm font-semibold text-gray-800">Saldo Awal</h3>
+                                <p className="text-xs text-muted-foreground">
+                                    {canEditOpeningBalance
+                                        ? 'Saldo awal akan otomatis tercatat sebagai jurnal: Debit Kas/Bank, Kredit Modal Pemilik. Kosongkan jika tidak ada saldo awal.'
+                                        : 'Saldo awal terkunci karena akun ini sudah memiliki transaksi. Untuk koreksi, gunakan Jurnal Manual.'}
+                                </p>
+                            </div>
 
-                            <FormField label="Tanggal Saldo Awal" error={errors.opening_balance_date} hint="Tanggal pencatatan saldo awal">
-                                <Input
-                                    type="date"
-                                    value={data.opening_balance_date}
-                                    onChange={(e) => setData('opening_balance_date', e.target.value)}
-                                    aria-invalid={!!errors.opening_balance_date}
-                                />
-                            </FormField>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField label="Saldo Awal (Rp)" error={errors.opening_balance}>
+                                    <Input
+                                        type="number"
+                                        placeholder="0"
+                                        value={data.opening_balance}
+                                        onChange={(e) => setData('opening_balance', Number(e.target.value))}
+                                        aria-invalid={!!errors.opening_balance}
+                                        disabled={!canEditOpeningBalance}
+                                    />
+                                </FormField>
+
+                                <FormField label="Tanggal Saldo Awal" error={errors.opening_balance_date}>
+                                    <Input
+                                        type="date"
+                                        value={data.opening_balance_date}
+                                        onChange={(e) => setData('opening_balance_date', e.target.value)}
+                                        aria-invalid={!!errors.opening_balance_date}
+                                        disabled={!canEditOpeningBalance}
+                                    />
+                                </FormField>
+                            </div>
                         </div>
 
                         <div className="flex gap-3 pt-4">

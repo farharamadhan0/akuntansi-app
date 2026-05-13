@@ -49,7 +49,7 @@ class ReceivablePaymentTest extends TestCase
             'is_active'  => true,
         ]);
 
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
 
         // Create a posted receivable ready to be paid
         $service = app(ReceivableService::class);
@@ -338,8 +338,6 @@ class ReceivablePaymentTest extends TestCase
             $otherUser
         );
 
-        return CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $otherCompany->id)
-            ->firstOrFail();
+        return $this->createDefaultCashBankAccount($otherCompany->id);
     }
 }

@@ -60,7 +60,7 @@ class ReportServiceTest extends TestCase
 
         $this->actingAs($this->user);
 
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
 
         $this->customer = Customer::withoutGlobalScope('company')->create([
             'company_id' => $this->companyId,

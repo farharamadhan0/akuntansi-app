@@ -7,11 +7,9 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\CompanyUser;
 use App\Models\Account;
-use App\Models\CashBankAccount;
 use App\Models\TransactionCategory;
 use App\Models\FiscalPeriod;
 use App\Enums\AccountType;
-use App\Enums\CashBankType;
 use Illuminate\Support\Facades\DB;
 
 class CompanySetupService
@@ -35,7 +33,6 @@ class CompanySetupService
             $this->createDefaultRoles($company);
             $this->assignOwner($company, $owner);
             $this->createDefaultChartOfAccounts($company);
-            $this->createDefaultCashAccount($company);
             $this->createDefaultCategories($company);
             $this->createCurrentFiscalPeriod($company);
 
@@ -236,24 +233,6 @@ class CompanySetupService
             ['code' => '5170', 'name' => 'Selisih Stok', 'type' => AccountType::Expense, 'subtype' => 'inventory_adjustment', 'parent_code' => '5100', 'is_system' => true],
             ['code' => '5200', 'name' => 'Beban Lain-lain', 'type' => AccountType::Expense, 'subtype' => 'other_expense', 'parent_code' => '5000'],
         ];
-    }
-
-    protected function createDefaultCashAccount(Company $company): void
-    {
-        $cashAccount = Account::withoutGlobalScope('company')
-            ->where('company_id', $company->id)
-            ->where('code', '1110')
-            ->first();
-
-        CashBankAccount::create([
-            'company_id' => $company->id,
-            'account_id' => $cashAccount->id,
-            'name' => 'Kas Utama',
-            'type' => CashBankType::Cash,
-            'opening_balance' => 0,
-            'opening_balance_date' => now()->startOfMonth(),
-            'is_active' => true,
-        ]);
     }
 
     protected function createDefaultCategories(Company $company): void

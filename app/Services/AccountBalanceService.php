@@ -34,15 +34,9 @@ class AccountBalanceService
 
     public function getCashBankBalance(int $cashBankAccountId, ?string $asOfDate = null): float
     {
-        $cashBank = CashBankAccount::with('account')->findOrFail($cashBankAccountId);
-        
-        $journalBalance = $this->getBalance($cashBank->account_id, $asOfDate);
-        
-        if ($cashBank->opening_balance_date && (!$asOfDate || $asOfDate >= $cashBank->opening_balance_date->toDateString())) {
-            return (float) $cashBank->opening_balance + $journalBalance;
-        }
+        $cashBank = CashBankAccount::findOrFail($cashBankAccountId);
 
-        return $journalBalance;
+        return $this->getBalance($cashBank->account_id, $asOfDate);
     }
 
     public function getTrialBalance(int $companyId, ?string $asOfDate = null): Collection

@@ -41,8 +41,7 @@ class IncomeServiceTest extends TestCase
         $this->user->refresh();
         $this->companyId = $company->id;
 
-        // Fetch seeded data (no auth → global scope inactive)
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
 
         $this->category = TransactionCategory::where('company_id', $this->companyId)
             ->where('type', 'income')

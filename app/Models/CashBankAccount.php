@@ -23,15 +23,11 @@ class CashBankAccount extends Model
         'type',
         'bank_name',
         'account_number',
-        'opening_balance',
-        'opening_balance_date',
         'is_active',
     ];
 
     protected $casts = [
         'type' => CashBankType::class,
-        'opening_balance' => 'decimal:2',
-        'opening_balance_date' => 'date',
         'is_active' => 'boolean',
     ];
 

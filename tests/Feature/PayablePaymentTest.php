@@ -47,7 +47,7 @@ class PayablePaymentTest extends TestCase
             'is_active'  => true,
         ]);
 
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
 
         $service = app(PayableService::class);
         $payable = $service->create([
@@ -332,8 +332,6 @@ class PayablePaymentTest extends TestCase
             $otherUser
         );
 
-        return CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $otherCompany->id)
-            ->firstOrFail();
+        return $this->createDefaultCashBankAccount($otherCompany->id);
     }
 }

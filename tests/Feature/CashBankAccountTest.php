@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\CashBankType;
 use App\Models\Account;
 use App\Models\CashBankAccount;
+use App\Models\JournalEntry;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\CompanySetupService;
@@ -63,7 +64,7 @@ class CashBankAccountTest extends TestCase
 
     public function test_edit_page_loads(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
 
         $this->actingAs($this->user)
             ->get("/master/kas-bank/{$account->id}/edit")
@@ -77,7 +78,7 @@ class CashBankAccountTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
-    // Store – kas
+    // Store
     // -----------------------------------------------------------------------
 
     public function test_valid_cash_account_is_stored(): void
@@ -88,12 +89,11 @@ class CashBankAccountTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('cash_bank_accounts', [
-            'company_id'      => $this->companyId,
-            'name'            => 'Kas Operasional',
-            'type'            => CashBankType::Cash->value,
-            'account_id'      => $this->cashLedgerAccount->id,
-            'opening_balance' => 500000,
-            'is_active'       => true,
+            'company_id' => $this->companyId,
+            'name'       => 'Kas Operasional',
+            'type'       => CashBankType::Cash->value,
+            'account_id' => $this->cashLedgerAccount->id,
+            'is_active'  => true,
         ]);
     }
 
@@ -113,37 +113,135 @@ class CashBankAccountTest extends TestCase
         ]);
     }
 
-    public function test_account_is_scoped_to_company(): void
+    // -----------------------------------------------------------------------
+    // Saldo Awal → Journal Entry
+    // -----------------------------------------------------------------------
+
+    public function test_opening_balance_creates_journal_entry(): void
     {
-        // CompanySetupService creates a default cash account, so start with count
-        $before = CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $this->companyId)
-            ->count();
-
         $this->actingAs($this->user)
-            ->post('/master/kas-bank', $this->cashPayload());
+            ->post('/master/kas-bank', $this->cashPayload(['opening_balance' => 500000]));
 
-        $after = CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $this->companyId)
-            ->count();
-
-        $this->assertEquals($before + 1, $after);
-    }
-
-    public function test_store_without_opening_balance_defaults_to_zero(): void
-    {
-        $payload = $this->cashPayload();
-        unset($payload['opening_balance']);
-
-        $this->actingAs($this->user)
-            ->post('/master/kas-bank', $payload);
-
-        $account = CashBankAccount::withoutGlobalScope('company')
+        $cashBank = CashBankAccount::withoutGlobalScope('company')
             ->where('company_id', $this->companyId)
             ->where('name', 'Kas Operasional')
+            ->firstOrFail();
+
+        $entry = JournalEntry::withoutGlobalScope('company')
+            ->where('source_type', CashBankAccount::class)
+            ->where('source_id', $cashBank->id)
+            ->with('lines')
             ->first();
 
-        $this->assertEquals(0, (float) $account->opening_balance);
+        $this->assertNotNull($entry, 'Opening balance journal entry should be created');
+        $this->assertEquals(500000, $entry->lines->sum('debit'));
+        $this->assertEquals(500000, $entry->lines->sum('credit'));
+
+        $debitLine  = $entry->lines->firstWhere('account_id', $cashBank->account_id);
+        $this->assertNotNull($debitLine);
+        $this->assertEquals(500000, (float) $debitLine->debit);
+
+        $equityAccount = Account::where('company_id', $this->companyId)
+            ->where('code', '3100')
+            ->first();
+        $creditLine = $entry->lines->firstWhere('account_id', $equityAccount->id);
+        $this->assertNotNull($creditLine, 'Credit harus ke akun 3100 Modal Pemilik');
+        $this->assertEquals(500000, (float) $creditLine->credit);
+    }
+
+    public function test_zero_opening_balance_does_not_create_journal(): void
+    {
+        $payload = $this->cashPayload();
+        unset($payload['opening_balance'], $payload['opening_balance_date']);
+
+        $this->actingAs($this->user)->post('/master/kas-bank', $payload);
+
+        $cashBank = CashBankAccount::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->firstOrFail();
+
+        $this->assertDatabaseMissing('journal_entries', [
+            'source_type' => CashBankAccount::class,
+            'source_id'   => $cashBank->id,
+        ]);
+    }
+
+    public function test_opening_balance_updated_when_no_user_transactions(): void
+    {
+        // Create with 500k
+        $this->actingAs($this->user)
+            ->post('/master/kas-bank', $this->cashPayload(['opening_balance' => 500000]));
+
+        $cashBank = CashBankAccount::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->firstOrFail();
+
+        // Update to 1M
+        $this->actingAs($this->user)
+            ->put("/master/kas-bank/{$cashBank->id}", $this->cashPayload(['opening_balance' => 1000000]));
+
+        $entries = JournalEntry::withoutGlobalScope('company')
+            ->where('source_type', CashBankAccount::class)
+            ->where('source_id', $cashBank->id)
+            ->get();
+
+        $this->assertCount(1, $entries, 'Hanya 1 journal saldo awal yang ada (lama dihapus, baru dibuat)');
+        $this->assertEquals(1000000, (float) $entries->first()->lines->sum('debit'));
+    }
+
+    public function test_opening_balance_locked_when_has_user_transactions(): void
+    {
+        $this->actingAs($this->user)
+            ->post('/master/kas-bank', $this->cashPayload(['opening_balance' => 500000]));
+
+        $cashBank = CashBankAccount::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->firstOrFail();
+
+        // Buat transaksi user
+        Transaction::withoutGlobalScope('company')->create([
+            'company_id'           => $this->companyId,
+            'transaction_number'   => 'TRX-LOCK-001',
+            'type'                 => 'income',
+            'status'               => 'posted',
+            'date'                 => now()->toDateString(),
+            'amount'               => 100000,
+            'description'          => 'Test',
+            'cash_bank_account_id' => $cashBank->id,
+            'created_by'           => $this->user->id,
+        ]);
+
+        // Coba ubah opening balance
+        $this->actingAs($this->user)
+            ->put("/master/kas-bank/{$cashBank->id}", $this->cashPayload(['opening_balance' => 9999999]));
+
+        // Saldo awal harus tetap 500k
+        $entry = JournalEntry::withoutGlobalScope('company')
+            ->where('source_type', CashBankAccount::class)
+            ->where('source_id', $cashBank->id)
+            ->with('lines')
+            ->firstOrFail();
+
+        $this->assertEquals(500000, (float) $entry->lines->sum('debit'));
+    }
+
+    public function test_destroy_removes_opening_journal(): void
+    {
+        $this->actingAs($this->user)
+            ->post('/master/kas-bank', $this->cashPayload(['opening_balance' => 500000]));
+
+        $cashBank = CashBankAccount::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->firstOrFail();
+
+        $this->actingAs($this->user)
+            ->delete("/master/kas-bank/{$cashBank->id}")
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('journal_entries', [
+            'source_type' => CashBankAccount::class,
+            'source_id'   => $cashBank->id,
+        ]);
     }
 
     // -----------------------------------------------------------------------
@@ -152,7 +250,7 @@ class CashBankAccountTest extends TestCase
 
     public function test_account_can_be_updated(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
 
         $this->actingAs($this->user)
             ->put("/master/kas-bank/{$account->id}", $this->cashPayload(['name' => 'Kas Baru']))
@@ -182,7 +280,7 @@ class CashBankAccountTest extends TestCase
 
     public function test_account_can_be_deactivated(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
         $this->assertTrue($account->is_active);
 
         $this->actingAs($this->user)
@@ -194,7 +292,7 @@ class CashBankAccountTest extends TestCase
 
     public function test_account_can_be_reactivated(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
         $account->update(['is_active' => false]);
 
         $this->actingAs($this->user)
@@ -210,7 +308,7 @@ class CashBankAccountTest extends TestCase
 
     public function test_account_with_no_transactions_can_be_deleted(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
 
         $this->actingAs($this->user)
             ->delete("/master/kas-bank/{$account->id}")
@@ -222,19 +320,18 @@ class CashBankAccountTest extends TestCase
 
     public function test_account_with_transactions_cannot_be_deleted(): void
     {
-        $account = $this->existingAccount();
+        $account = $this->createCashBank();
 
-        // Create a transaction attached to this account
         Transaction::withoutGlobalScope('company')->create([
-            'company_id'          => $this->companyId,
-            'transaction_number'  => 'TRX-TEST-001',
-            'type'                => 'income',
-            'status'              => 'draft',
-            'date'                => now()->toDateString(),
-            'amount'              => 100000,
-            'description'         => 'Test transaksi',
+            'company_id'           => $this->companyId,
+            'transaction_number'   => 'TRX-TEST-001',
+            'type'                 => 'income',
+            'status'               => 'draft',
+            'date'                 => now()->toDateString(),
+            'amount'               => 100000,
+            'description'          => 'Test transaksi',
             'cash_bank_account_id' => $account->id,
-            'created_by'          => $this->user->id,
+            'created_by'           => $this->user->id,
         ]);
 
         $this->actingAs($this->user)
@@ -322,12 +419,10 @@ class CashBankAccountTest extends TestCase
         ], $overrides);
     }
 
-    /** The seeded default cash account from CompanySetupService. */
-    private function existingAccount(): CashBankAccount
+    /** Create a fresh cash bank account (no auto-seed anymore). */
+    private function createCashBank(): CashBankAccount
     {
-        return CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $this->companyId)
-            ->firstOrFail();
+        return $this->createDefaultCashBankAccount($this->companyId);
     }
 
     private function createOtherCompanyAccount(): CashBankAccount
@@ -338,8 +433,6 @@ class CashBankAccountTest extends TestCase
             $otherUser
         );
 
-        return CashBankAccount::withoutGlobalScope('company')
-            ->where('company_id', $otherCompany->id)
-            ->firstOrFail();
+        return $this->createDefaultCashBankAccount($otherCompany->id);
     }
 }

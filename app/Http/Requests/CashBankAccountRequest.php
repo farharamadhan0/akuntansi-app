@@ -27,7 +27,7 @@ class CashBankAccountRequest extends FormRequest
             'bank_name' => ['nullable', 'string', 'max:100'],
             'account_number' => ['nullable', 'string', 'max:50'],
             'opening_balance' => ['nullable', 'numeric', 'min:0'],
-            'opening_balance_date' => ['nullable', 'date'],
+            'opening_balance_date' => ['nullable', 'date', 'before_or_equal:today'],
         ];
     }
 
@@ -45,6 +45,7 @@ class CashBankAccountRequest extends FormRequest
             'opening_balance.numeric' => 'Saldo awal harus berupa angka',
             'opening_balance.min' => 'Saldo awal tidak boleh negatif',
             'opening_balance_date.date' => 'Tanggal saldo awal tidak valid',
+            'opening_balance_date.before_or_equal' => 'Tanggal saldo awal tidak boleh di masa depan',
         ];
     }
 }

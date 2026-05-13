@@ -6,12 +6,19 @@ use App\Models\CashBankAccount;
 use App\Models\Account;
 use App\Enums\CashBankType;
 use App\Http\Requests\CashBankAccountRequest;
+use App\Services\AccountBalanceService;
+use App\Services\CashBankAccountService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CashBankAccountController extends Controller
 {
+    public function __construct(
+        protected CashBankAccountService $service,
+        protected AccountBalanceService $balanceService,
+    ) {}
+
     public function index(): Response
     {
         $companyId = auth()->user()->current_company_id;
@@ -28,7 +35,7 @@ class CashBankAccountController extends Controller
                 'type_label' => $acc->type->label(),
                 'bank_name' => $acc->bank_name,
                 'account_number' => $acc->account_number,
-                'opening_balance' => (float) $acc->opening_balance,
+                'current_balance' => $this->balanceService->getBalance($acc->account_id),
                 'is_active' => $acc->is_active,
                 'account_code' => $acc->account->code,
             ]);
@@ -54,6 +61,9 @@ class CashBankAccountController extends Controller
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
+            'canEditOpeningBalance' => true,
+            'openingBalance' => 0,
+            'openingBalanceDate' => null,
         ]);
     }
 
@@ -61,17 +71,12 @@ class CashBankAccountController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        CashBankAccount::create([
-            'company_id' => $companyId,
-            'account_id' => $request->account_id,
-            'name' => $request->name,
-            'type' => $request->type,
-            'bank_name' => $request->bank_name,
-            'account_number' => $request->account_number,
-            'opening_balance' => $request->opening_balance ?? 0,
-            'opening_balance_date' => $request->opening_balance_date ?? now()->startOfMonth(),
-            'is_active' => true,
-        ]);
+        $this->service->create(
+            $companyId,
+            $request->only(['account_id', 'name', 'type', 'bank_name', 'account_number']),
+            $request->filled('opening_balance') ? (float) $request->opening_balance : null,
+            $request->filled('opening_balance_date') ? $request->opening_balance_date : null,
+        );
 
         return redirect()->route('cash-bank.index')
             ->with('success', 'Akun kas/bank berhasil ditambahkan');
@@ -89,6 +94,9 @@ class CashBankAccountController extends Controller
             ->orderBy('code')
             ->get(['id', 'code', 'name', 'subtype']);
 
+        $opening = $this->service->getOpeningBalance($cashBank);
+        $canEditOpeningBalance = ! $this->service->hasUserTransactions($cashBank);
+
         return Inertia::render('MasterData/CashBank/Form', [
             'cashBank' => [
                 'id' => $cashBank->id,
@@ -97,14 +105,15 @@ class CashBankAccountController extends Controller
                 'type' => $cashBank->type->value,
                 'bank_name' => $cashBank->bank_name,
                 'account_number' => $cashBank->account_number,
-                'opening_balance' => (float) $cashBank->opening_balance,
-                'opening_balance_date' => $cashBank->opening_balance_date?->format('Y-m-d'),
             ],
             'ledgerAccounts' => $ledgerAccounts,
             'types' => collect(CashBankType::cases())->map(fn($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
+            'canEditOpeningBalance' => $canEditOpeningBalance,
+            'openingBalance' => $opening['amount'],
+            'openingBalanceDate' => $opening['date'],
         ]);
     }
 
@@ -112,15 +121,12 @@ class CashBankAccountController extends Controller
     {
         $this->authorizeCompany($cashBank);
 
-        $cashBank->update([
-            'account_id' => $request->account_id,
-            'name' => $request->name,
-            'type' => $request->type,
-            'bank_name' => $request->bank_name,
-            'account_number' => $request->account_number,
-            'opening_balance' => $request->opening_balance ?? 0,
-            'opening_balance_date' => $request->opening_balance_date,
-        ]);
+        $this->service->update(
+            $cashBank,
+            $request->only(['account_id', 'name', 'type', 'bank_name', 'account_number']),
+            $request->filled('opening_balance') ? (float) $request->opening_balance : null,
+            $request->filled('opening_balance_date') ? $request->opening_balance_date : null,
+        );
 
         return redirect()->route('cash-bank.index')
             ->with('success', 'Akun kas/bank berhasil diperbarui');
@@ -130,11 +136,11 @@ class CashBankAccountController extends Controller
     {
         $this->authorizeCompany($cashBank);
 
-        if ($cashBank->transactions()->exists()) {
+        if ($this->service->hasUserTransactions($cashBank)) {
             return back()->with('error', 'Tidak dapat menghapus akun yang sudah memiliki transaksi');
         }
 
-        $cashBank->delete();
+        $this->service->destroy($cashBank);
 
         return redirect()->route('cash-bank.index')
             ->with('success', 'Akun kas/bank berhasil dihapus');
@@ -154,7 +160,7 @@ class CashBankAccountController extends Controller
     protected function authorizeCompany(CashBankAccount $cashBank): void
     {
         if ($cashBank->company_id !== auth()->user()->current_company_id) {
-            abort(403);
+            abort(404);
         }
     }
 }

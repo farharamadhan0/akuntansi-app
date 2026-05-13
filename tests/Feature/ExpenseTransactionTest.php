@@ -36,7 +36,7 @@ class ExpenseTransactionTest extends TestCase
         $this->user->refresh();
         $this->companyId = $company->id;
 
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
         $this->category = TransactionCategory::where('company_id', $this->companyId)
             ->where('type', 'expense')
             ->first();
@@ -289,7 +289,7 @@ class ExpenseTransactionTest extends TestCase
             $otherUser
         );
 
-        return CashBankAccount::where('company_id', $otherCompany->id)->first();
+        return $this->createDefaultCashBankAccount($otherCompany->id);
     }
 
     private function createOtherCompanyExpenseCategory(): TransactionCategory

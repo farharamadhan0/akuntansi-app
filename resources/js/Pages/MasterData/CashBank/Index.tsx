@@ -14,7 +14,7 @@ interface CashBankAccount {
     type_label: string;
     bank_name?: string;
     account_number?: string;
-    opening_balance: number;
+    current_balance: number;
     is_active: boolean;
     account_code: string;
     account: { code: string; name: string };
@@ -72,7 +72,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                 <TableHead>Nama</TableHead>
                                 <TableHead>Jenis</TableHead>
                                 <TableHead>Bank / No. Rek</TableHead>
-                                <TableHead className="text-right">Saldo Awal</TableHead>
+                                <TableHead className="text-right">Saldo Saat Ini</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Aksi</TableHead>
                             </TableRow>
@@ -122,7 +122,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                             ) : '-'}
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
-                                            {formatCurrency(account.opening_balance)}
+                                            {formatCurrency(account.current_balance)}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${

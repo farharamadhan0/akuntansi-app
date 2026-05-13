@@ -38,8 +38,7 @@ class IncomeTransactionTest extends TestCase
         $this->user->refresh(); // pick up current_company_id
         $this->companyId = $company->id;
 
-        // No user authenticated yet → BelongsToCompany global scope is inactive
-        $this->cashBank = CashBankAccount::where('company_id', $this->companyId)->first();
+        $this->cashBank = $this->createDefaultCashBankAccount($this->companyId);
         $this->category = TransactionCategory::where('company_id', $this->companyId)
             ->where('type', 'income')
             ->first();
@@ -291,7 +290,7 @@ class IncomeTransactionTest extends TestCase
             $otherUser
         );
 
-        return CashBankAccount::where('company_id', $otherCompany->id)->first();
+        return $this->createDefaultCashBankAccount($otherCompany->id);
     }
 
     private function createOtherCompanyCategory(): TransactionCategory
