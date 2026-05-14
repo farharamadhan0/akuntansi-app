@@ -37,10 +37,10 @@ class SupplierRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Nama pemasok wajib diisi.',
-            'name.max' => 'Nama pemasok maksimal 255 karakter.',
-            'code.unique' => 'Kode pemasok sudah digunakan.',
-            'code.max' => 'Kode pemasok maksimal 20 karakter.',
+            'name.required' => 'Nama supplier wajib diisi.',
+            'name.max' => 'Nama supplier maksimal 255 karakter.',
+            'code.unique' => 'Kode supplier sudah digunakan.',
+            'code.max' => 'Kode supplier maksimal 20 karakter.',
             'email.email' => 'Format email tidak valid.',
         ];
     }

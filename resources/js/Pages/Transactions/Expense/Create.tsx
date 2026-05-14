@@ -159,7 +159,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                 />
                             </FormField>
 
-                            {/* Akun & Pemasok */}
+                            {/* Akun & Supplier */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                     label="Akun Pengeluaran"
@@ -182,7 +182,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                 </FormField>
 
                                 <FormField
-                                    label="Kepada Pemasok"
+                                    label="Kepada Supplier"
                                     error={errors.supplier_id}
                                     hint="Opsional"
                                 >
@@ -192,7 +192,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                         onChange={(e) => setData('supplier_id', e.target.value)}
                                         aria-invalid={!!errors.supplier_id}
                                     >
-                                        <option value="">-- Tanpa Pemasok --</option>
+                                        <option value="">-- Tanpa Supplier --</option>
                                         {suppliers.map((s) => (
                                             <option key={s.id} value={s.id}>
                                                 {s.name}

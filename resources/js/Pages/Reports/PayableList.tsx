@@ -95,7 +95,7 @@ export default function PayableList({ rows, summary, filters }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>No. Hutang</TableHead>
-                                <TableHead>Pemasok</TableHead>
+                                <TableHead>Supplier</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jatuh Tempo</TableHead>
                                 <TableHead className="text-right">Total</TableHead>

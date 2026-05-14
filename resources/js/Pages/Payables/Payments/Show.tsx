@@ -141,7 +141,7 @@ export default function Show({ payment: p, journalEntries }: Props) {
                     <CardContent className="p-6 space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-gray-500">Pemasok</p>
+                                <p className="text-gray-500">Supplier</p>
                                 <p className="font-medium text-gray-900">{p.supplier.name}</p>
                             </div>
                             <div>

@@ -138,7 +138,7 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
                     <div>
                         <h1 className="text-xl font-bold text-gray-900">Catat Pembayaran Hutang</h1>
                         <p className="text-sm text-gray-500">
-                            Bayar hutang ke pemasok
+                            Bayar hutang ke supplier
                         </p>
                     </div>
                 </div>
@@ -195,7 +195,7 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
                     {/* Supplier Filter */}
                     <Card className="mb-4">
                         <CardContent className="p-4">
-                            <FormField label="Filter Pemasok">
+                            <FormField label="Filter Supplier">
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={selectedSupplierId ?? ''}
@@ -204,7 +204,7 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
                                         setAllocations({});
                                     }}
                                 >
-                                    <option value="">-- Semua Pemasok --</option>
+                                    <option value="">-- Semua Supplier --</option>
                                     {suppliers.map((s) => (
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}

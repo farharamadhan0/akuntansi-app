@@ -41,26 +41,26 @@ export default function Form({ supplier }: Props) {
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (isEdit) {
-            put(`/master/pemasok/${supplier.id}`);
+            put(`/master/supplier/${supplier.id}`);
         } else {
-            post('/master/pemasok');
+            post('/master/supplier');
         }
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title={isEdit ? 'Edit Pemasok' : 'Tambah Pemasok'} />
+            <Head title={isEdit ? 'Edit Supplier' : 'Tambah Supplier'} />
 
             <div className="max-w-2xl mx-auto">
                 <Breadcrumb items={[
                     { label: 'Master Data' },
-                    { label: 'Pemasok', href: '/master/pemasok' },
+                    { label: 'Supplier', href: '/master/supplier' },
                     { label: isEdit ? 'Edit' : 'Tambah' },
                 ]} />
 
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">
-                        {isEdit ? 'Edit Pemasok' : 'Tambah Pemasok'}
+                        {isEdit ? 'Edit Supplier' : 'Tambah Supplier'}
                     </h1>
                 </div>
 
@@ -68,15 +68,15 @@ export default function Form({ supplier }: Props) {
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <FormField label="Nama Pemasok" error={errors.name} required>
+                                <FormField label="Nama Supplier" error={errors.name} required>
                                     <Input
-                                        placeholder="Nama lengkap pemasok"
+                                        placeholder="Nama lengkap supplier"
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                     />
                                 </FormField>
 
-                                <FormField label="Kode" error={errors.code} hint="Opsional – kode unik pemasok">
+                                <FormField label="Kode" error={errors.code} hint="Opsional – kode unik supplier">
                                     <Input
                                         placeholder="Contoh: SUP-001"
                                         value={data.code}
@@ -106,7 +106,7 @@ export default function Form({ supplier }: Props) {
 
                             <FormField label="Alamat" error={errors.address}>
                                 <Textarea
-                                    placeholder="Alamat lengkap pemasok"
+                                    placeholder="Alamat lengkap supplier"
                                     value={data.address}
                                     onChange={(e) => setData('address', e.target.value)}
                                     rows={3}
@@ -114,7 +114,7 @@ export default function Form({ supplier }: Props) {
                             </FormField>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <FormField label="NPWP" error={errors.tax_id} hint="Opsional – Nomor Pokok Wajib Pajak pemasok">
+                                <FormField label="NPWP" error={errors.tax_id} hint="Opsional – Nomor Pokok Wajib Pajak supplier">
                                     <Input
                                         placeholder="00.000.000.0-000.000"
                                         value={data.tax_id}
@@ -123,9 +123,9 @@ export default function Form({ supplier }: Props) {
                                 </FormField>
                             </div>
 
-                            <FormField label="Catatan" error={errors.notes} hint="Opsional – catatan internal tentang pemasok">
+                            <FormField label="Catatan" error={errors.notes} hint="Opsional – catatan internal tentang supplier">
                                 <Textarea
-                                    placeholder="Catatan internal tentang pemasok"
+                                    placeholder="Catatan internal tentang supplier"
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     rows={2}
@@ -149,9 +149,9 @@ export default function Form({ supplier }: Props) {
 
                             <div className="flex gap-3 pt-4">
                                 <Button type="submit" disabled={processing}>
-                                    {isEdit ? 'Simpan Perubahan' : 'Tambah Pemasok'}
+                                    {isEdit ? 'Simpan Perubahan' : 'Tambah Supplier'}
                                 </Button>
-                                <Link href="/master/pemasok">
+                                <Link href="/master/supplier">
                                     <Button type="button" variant="outline">
                                         Batal
                                     </Button>

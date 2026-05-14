@@ -67,7 +67,7 @@ export default function Create({ suppliers, categories }: Props) {
                     <div>
                         <h1 className="text-xl font-bold text-gray-900">Catat Hutang</h1>
                         <p className="text-sm text-gray-500">
-                            Catat tagihan yang harus dibayar ke pemasok
+                            Catat tagihan yang harus dibayar ke supplier
                         </p>
                     </div>
                 </div>
@@ -75,13 +75,13 @@ export default function Create({ suppliers, categories }: Props) {
                 <Card>
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
-                            <FormField label="Pemasok" error={errors.supplier_id} required>
+                            <FormField label="Supplier" error={errors.supplier_id} required>
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.supplier_id}
                                     onChange={(e) => setData('supplier_id', e.target.value)}
                                 >
-                                    <option value="">-- Pilih Pemasok --</option>
+                                    <option value="">-- Pilih Supplier --</option>
                                     {suppliers.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.code ? `[${s.code}] ` : ''}{s.name}
@@ -100,7 +100,7 @@ export default function Create({ suppliers, categories }: Props) {
                                     />
                                 </FormField>
 
-                                <FormField label="Jatuh Tempo" error={errors.due_date} required hint="Batas waktu pembayaran ke pemasok">
+                                <FormField label="Jatuh Tempo" error={errors.due_date} required hint="Batas waktu pembayaran ke supplier">
                                     <Input
                                         type="date"
                                         value={data.due_date}

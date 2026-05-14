@@ -52,7 +52,7 @@ class Permissions
                 'actions' => $crud,
             ],
             'suppliers' => [
-                'label' => 'Pemasok',
+                'label' => 'Supplier',
                 'actions' => $crud,
             ],
             'cash_bank' => [

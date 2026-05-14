@@ -53,7 +53,7 @@ class ExpenseTransactionRequest extends FormRequest
             'cash_bank_account_id.required' => 'Pilih kas/bank sumber pembayaran',
             'cash_bank_account_id.exists'   => 'Kas/bank tidak valid atau tidak aktif',
             'category_id.exists'            => 'Kategori tidak valid',
-            'supplier_id.exists'            => 'Pemasok tidak valid',
+            'supplier_id.exists'            => 'Supplier tidak valid',
             'description.required'          => 'Keterangan wajib diisi',
             'description.max'               => 'Keterangan maksimal 500 karakter',
             'reference.max'                 => 'No. referensi maksimal 100 karakter',

@@ -122,7 +122,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
     ],
     "master-data": [
         { key: "pelanggan", label: "Pelanggan", href: "/master/pelanggan", icon: UserCheck, permission: "customers.view" },
-        { key: "pemasok", label: "Pemasok", href: "/master/pemasok", icon: Truck, permission: "suppliers.view" },
+        { key: "supplier", label: "Supplier", href: "/master/supplier", icon: Truck, permission: "suppliers.view" },
         { key: "produk", label: "Produk", href: "/master/produk", icon: Package, permission: "products.view" },
         { key: "kas-bank", label: "Kas & Bank", href: "/master/kas-bank", icon: Wallet, permission: "cash_bank.view" },
         { key: "kategori", label: "Daftar Akun", href: "/master/kategori", icon: Tags, permission: "accounts.view" },

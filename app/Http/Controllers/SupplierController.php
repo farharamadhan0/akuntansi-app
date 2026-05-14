@@ -65,7 +65,7 @@ class SupplierController extends Controller
 
         return redirect()
             ->route('suppliers.index')
-            ->with('success', 'Pemasok berhasil ditambahkan.');
+            ->with('success', 'Supplier berhasil ditambahkan.');
     }
 
     public function edit(Supplier $supplier): Response
@@ -95,7 +95,7 @@ class SupplierController extends Controller
 
         return redirect()
             ->route('suppliers.index')
-            ->with('success', 'Pemasok berhasil diperbarui.');
+            ->with('success', 'Supplier berhasil diperbarui.');
     }
 
     public function destroy(Supplier $supplier): RedirectResponse
@@ -109,14 +109,14 @@ class SupplierController extends Controller
             ->exists();
 
         if ($hasActive) {
-            return back()->with('error', 'Pemasok tidak dapat dihapus karena masih memiliki hutang aktif.');
+            return back()->with('error', 'Supplier tidak dapat dihapus karena masih memiliki hutang aktif.');
         }
 
         $supplier->delete();
 
         return redirect()
             ->route('suppliers.index')
-            ->with('success', 'Pemasok berhasil dihapus.');
+            ->with('success', 'Supplier berhasil dihapus.');
     }
 
     public function toggleActive(Supplier $supplier): RedirectResponse
@@ -126,7 +126,7 @@ class SupplierController extends Controller
         $supplier->update(['is_active' => !$supplier->is_active]);
 
         $status = $supplier->is_active ? 'diaktifkan' : 'dinonaktifkan';
-        return back()->with('success', "Pemasok berhasil {$status}.");
+        return back()->with('success', "Supplier berhasil {$status}.");
     }
 
     protected function authorizeCompany(Supplier $supplier): void

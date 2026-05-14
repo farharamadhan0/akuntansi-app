@@ -47,19 +47,19 @@ export default function Index({ suppliers, filters }: Props) {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/master/pemasok', { search, status: filters.status }, { preserveState: true, replace: true });
+        router.get('/master/supplier', { search, status: filters.status }, { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
-        router.get('/master/pemasok', { search, status }, { preserveState: true, replace: true });
+        router.get('/master/supplier', { search, status }, { preserveState: true, replace: true });
     };
 
     const handleToggle = (supplier: Supplier) => {
-        router.post(`/master/pemasok/${supplier.id}/toggle`, {}, { preserveScroll: true });
+        router.post(`/master/supplier/${supplier.id}/toggle`, {}, { preserveScroll: true });
     };
 
     const handleDelete = (supplier: Supplier) => {
-        router.delete(`/master/pemasok/${supplier.id}`, {
+        router.delete(`/master/supplier/${supplier.id}`, {
             onFinish: () => setDeleteTarget(null),
         });
     };
@@ -68,28 +68,28 @@ export default function Index({ suppliers, filters }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Data Pemasok" />
+            <Head title="Data Supplier" />
 
             <Breadcrumb items={[
                 { label: 'Master Data' },
-                { label: 'Pemasok' },
+                { label: 'Supplier' },
             ]} />
 
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Truck className="text-orange-500" size={26} />
-                        Data Pemasok
+                        Data Supplier
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                        Kelola daftar pemasok / supplier usaha Anda
+                        Kelola daftar supplier usaha Anda
                     </p>
                 </div>
                 {can('suppliers.create') && (
-                    <Link href="/master/pemasok/tambah">
+                    <Link href="/master/supplier/tambah">
                         <Button className="gap-1.5">
                             <Plus size={18} />
-                            Tambah Pemasok
+                            Tambah Supplier
                         </Button>
                     </Link>
                 )}
@@ -143,7 +143,7 @@ export default function Index({ suppliers, filters }: Props) {
                             {suppliers.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Belum ada data pemasok. Klik "Tambah Pemasok" untuk memulai.
+                                        Belum ada data supplier. Klik "Tambah Supplier" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -172,7 +172,7 @@ export default function Index({ suppliers, filters }: Props) {
                                         <TableCell>
                                             <div className="flex items-center gap-1">
                                                 {can('suppliers.edit') && (
-                                                    <Link href={`/master/pemasok/${s.id}/edit`}>
+                                                    <Link href={`/master/supplier/${s.id}/edit`}>
                                                         <Button variant="ghost" size="sm" title="Edit">
                                                             <Pencil size={15} />
                                                         </Button>
@@ -215,9 +215,9 @@ export default function Index({ suppliers, filters }: Props) {
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-                        <h3 className="text-lg font-semibold mb-2">Hapus Pemasok</h3>
+                        <h3 className="text-lg font-semibold mb-2">Hapus Supplier</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            Hapus pemasok <strong>{deleteTarget.name}</strong>? Pemasok yang masih memiliki hutang aktif tidak dapat dihapus.
+                            Hapus supplier <strong>{deleteTarget.name}</strong>? Supplier yang masih memiliki hutang aktif tidak dapat dihapus.
                         </p>
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setDeleteTarget(null)}>

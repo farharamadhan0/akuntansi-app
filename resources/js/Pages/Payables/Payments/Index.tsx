@@ -79,7 +79,7 @@ export default function Index({ payments }: Props) {
                         Pembayaran Hutang
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                        Riwayat pembayaran hutang ke pemasok
+                        Riwayat pembayaran hutang ke supplier
                     </p>
                 </div>
                 {can('payables.edit') && (
@@ -98,7 +98,7 @@ export default function Index({ payments }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>No. Pembayaran</TableHead>
-                                <TableHead>Pemasok</TableHead>
+                                <TableHead>Supplier</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Dibayar dari</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>

@@ -40,21 +40,21 @@ class SupplierTest extends TestCase
     public function test_supplier_list_page_loads(): void
     {
         $this->actingAs($this->user)
-            ->get('/master/pemasok')
+            ->get('/master/supplier')
             ->assertOk();
     }
 
     public function test_supplier_create_page_loads(): void
     {
         $this->actingAs($this->user)
-            ->get('/master/pemasok/tambah')
+            ->get('/master/supplier/tambah')
             ->assertOk();
     }
 
     public function test_unauthenticated_user_is_redirected(): void
     {
-        $this->get('/master/pemasok')->assertRedirect('/login');
-        $this->post('/master/pemasok', $this->validPayload())->assertRedirect('/login');
+        $this->get('/master/supplier')->assertRedirect('/login');
+        $this->post('/master/supplier', $this->validPayload())->assertRedirect('/login');
     }
 
     // -----------------------------------------------------------------------
@@ -64,8 +64,8 @@ class SupplierTest extends TestCase
     public function test_valid_supplier_is_created(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/pemasok', $this->validPayload())
-            ->assertRedirect('/master/pemasok')
+            ->post('/master/supplier', $this->validPayload())
+            ->assertRedirect('/master/supplier')
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('suppliers', [
@@ -81,7 +81,7 @@ class SupplierTest extends TestCase
     public function test_supplier_is_scoped_to_company(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/pemasok', $this->validPayload());
+            ->post('/master/supplier', $this->validPayload());
 
         $this->assertDatabaseCount('suppliers', 1);
         $this->assertEquals($this->companyId, Supplier::withoutGlobalScope('company')->first()->company_id);
@@ -90,8 +90,8 @@ class SupplierTest extends TestCase
     public function test_supplier_without_optional_fields_is_created(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/pemasok', ['name' => 'Minimal Supplier'])
-            ->assertRedirect('/master/pemasok');
+            ->post('/master/supplier', ['name' => 'Minimal Supplier'])
+            ->assertRedirect('/master/supplier');
 
         $this->assertDatabaseHas('suppliers', [
             'company_id' => $this->companyId,
@@ -109,8 +109,8 @@ class SupplierTest extends TestCase
         $supplier = $this->createSupplier(['name' => 'Lama']);
 
         $this->actingAs($this->user)
-            ->put("/master/pemasok/{$supplier->id}", $this->validPayload(['name' => 'Baru']))
-            ->assertRedirect('/master/pemasok')
+            ->put("/master/supplier/{$supplier->id}", $this->validPayload(['name' => 'Baru']))
+            ->assertRedirect('/master/supplier')
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('suppliers', [
@@ -124,7 +124,7 @@ class SupplierTest extends TestCase
         $other = $this->createOtherCompanySupplier();
 
         $this->actingAs($this->user)
-            ->put("/master/pemasok/{$other->id}", $this->validPayload(['name' => 'Hacked']))
+            ->put("/master/supplier/{$other->id}", $this->validPayload(['name' => 'Hacked']))
             ->assertNotFound();
 
         $this->assertDatabaseMissing('suppliers', ['id' => $other->id, 'name' => 'Hacked']);
@@ -139,7 +139,7 @@ class SupplierTest extends TestCase
         $supplier = $this->createSupplier(['is_active' => true]);
 
         $this->actingAs($this->user)
-            ->post("/master/pemasok/{$supplier->id}/toggle")
+            ->post("/master/supplier/{$supplier->id}/toggle")
             ->assertRedirect();
 
         $this->assertDatabaseHas('suppliers', ['id' => $supplier->id, 'is_active' => false]);
@@ -150,7 +150,7 @@ class SupplierTest extends TestCase
         $supplier = $this->createSupplier(['is_active' => false]);
 
         $this->actingAs($this->user)
-            ->post("/master/pemasok/{$supplier->id}/toggle")
+            ->post("/master/supplier/{$supplier->id}/toggle")
             ->assertRedirect();
 
         $this->assertDatabaseHas('suppliers', ['id' => $supplier->id, 'is_active' => true]);
@@ -165,8 +165,8 @@ class SupplierTest extends TestCase
         $supplier = $this->createSupplier();
 
         $this->actingAs($this->user)
-            ->delete("/master/pemasok/{$supplier->id}")
-            ->assertRedirect('/master/pemasok')
+            ->delete("/master/supplier/{$supplier->id}")
+            ->assertRedirect('/master/supplier')
             ->assertSessionHas('success');
 
         $this->assertSoftDeleted('suppliers', ['id' => $supplier->id]);
@@ -191,7 +191,7 @@ class SupplierTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->delete("/master/pemasok/{$supplier->id}")
+            ->delete("/master/supplier/{$supplier->id}")
             ->assertSessionHas('error');
 
         $this->assertDatabaseHas('suppliers', ['id' => $supplier->id, 'deleted_at' => null]);
@@ -202,7 +202,7 @@ class SupplierTest extends TestCase
         $other = $this->createOtherCompanySupplier();
 
         $this->actingAs($this->user)
-            ->delete("/master/pemasok/{$other->id}")
+            ->delete("/master/supplier/{$other->id}")
             ->assertNotFound();
 
         $this->assertDatabaseHas('suppliers', ['id' => $other->id, 'deleted_at' => null]);
@@ -215,7 +215,7 @@ class SupplierTest extends TestCase
     public function test_name_is_required(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/pemasok', [])
+            ->post('/master/supplier', [])
             ->assertSessionHasErrors('name');
     }
 
@@ -224,7 +224,7 @@ class SupplierTest extends TestCase
         $this->createSupplier(['code' => 'SUP-001']);
 
         $this->actingAs($this->user)
-            ->post('/master/pemasok', $this->validPayload(['code' => 'SUP-001']))
+            ->post('/master/supplier', $this->validPayload(['code' => 'SUP-001']))
             ->assertSessionHasErrors('code');
     }
 
@@ -237,14 +237,14 @@ class SupplierTest extends TestCase
         $otherUser->refresh();
 
         $this->actingAs($otherUser)
-            ->post('/master/pemasok', $this->validPayload(['code' => 'SUP-001']))
-            ->assertRedirect('/master/pemasok');
+            ->post('/master/supplier', $this->validPayload(['code' => 'SUP-001']))
+            ->assertRedirect('/master/supplier');
     }
 
     public function test_invalid_email_is_rejected(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/pemasok', $this->validPayload(['email' => 'bukan-email']))
+            ->post('/master/supplier', $this->validPayload(['email' => 'bukan-email']))
             ->assertSessionHasErrors('email');
     }
 
@@ -258,7 +258,7 @@ class SupplierTest extends TestCase
         $this->createSupplier(['name' => 'CV Mundur']);
 
         $response = $this->actingAs($this->user)
-            ->get('/master/pemasok?search=Maju')
+            ->get('/master/supplier?search=Maju')
             ->assertOk();
 
         $suppliers = $response->original->getData()['page']['props']['suppliers'];
@@ -273,7 +273,7 @@ class SupplierTest extends TestCase
         $this->createSupplier(['name' => 'Nonaktif', 'is_active' => false]);
 
         $response = $this->actingAs($this->user)
-            ->get('/master/pemasok?status=active')
+            ->get('/master/supplier?status=active')
             ->assertOk();
 
         $suppliers = $response->original->getData()['page']['props']['suppliers'];

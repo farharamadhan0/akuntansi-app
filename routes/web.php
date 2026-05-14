@@ -101,14 +101,14 @@ Route::middleware('auth')->group(function () {
             Route::delete('pelanggan/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete')->name('customers.destroy');
             Route::post('pelanggan/{customer}/toggle', [CustomerController::class, 'toggleActive'])->middleware('permission:customers.edit')->name('customers.toggle');
 
-            // Master Data - Pemasok
-            Route::get('pemasok', [SupplierController::class, 'index'])->middleware('permission:suppliers.view')->name('suppliers.index');
-            Route::get('pemasok/tambah', [SupplierController::class, 'create'])->middleware('permission:suppliers.create')->name('suppliers.create');
-            Route::post('pemasok', [SupplierController::class, 'store'])->middleware('permission:suppliers.create')->name('suppliers.store');
-            Route::get('pemasok/{supplier}/edit', [SupplierController::class, 'edit'])->middleware('permission:suppliers.edit')->name('suppliers.edit');
-            Route::put('pemasok/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.edit')->name('suppliers.update');
-            Route::delete('pemasok/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete')->name('suppliers.destroy');
-            Route::post('pemasok/{supplier}/toggle', [SupplierController::class, 'toggleActive'])->middleware('permission:suppliers.edit')->name('suppliers.toggle');
+            // Master Data - Supplier
+            Route::get('supplier', [SupplierController::class, 'index'])->middleware('permission:suppliers.view')->name('suppliers.index');
+            Route::get('supplier/tambah', [SupplierController::class, 'create'])->middleware('permission:suppliers.create')->name('suppliers.create');
+            Route::post('supplier', [SupplierController::class, 'store'])->middleware('permission:suppliers.create')->name('suppliers.store');
+            Route::get('supplier/{supplier}/edit', [SupplierController::class, 'edit'])->middleware('permission:suppliers.edit')->name('suppliers.edit');
+            Route::put('supplier/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.edit')->name('suppliers.update');
+            Route::delete('supplier/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete')->name('suppliers.destroy');
+            Route::post('supplier/{supplier}/toggle', [SupplierController::class, 'toggleActive'])->middleware('permission:suppliers.edit')->name('suppliers.toggle');
 
         // Master Data - Kas & Bank
             Route::get('kas-bank', [CashBankAccountController::class, 'index'])->middleware('permission:cash_bank.view')->name('cash-bank.index');
