@@ -88,7 +88,7 @@ class StockAdjustmentRequest extends FormRequest
                     $v->errors()->add("items.$index.product_id", 'Hanya produk barang yang dapat disesuaikan stoknya.');
                 }
 
-                if (($item['adjustment_type'] ?? null) === 'in' && ! isset($item['unit_cost'])) {
+                if (($item['adjustment_type'] ?? null) === 'in' && blank($item['unit_cost'] ?? null)) {
                     $v->errors()->add("items.$index.unit_cost", 'Penyesuaian masuk wajib memiliki unit cost.');
                 }
             }

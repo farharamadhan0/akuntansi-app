@@ -39,6 +39,18 @@ export default function Create({ products }: Props) {
             }
         }
 
+        if (key === 'adjustment_type') {
+            const product = products.find((entry) => String(entry.id) === next[index].product_id);
+
+            if (value === 'in' && product) {
+                next[index].unit_cost = String(product.average_cost || 0);
+            }
+
+            if (value === 'out') {
+                next[index].unit_cost = '';
+            }
+        }
+
         syncItems(next);
     };
 
