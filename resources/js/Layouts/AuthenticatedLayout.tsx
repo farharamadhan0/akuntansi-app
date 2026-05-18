@@ -1,4 +1,6 @@
 import { Link, usePage, router } from "@inertiajs/react";
+import { Toaster } from "sonner";
+import { useFlashToast } from "@/hooks/useFlashToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePermissions } from "@/lib/permissions";
 import {
@@ -431,6 +433,11 @@ function Header({
 // Main Layout Component
 // ============================================================================
 
+function FlashToastHandler() {
+    useFlashToast();
+    return null;
+}
+
 export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -438,6 +445,8 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <FlashToastHandler />
+            <Toaster position="top-right" richColors closeButton />
             {/* Header with Top Navigation */}
             <Header
                 activeCategoryKey={activeCategoryKey}

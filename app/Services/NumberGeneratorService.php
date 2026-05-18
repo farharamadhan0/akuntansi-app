@@ -12,6 +12,7 @@ use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\StockAdjustment;
 use App\Models\Customer;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
 
 class NumberGeneratorService
@@ -58,6 +59,11 @@ class NumberGeneratorService
     public function generateCustomerCode(int $companyId): string
     {
         return $this->generate($companyId, 'CUS', Customer::class, 'code');
+    }
+
+    public function generateSupplierCode(int $companyId): string
+    {
+        return $this->generate($companyId, 'SUP', Supplier::class, 'code');
     }
 
     public function generatePurchaseNumber(int $companyId): string

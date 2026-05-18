@@ -51,6 +51,15 @@ class SupplierTest extends TestCase
             ->assertOk();
     }
 
+    public function test_supplier_detail_page_loads(): void
+    {
+        $supplier = $this->createSupplier(['name' => 'Detail Supplier']);
+
+        $this->actingAs($this->user)
+            ->get("/master/supplier/{$supplier->id}")
+            ->assertOk();
+    }
+
     public function test_unauthenticated_user_is_redirected(): void
     {
         $this->get('/master/supplier')->assertRedirect('/login');
@@ -100,6 +109,38 @@ class SupplierTest extends TestCase
         ]);
     }
 
+    public function test_supplier_code_is_auto_generated_when_not_provided(): void
+    {
+        $this->actingAs($this->user)
+            ->post('/master/supplier', ['name' => 'Auto Code Supplier'])
+            ->assertRedirect('/master/supplier');
+
+        $supplier = Supplier::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->where('name', 'Auto Code Supplier')
+            ->first();
+
+        $this->assertNotNull($supplier);
+        $this->assertMatchesRegularExpression('/^SUP-\d{6}-\d{4}$/', $supplier->code);
+    }
+
+    public function test_supplier_auto_generated_code_increments_uniquely(): void
+    {
+        $this->createSupplier([
+            'code' => 'SUP-' . now()->format('Ym') . '-0001',
+        ]);
+
+        $this->actingAs($this->user)
+            ->post('/master/supplier', ['name' => 'Auto Code Supplier 2'])
+            ->assertRedirect('/master/supplier');
+
+        $this->assertDatabaseHas('suppliers', [
+            'company_id' => $this->companyId,
+            'name' => 'Auto Code Supplier 2',
+            'code' => 'SUP-' . now()->format('Ym') . '-0002',
+        ]);
+    }
+
     // -----------------------------------------------------------------------
     // Update
     // -----------------------------------------------------------------------
@@ -128,6 +169,15 @@ class SupplierTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseMissing('suppliers', ['id' => $other->id, 'name' => 'Hacked']);
+    }
+
+    public function test_detail_from_other_company_is_rejected(): void
+    {
+        $other = $this->createOtherCompanySupplier();
+
+        $this->actingAs($this->user)
+            ->get("/master/supplier/{$other->id}")
+            ->assertNotFound();
     }
 
     // -----------------------------------------------------------------------

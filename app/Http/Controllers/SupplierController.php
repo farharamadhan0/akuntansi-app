@@ -6,6 +6,7 @@ use App\Http\Requests\SupplierRequest;
 use App\Models\Supplier;
 use App\Enums\TransactionStatus;
 use App\Enums\PaymentStatus;
+use App\Services\NumberGeneratorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,6 +14,10 @@ use Inertia\Response;
 
 class SupplierController extends Controller
 {
+    public function __construct(
+        protected NumberGeneratorService $numberGenerator,
+    ) {}
+
     public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
@@ -30,8 +35,9 @@ class SupplierController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+        $status = $request->filled('status') ? $request->status : 'active';
+        if ($status !== 'all') {
+            $query->where('is_active', $status === 'active');
         }
 
         $suppliers = $query->get()->map(fn(Supplier $s) => [
@@ -55,11 +61,71 @@ class SupplierController extends Controller
         return Inertia::render('MasterData/Suppliers/Form');
     }
 
+    public function show(Supplier $supplier): Response
+    {
+        $this->authorizeCompany($supplier);
+
+        $supplier->load([
+            'payables' => fn ($query) => $query->latest('date')->limit(5),
+            'purchases' => fn ($query) => $query->latest('date')->limit(5),
+        ]);
+
+        return Inertia::render('MasterData/Suppliers/Show', [
+            'supplier' => [
+                'id' => $supplier->id,
+                'code' => $supplier->code,
+                'name' => $supplier->name,
+                'email' => $supplier->email,
+                'phone' => $supplier->phone,
+                'address' => $supplier->address,
+                'tax_id' => $supplier->tax_id,
+                'notes' => $supplier->notes,
+                'is_active' => $supplier->is_active,
+                'outstanding_payables' => (float) $supplier->outstanding_payables,
+                'total_payables' => $supplier->payables()->count(),
+                'active_payables' => $supplier->payables()
+                    ->where('status', TransactionStatus::Posted)
+                    ->where('payment_status', '!=', PaymentStatus::Paid)
+                    ->count(),
+                'total_purchases' => $supplier->purchases()->count(),
+            ],
+            'recentPayables' => $supplier->payables->map(fn ($payable) => [
+                'id' => $payable->id,
+                'payable_number' => $payable->payable_number,
+                'date' => optional($payable->date)->toDateString(),
+                'due_date' => optional($payable->due_date)->toDateString(),
+                'amount' => (float) $payable->amount,
+                'paid_amount' => (float) $payable->paid_amount,
+                'remaining_amount' => (float) $payable->remaining_amount,
+                'status' => $payable->status->value,
+                'status_label' => $payable->status->label(),
+                'payment_status' => $payable->payment_status->value,
+                'payment_status_label' => $payable->payment_status->label(),
+            ])->values(),
+            'recentPurchases' => $supplier->purchases->map(fn ($purchase) => [
+                'id' => $purchase->id,
+                'purchase_number' => $purchase->purchase_number,
+                'date' => optional($purchase->date)->toDateString(),
+                'due_date' => optional($purchase->due_date)->toDateString(),
+                'payment_type' => $purchase->payment_type,
+                'payment_type_label' => $purchase->payment_type === 'cash' ? 'Tunai' : 'Kredit',
+                'total_amount' => (float) $purchase->total_amount,
+                'status' => $purchase->status->value,
+                'status_label' => $purchase->status->label(),
+            ])->values(),
+        ]);
+    }
+
     public function store(SupplierRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $data['company_id'] = auth()->user()->current_company_id;
+        $companyId = auth()->user()->current_company_id;
+
+        $data['company_id'] = $companyId;
         $data['is_active'] = $data['is_active'] ?? true;
+        $data['code'] = filled($data['code'] ?? null)
+            ? $data['code']
+            : $this->numberGenerator->generateSupplierCode($companyId);
 
         Supplier::create($data);
 

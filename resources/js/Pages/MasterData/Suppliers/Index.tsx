@@ -14,7 +14,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Truck, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Truck, Search, MoreVertical } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 interface Supplier {
     id: number;
@@ -44,10 +45,11 @@ export default function Index({ suppliers, filters }: Props) {
     const { can } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+    const activeFilter = filters.status ?? 'active';
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/master/supplier', { search, status: filters.status }, { preserveState: true, replace: true });
+        router.get('/master/supplier', { search, status: activeFilter }, { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
@@ -63,8 +65,6 @@ export default function Index({ suppliers, filters }: Props) {
             onFinish: () => setDeleteTarget(null),
         });
     };
-
-    const activeFilter = filters.status ?? '';
 
     return (
         <AuthenticatedLayout>
@@ -110,14 +110,14 @@ export default function Index({ suppliers, filters }: Props) {
                     <Button type="submit" variant="outline">Cari</Button>
                 </form>
                 <div className="flex gap-2">
-                    {(['', 'active', 'inactive'] as const).map((s) => (
+                    {(['all', 'active', 'inactive'] as const).map((s) => (
                         <Button
                             key={s}
                             variant={activeFilter === s ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => handleStatusFilter(s)}
                         >
-                            {s === '' && 'Semua'}
+                            {s === 'all' && 'Semua'}
                             {s === 'active' && 'Aktif'}
                             {s === 'inactive' && 'Nonaktif'}
                         </Button>
@@ -134,9 +134,9 @@ export default function Index({ suppliers, filters }: Props) {
                                 <TableHead>Nama</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Telepon</TableHead>
-                                <TableHead className="text-right">Hutang Aktif</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="w-24">Aksi</TableHead>
+                                <TableHead className="text-right">Hutang Aktif</TableHead>
+                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -149,15 +149,25 @@ export default function Index({ suppliers, filters }: Props) {
                             ) : (
                                 suppliers.map((s) => (
                                     <TableRow key={s.id} className={!s.is_active ? 'opacity-60' : ''}>
-                                        <TableCell className="font-mono text-sm text-gray-500">
-                                            {s.code || '-'}
+                                        <TableCell className="font-mono text-sm">
+                                            <Link
+                                                href={`/master/supplier/${s.id}`}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                {s.code || 'Tanpa kode'}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="font-medium">{s.name}</TableCell>
                                         <TableCell className="text-gray-500">{s.email || '-'}</TableCell>
                                         <TableCell className="text-gray-500">{s.phone || '-'}</TableCell>
+                                        <TableCell>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                {s.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             {s.outstanding_payables > 0 ? (
-                                                <span className="text-orange-600 font-medium">
+                                                <span className="font-medium">
                                                     {formatCurrency(s.outstanding_payables)}
                                                 </span>
                                             ) : (
@@ -165,43 +175,46 @@ export default function Index({ suppliers, filters }: Props) {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {s.is_active ? 'Aktif' : 'Nonaktif'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                {can('suppliers.edit') && (
-                                                    <Link href={`/master/supplier/${s.id}/edit`}>
-                                                        <Button variant="ghost" size="sm" title="Edit">
-                                                            <Pencil size={15} />
-                                                        </Button>
-                                                    </Link>
-                                                )}
-                                                {can('suppliers.edit') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleToggle(s)}
-                                                        title={s.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                                    >
-                                                        {s.is_active
-                                                            ? <ToggleRight size={15} className="text-green-600" />
-                                                            : <ToggleLeft size={15} className="text-gray-400" />
-                                                        }
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm">
+                                                        <MoreVertical size={16} />
                                                     </Button>
-                                                )}
-                                                {can('suppliers.delete') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setDeleteTarget(s)}
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={15} className="text-red-500" />
-                                                    </Button>
-                                                )}
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {can('suppliers.edit') && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/master/supplier/${s.id}/edit`} className="flex items-center gap-2">
+                                                                <Pencil size={15} />
+                                                                Edit
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('suppliers.edit') && (
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleToggle(s)}
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            {s.is_active
+                                                                ? <><ToggleRight size={15} className="text-green-600" />Nonaktifkan</>
+                                                                : <><ToggleLeft size={15} className="text-gray-400" />Aktifkan</>
+                                                            }
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('suppliers.delete') && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem
+                                                                onClick={() => setDeleteTarget(s)}
+                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                            >
+                                                                <Trash2 size={15} />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))
