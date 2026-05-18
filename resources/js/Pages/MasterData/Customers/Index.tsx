@@ -71,7 +71,7 @@ export default function Index({ customers, filters }: Props) {
         });
     };
 
-    const activeFilter = filters.status ?? '';
+    const activeFilter = filters.status ?? 'active';
 
     return (
         <AuthenticatedLayout>
@@ -117,14 +117,14 @@ export default function Index({ customers, filters }: Props) {
                     <Button type="submit" variant="outline">Cari</Button>
                 </form>
                 <div className="flex gap-2">
-                    {(['', 'active', 'inactive'] as const).map((s) => (
+                    {(['all', 'active', 'inactive'] as const).map((s) => (
                         <Button
                             key={s}
                             variant={activeFilter === s ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => handleStatusFilter(s)}
                         >
-                            {s === '' && 'Semua'}
+                            {s === 'all' && 'Semua'}
                             {s === 'active' && 'Aktif'}
                             {s === 'inactive' && 'Nonaktif'}
                         </Button>

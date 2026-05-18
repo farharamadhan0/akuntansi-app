@@ -35,8 +35,9 @@ class CustomerController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+        $status = $request->filled('status') ? $request->status : 'active';
+        if ($status !== 'all') {
+            $query->where('is_active', $status === 'active');
         }
 
         $customers = $query->get()->map(fn(Customer $c) => [
