@@ -51,6 +51,15 @@ class CustomerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_customer_detail_page_loads(): void
+    {
+        $customer = $this->createCustomer(['name' => 'Detail Customer']);
+
+        $this->actingAs($this->user)
+            ->get("/master/pelanggan/{$customer->id}")
+            ->assertOk();
+    }
+
     public function test_unauthenticated_user_is_redirected(): void
     {
         $this->get('/master/pelanggan')->assertRedirect('/login');
@@ -100,6 +109,38 @@ class CustomerTest extends TestCase
         ]);
     }
 
+    public function test_customer_code_is_auto_generated_when_not_provided(): void
+    {
+        $this->actingAs($this->user)
+            ->post('/master/pelanggan', ['name' => 'Auto Code Customer'])
+            ->assertRedirect('/master/pelanggan');
+
+        $customer = Customer::withoutGlobalScope('company')
+            ->where('company_id', $this->companyId)
+            ->where('name', 'Auto Code Customer')
+            ->first();
+
+        $this->assertNotNull($customer);
+        $this->assertMatchesRegularExpression('/^CUS-\d{6}-\d{4}$/', $customer->code);
+    }
+
+    public function test_customer_auto_generated_code_increments_uniquely(): void
+    {
+        $this->createCustomer([
+            'code' => 'CUS-' . now()->format('Ym') . '-0001',
+        ]);
+
+        $this->actingAs($this->user)
+            ->post('/master/pelanggan', ['name' => 'Auto Code Customer 2'])
+            ->assertRedirect('/master/pelanggan');
+
+        $this->assertDatabaseHas('customers', [
+            'company_id' => $this->companyId,
+            'name' => 'Auto Code Customer 2',
+            'code' => 'CUS-' . now()->format('Ym') . '-0002',
+        ]);
+    }
+
     // -----------------------------------------------------------------------
     // Update
     // -----------------------------------------------------------------------
@@ -130,6 +171,15 @@ class CustomerTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseMissing('customers', ['id' => $other->id, 'name' => 'Hacked']);
+    }
+
+    public function test_detail_from_other_company_is_rejected(): void
+    {
+        $other = $this->createOtherCompanyCustomer();
+
+        $this->actingAs($this->user)
+            ->get("/master/pelanggan/{$other->id}")
+            ->assertNotFound();
     }
 
     // -----------------------------------------------------------------------

@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
             Route::get('pelanggan', [CustomerController::class, 'index'])->middleware('permission:customers.view')->name('customers.index');
             Route::get('pelanggan/tambah', [CustomerController::class, 'create'])->middleware('permission:customers.create')->name('customers.create');
             Route::post('pelanggan', [CustomerController::class, 'store'])->middleware('permission:customers.create')->name('customers.store');
+            Route::get('pelanggan/{customer}', [CustomerController::class, 'show'])->middleware('permission:customers.view')->name('customers.show');
             Route::get('pelanggan/{customer}/edit', [CustomerController::class, 'edit'])->middleware('permission:customers.edit')->name('customers.edit');
             Route::put('pelanggan/{customer}', [CustomerController::class, 'update'])->middleware('permission:customers.edit')->name('customers.update');
             Route::delete('pelanggan/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete')->name('customers.destroy');

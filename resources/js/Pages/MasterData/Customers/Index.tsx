@@ -14,7 +14,14 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Users, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Users, Search, MoreVertical } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface Customer {
     id: number;
@@ -134,9 +141,9 @@ export default function Index({ customers, filters }: Props) {
                                 <TableHead>Nama</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Telepon</TableHead>
-                                <TableHead className="text-right">Piutang Aktif</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="w-24">Aksi</TableHead>
+                                <TableHead className="text-right">Piutang Aktif</TableHead>
+                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -149,15 +156,25 @@ export default function Index({ customers, filters }: Props) {
                             ) : (
                                 customers.map((c) => (
                                     <TableRow key={c.id} className={!c.is_active ? 'opacity-60' : ''}>
-                                        <TableCell className="font-mono text-sm text-gray-500">
-                                            {c.code || '-'}
+                                        <TableCell className="font-mono text-sm">
+                                            <Link
+                                                href={`/master/pelanggan/${c.id}`}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                {c.code || 'Tanpa kode'}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="font-medium">{c.name}</TableCell>
                                         <TableCell className="text-gray-500">{c.email || '-'}</TableCell>
                                         <TableCell className="text-gray-500">{c.phone || '-'}</TableCell>
+                                        <TableCell>
+                                            <span className={`px-2 py-0.5 text-xs rounded-full ${c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                {c.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             {c.outstanding_receivables > 0 ? (
-                                                <span className="text-blue-600 font-medium">
+                                                <span className="font-medium">
                                                     {formatCurrency(c.outstanding_receivables)}
                                                 </span>
                                             ) : (
@@ -165,43 +182,43 @@ export default function Index({ customers, filters }: Props) {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {c.is_active ? 'Aktif' : 'Nonaktif'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                {can('customers.edit') && (
-                                                    <Link href={`/master/pelanggan/${c.id}/edit`}>
-                                                        <Button variant="ghost" size="sm" title="Edit">
-                                                            <Pencil size={15} />
-                                                        </Button>
-                                                    </Link>
-                                                )}
-                                                {can('customers.edit') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleToggle(c)}
-                                                        title={c.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                                    >
-                                                        {c.is_active
-                                                            ? <ToggleRight size={15} className="text-green-600" />
-                                                            : <ToggleLeft size={15} className="text-gray-400" />
-                                                        }
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm">
+                                                        <MoreVertical size={16} />
                                                     </Button>
-                                                )}
-                                                {can('customers.delete') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setDeleteTarget(c)}
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={15} className="text-red-500" />
-                                                    </Button>
-                                                )}
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {can('customers.edit') && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/master/pelanggan/${c.id}/edit`} className="flex items-center gap-2">
+                                                                <Pencil size={14} />
+                                                                Edit
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('customers.edit') && (
+                                                        <DropdownMenuItem onClick={() => handleToggle(c)} className="flex items-center gap-2">
+                                                            {c.is_active
+                                                                ? <><ToggleRight size={14} className="text-green-600" /> Nonaktifkan</>
+                                                                : <><ToggleLeft size={14} className="text-gray-400" /> Aktifkan</>
+                                                            }
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('customers.delete') && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem
+                                                                onClick={() => setDeleteTarget(c)}
+                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))
