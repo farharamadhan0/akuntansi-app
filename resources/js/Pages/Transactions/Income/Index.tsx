@@ -145,14 +145,13 @@ export default function Index({ transactions }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Tanggal</TableHead>
                                 <TableHead>No. Transaksi</TableHead>
+                                <TableHead>Tanggal</TableHead>
                                 <TableHead>Keterangan</TableHead>
                                 <TableHead>Kas/Bank</TableHead>
                                 <TableHead>Akun</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -173,11 +172,13 @@ export default function Index({ transactions }: Props) {
                             ) : (
                                 filtered.map((t) => (
                                     <TableRow key={t.id}>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            <Link href={`/transaksi/uang-masuk/${t.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                {t.transaction_number}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                                             {formatDate(t.date)}
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs text-muted-foreground">
-                                            {t.transaction_number}
                                         </TableCell>
                                         <TableCell>
                                             <p className="font-medium text-sm">{t.description}</p>
@@ -198,23 +199,15 @@ export default function Index({ transactions }: Props) {
                                         <TableCell className="text-sm text-muted-foreground">
                                             {t.category_name ?? '-'}
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold text-green-700 whitespace-nowrap">
-                                            {formatCurrency(t.amount)}
-                                        </TableCell>
-                                        <TableCell className="text-center">
+                                        <TableCell>
                                             <span
                                                 className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[t.status]}`}
                                             >
                                                 {t.status_label}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-center">
-                                            <Link href={`/transaksi/uang-masuk/${t.id}`}>
-                                                <Button variant="ghost" size="sm" className="gap-1">
-                                                    <Eye size={14} />
-                                                    Detail
-                                                </Button>
-                                            </Link>
+                                        <TableCell className="text-right font-semibold text-green-700 whitespace-nowrap">
+                                            {formatCurrency(t.amount)}
                                         </TableCell>
                                     </TableRow>
                                 ))
