@@ -218,15 +218,6 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
                                     aria-invalid={!!errors.reference}
                                 />
                             </FormField>
-
-                            {/* Info jurnal otomatis */}
-                            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                                <p className="font-medium mb-1">Jurnal otomatis akan dibuat:</p>
-                                <ul className="space-y-0.5 text-green-700">
-                                    <li>• <span className="font-medium">Debit</span> – Kas/Bank yang dipilih</li>
-                                    <li>• <span className="font-medium">Kredit</span> – Akun pendapatan (sesuai akun yang dipilih)</li>
-                                </ul>
-                            </div>
                         </CardContent>
                     </Card>
 

@@ -215,15 +215,6 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                                     aria-invalid={!!errors.reference}
                                 />
                             </FormField>
-
-                            {/* Info jurnal otomatis */}
-                            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                                <p className="font-medium mb-1">Jurnal otomatis akan dibuat:</p>
-                                <ul className="space-y-0.5 text-red-700">
-                                    <li>• <span className="font-medium">Debit</span> – Akun beban (sesuai akun yang dipilih)</li>
-                                    <li>• <span className="font-medium">Kredit</span> – Kas/Bank yang dipilih</li>
-                                </ul>
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -237,7 +228,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="gap-2 min-w-36 bg-red-600 hover:bg-red-700"
+                            className="gap-2 min-w-36"
                         >
                             <TrendingDown size={16} />
                             {processing ? 'Menyimpan...' : 'Simpan & Posting'}

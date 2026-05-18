@@ -148,8 +148,7 @@ export default function Index({ transactions }: Props) {
                                 <TableHead>No. Transaksi</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Keterangan</TableHead>
-                                <TableHead>Kas/Bank</TableHead>
-                                <TableHead>Akun</TableHead>
+                                <TableHead>Pelanggan</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
@@ -187,17 +186,11 @@ export default function Index({ transactions }: Props) {
                                                     Ref: {t.reference}
                                                 </p>
                                             )}
-                                            {t.customer_name && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    {t.customer_name}
-                                                </p>
-                                            )}
                                         </TableCell>
-                                        <TableCell className="text-sm">
-                                            {t.cash_bank_name}
-                                        </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {t.category_name ?? '-'}
+                                        <TableCell>
+                                            <p className="text-xs text-muted-foreground">
+                                                {t.customer_name}
+                                            </p>
                                         </TableCell>
                                         <TableCell>
                                             <span
@@ -206,7 +199,7 @@ export default function Index({ transactions }: Props) {
                                                 {t.status_label}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold text-green-700 whitespace-nowrap">
+                                        <TableCell className="text-right font-semibold whitespace-nowrap">
                                             {formatCurrency(t.amount)}
                                         </TableCell>
                                     </TableRow>

@@ -25,7 +25,7 @@ class ExpenseTransactionController extends Controller
 
         $transactions = Transaction::where('company_id', $companyId)
             ->ofType(TransactionType::Expense)
-            ->with(['cashBankAccount:id,name,type', 'category:id,name', 'supplier:id,name'])
+            ->with(['supplier:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -39,9 +39,6 @@ class ExpenseTransactionController extends Controller
                 'status'               => $t->status->value,
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
-                'cash_bank_name'       => $t->cashBankAccount->name,
-                'cash_bank_type'       => $t->cashBankAccount->type->value,
-                'category_name'        => $t->category?->name,
                 'supplier_name'        => $t->supplier?->name,
             ]);
 

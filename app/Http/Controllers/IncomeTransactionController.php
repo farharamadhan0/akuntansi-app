@@ -25,7 +25,7 @@ class IncomeTransactionController extends Controller
 
         $transactions = Transaction::where('company_id', $companyId)
             ->ofType(TransactionType::Income)
-            ->with(['cashBankAccount:id,name,type', 'category:id,name', 'customer:id,name'])
+            ->with(['customer:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -39,9 +39,6 @@ class IncomeTransactionController extends Controller
                 'status'               => $t->status->value,
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
-                'cash_bank_name'       => $t->cashBankAccount->name,
-                'cash_bank_type'       => $t->cashBankAccount->type->value,
-                'category_name'        => $t->category?->name,
                 'customer_name'        => $t->customer?->name,
             ]);
 
