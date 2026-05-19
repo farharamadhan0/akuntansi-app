@@ -74,7 +74,7 @@ class StockAdjustmentController extends Controller
         $this->authorizeCompany($stockAdjustment);
 
         $stockAdjustment->load([
-            'items.product:id,name,product_code,sku,unit',
+            'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'unit', 'deleted_at'),
             'journalEntries.lines.account:id,code,name',
         ]);
 

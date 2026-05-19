@@ -13,7 +13,7 @@ interface SaleItem {
     line_total: number;
     unit_cost: number;
     cost_amount: number;
-    product: { name: string; product_code: string; };
+    product: { name: string; product_code: string; deleted_at: string | null; } | null;
 }
 
 interface SaleData {
@@ -91,7 +91,12 @@ export default function Show({ sale, journalEntries }: Props) {
                                     <tbody>
                                         {sale.items.map((item) => (
                                             <tr key={item.id} className="border-t">
-                                                <td className="px-3 py-2">{item.product.product_code} - {item.product.name}</td>
+                                                <td className="px-3 py-2">
+                                                    {item.product
+                                                        ? <>{item.product.product_code} - {item.product.name}{item.product.deleted_at && <span className="ml-1.5 italic text-xs text-muted-foreground">(produk dihapus)</span>}</>
+                                                        : '-'
+                                                    }
+                                                </td>
                                                 <td className="px-3 py-2 text-right">{item.quantity} {item.unit}</td>
                                                 <td className="px-3 py-2 text-right">{formatCurrency(item.unit_price)}</td>
                                                 <td className="px-3 py-2 text-right">{item.cost_amount > 0 ? formatCurrency(item.cost_amount) : '-'}</td>

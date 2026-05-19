@@ -82,7 +82,7 @@ class PurchaseController extends Controller
             'supplier:id,name,code',
             'cashBankAccount:id,name',
             'payable:id,payable_number,payment_status,amount,paid_amount',
-            'items.product:id,name,product_code,sku,product_type,unit',
+            'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'product_type', 'unit', 'deleted_at'),
             'journalEntries.lines.account:id,code,name',
         ]);
 

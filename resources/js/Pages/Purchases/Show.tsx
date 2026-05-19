@@ -11,7 +11,7 @@ interface PurchaseItem {
     unit: string;
     unit_price: number;
     line_total: number;
-    product: { name: string; product_code: string; };
+    product: { name: string; product_code: string; deleted_at: string | null; } | null;
 }
 
 interface PurchaseData {
@@ -88,7 +88,12 @@ export default function Show({ purchase, journalEntries }: Props) {
                                     <tbody>
                                         {purchase.items.map((item) => (
                                             <tr key={item.id} className="border-t">
-                                                <td className="px-3 py-2">{item.product.product_code} - {item.product.name}</td>
+                                                <td className="px-3 py-2">
+                                                    {item.product
+                                                        ? <>{item.product.product_code} - {item.product.name}{item.product.deleted_at && <span className="ml-1.5 italic text-xs text-muted-foreground">(produk dihapus)</span>}</>
+                                                        : '-'
+                                                    }
+                                                </td>
                                                 <td className="px-3 py-2 text-right">{item.quantity} {item.unit}</td>
                                                 <td className="px-3 py-2 text-right">{formatCurrency(item.unit_price)}</td>
                                                 <td className="px-3 py-2 text-right">{formatCurrency(item.line_total)}</td>

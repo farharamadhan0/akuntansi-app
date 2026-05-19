@@ -137,6 +137,7 @@ Route::middleware('auth')->group(function () {
             Route::get('produk/{product}', [ProductController::class, 'show'])->middleware('permission:products.view')->name('products.show');
             Route::get('produk/{product}/edit', [ProductController::class, 'edit'])->middleware('permission:products.edit')->name('products.edit');
             Route::put('produk/{product}', [ProductController::class, 'update'])->middleware('permission:products.edit')->name('products.update');
+            Route::delete('produk/{product}', [ProductController::class, 'destroy'])->middleware('permission:products.delete')->name('products.destroy');
             Route::post('produk/{product}/toggle', [ProductController::class, 'toggleActive'])->middleware('permission:products.edit')->name('products.toggle');
         });
 

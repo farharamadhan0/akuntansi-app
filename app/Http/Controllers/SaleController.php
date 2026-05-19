@@ -83,7 +83,7 @@ class SaleController extends Controller
             'customer:id,name,code',
             'cashBankAccount:id,name',
             'receivable:id,receivable_number,payment_status,amount,paid_amount',
-            'items.product:id,name,product_code,sku,product_type,unit',
+            'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'product_type', 'unit', 'deleted_at'),
             'journalEntries.lines.account:id,code,name',
         ]);
 

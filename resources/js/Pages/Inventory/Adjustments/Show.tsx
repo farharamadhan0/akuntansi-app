@@ -12,7 +12,7 @@ interface AdjustmentItem {
     unit_cost?: number | null;
     total_cost: number;
     reason?: string | null;
-    product: { name: string; product_code: string; unit: string; };
+    product: { name: string; product_code: string; unit: string; deleted_at: string | null; } | null;
 }
 
 interface AdjustmentData {
@@ -76,9 +76,14 @@ export default function Show({ stock_adjustment: adjustment, journalEntries }: P
                                 <tbody>
                                     {adjustment.items.map((item) => (
                                         <tr key={item.id} className="border-t">
-                                            <td className="px-3 py-2">{item.product.product_code} - {item.product.name}</td>
+                                            <td className="px-3 py-2">
+                                                {item.product
+                                                    ? <>{item.product.product_code} - {item.product.name}{item.product.deleted_at && <span className="ml-1.5 italic text-xs text-muted-foreground">(produk dihapus)</span>}</>
+                                                    : '-'
+                                                }
+                                            </td>
                                             <td className="px-3 py-2">{item.adjustment_type === 'in' ? 'Tambah' : 'Kurang'}</td>
-                                            <td className="px-3 py-2 text-right">{item.quantity} {item.product.unit}</td>
+                                            <td className="px-3 py-2 text-right">{item.quantity} {item.product?.unit ?? '-'}</td>
                                             <td className="px-3 py-2 text-right">{item.unit_cost ? formatCurrency(item.unit_cost) : '-'}</td>
                                             <td className="px-3 py-2 text-right">{formatCurrency(item.total_cost)}</td>
                                         </tr>

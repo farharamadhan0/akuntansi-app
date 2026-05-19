@@ -101,7 +101,26 @@ class ProductController extends Controller
             'createdBy:id,name',
         ]);
 
-        return Inertia::render('MasterData/Products/Form', [
+        $recentMovements = $product->stockMovements()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get()
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'date' => $m->date?->toDateString(),
+                'movement_type' => $m->movement_type,
+                'quantity_in' => (float) $m->quantity_in,
+                'quantity_out' => (float) $m->quantity_out,
+                'unit_cost' => (float) $m->unit_cost,
+                'total_cost' => (float) $m->total_cost,
+                'balance_quantity' => (float) $m->balance_quantity,
+                'balance_average_cost' => (float) $m->balance_average_cost,
+                'notes' => $m->notes,
+                'source_type' => $m->source_type,
+            ]);
+
+        return Inertia::render('MasterData/Products/Show', [
             'product' => [
                 'id' => $product->id,
                 'product_code' => $product->product_code,
@@ -117,17 +136,30 @@ class ProductController extends Controller
                 'average_cost' => (float) $product->average_cost,
                 'is_active' => $product->is_active,
                 'created_by_name' => $product->createdBy?->name,
-                'inventory_account_id' => $product->inventory_account_id,
-                'revenue_account_id' => $product->revenue_account_id,
-                'expense_account_id' => $product->expense_account_id,
-                'cogs_account_id' => $product->cogs_account_id,
+                'inventory_account' => $product->inventoryAccount ? [
+                    'id' => $product->inventoryAccount->id,
+                    'code' => $product->inventoryAccount->code,
+                    'name' => $product->inventoryAccount->name,
+                ] : null,
+                'revenue_account' => $product->revenueAccount ? [
+                    'id' => $product->revenueAccount->id,
+                    'code' => $product->revenueAccount->code,
+                    'name' => $product->revenueAccount->name,
+                ] : null,
+                'expense_account' => $product->expenseAccount ? [
+                    'id' => $product->expenseAccount->id,
+                    'code' => $product->expenseAccount->code,
+                    'name' => $product->expenseAccount->name,
+                ] : null,
+                'cogs_account' => $product->cogsAccount ? [
+                    'id' => $product->cogsAccount->id,
+                    'code' => $product->cogsAccount->code,
+                    'name' => $product->cogsAccount->name,
+                ] : null,
             ],
-            'accounts' => $this->accountOptions(),
-            'product_types' => [
-                ['value' => 'goods', 'label' => 'Barang'],
-                ['value' => 'service', 'label' => 'Jasa'],
-            ],
-            'readonly' => true,
+            'recentMovements' => $recentMovements,
+            'total_purchases' => $product->purchaseItems()->count(),
+            'total_sales' => $product->saleItems()->count(),
         ]);
     }
 
@@ -153,6 +185,16 @@ class ProductController extends Controller
 
         return redirect()->route('products.show', $product)
             ->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    public function destroy(Product $product): RedirectResponse
+    {
+        $this->authorizeCompany($product);
+
+        $product->delete();
+
+        return redirect()->route('products.index')
+            ->with('success', 'Produk berhasil dihapus.');
     }
 
     public function toggleActive(Product $product): RedirectResponse

@@ -86,9 +86,15 @@ class NumberGeneratorService
         $yearMonth = now()->format('Ym');
         $pattern = "{$prefix}-{$yearMonth}-%";
 
-        $lastNumber = $model::withoutGlobalScope('company')
+        $query = $model::withoutGlobalScope('company')
             ->where('company_id', $companyId)
-            ->where($column, 'like', $pattern)
+            ->where($column, 'like', $pattern);
+
+        if (method_exists($model, 'bootSoftDeletes')) {
+            $query = $query->withTrashed();
+        }
+
+        $lastNumber = $query
             ->orderByRaw("CAST(SUBSTR({$column}, LENGTH({$column}) - 3, 4) AS INTEGER) DESC")
             ->value($column);
 
