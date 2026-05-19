@@ -24,7 +24,6 @@ interface Supplier {
     email?: string;
     phone?: string;
     is_active: boolean;
-    outstanding_payables: number;
 }
 
 interface Props {
@@ -134,8 +133,6 @@ export default function Index({ suppliers, filters }: Props) {
                                 <TableHead>Nama</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Telepon</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Hutang Aktif</TableHead>
                                 <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -160,20 +157,6 @@ export default function Index({ suppliers, filters }: Props) {
                                         <TableCell className="font-medium">{s.name}</TableCell>
                                         <TableCell className="text-gray-500">{s.email || '-'}</TableCell>
                                         <TableCell className="text-gray-500">{s.phone || '-'}</TableCell>
-                                        <TableCell>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {s.is_active ? 'Aktif' : 'Nonaktif'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {s.outstanding_payables > 0 ? (
-                                                <span className="font-medium">
-                                                    {formatCurrency(s.outstanding_payables)}
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-400">-</span>
-                                            )}
-                                        </TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>

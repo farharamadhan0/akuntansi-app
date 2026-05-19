@@ -47,7 +47,6 @@ class CustomerController extends Controller
             'email' => $c->email,
             'phone' => $c->phone,
             'is_active' => $c->is_active,
-            'outstanding_receivables' => (float) $c->outstanding_receivables,
         ]);
 
         return Inertia::render('MasterData/Customers/Index', [

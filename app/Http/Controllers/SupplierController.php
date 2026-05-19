@@ -47,7 +47,6 @@ class SupplierController extends Controller
             'email' => $s->email,
             'phone' => $s->phone,
             'is_active' => $s->is_active,
-            'outstanding_payables' => (float) $s->outstanding_payables,
         ]);
 
         return Inertia::render('MasterData/Suppliers/Index', [
