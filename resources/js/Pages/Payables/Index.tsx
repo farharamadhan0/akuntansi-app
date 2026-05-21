@@ -210,7 +210,12 @@ export default function Index({ payables, summary, filters }: Props) {
                                         className={p.is_overdue ? 'bg-red-50' : ''}
                                     >
                                         <TableCell className="font-mono text-sm text-gray-500">
-                                            {p.payable_number}
+                                            <Link 
+                                                href={`/transaksi/hutang/${p.id}`}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                {p.payable_number}
+                                            </Link>
                                         </TableCell>
                                         <TableCell>
                                             <p className="font-medium">{p.supplier_name}</p>

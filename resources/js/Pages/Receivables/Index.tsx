@@ -218,7 +218,10 @@ export default function Index({ receivables, summary }: Props) {
                                 filtered.map((r) => (
                                     <TableRow key={r.id} className={r.is_overdue ? 'bg-red-50' : ''}>
                                         <TableCell className="font-mono text-sm">
-                                            <Link href={`/transaksi/piutang/${r.id}`} className="text-blue-600 hover:underline">
+                                            <Link 
+                                                href={`/transaksi/piutang/${r.id}`} 
+                                                className="text-blue-600 hover:underline"
+                                            >
                                                 {r.receivable_number}
                                             </Link>
                                         </TableCell>
