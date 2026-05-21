@@ -202,10 +202,9 @@ export default function Index({ receivables, summary }: Props) {
                                 <TableHead>Pelanggan</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jatuh Tempo</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                                 <TableHead className="text-right">Sisa Tagihan</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -219,7 +218,9 @@ export default function Index({ receivables, summary }: Props) {
                                 filtered.map((r) => (
                                     <TableRow key={r.id} className={r.is_overdue ? 'bg-red-50' : ''}>
                                         <TableCell className="font-mono text-sm">
-                                            {r.receivable_number}
+                                            <Link href={`/transaksi/piutang/${r.id}`} className="text-blue-600 hover:underline">
+                                                {r.receivable_number}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="font-medium">{r.customer_name}</TableCell>
                                         <TableCell>{formatDate(r.date)}</TableCell>
@@ -228,19 +229,12 @@ export default function Index({ receivables, summary }: Props) {
                                                 {formatDate(r.due_date)}
                                             </span>
                                         </TableCell>
+                                        <TableCell>{statusBadge(r)}</TableCell>
                                         <TableCell className="text-right font-medium">
                                             {formatCurrency(r.amount)}
                                         </TableCell>
                                         <TableCell className="text-right font-medium text-blue-600">
                                             {formatCurrency(r.remaining_amount)}
-                                        </TableCell>
-                                        <TableCell>{statusBadge(r)}</TableCell>
-                                        <TableCell>
-                                            <Link href={`/transaksi/piutang/${r.id}`}>
-                                                <Button variant="ghost" size="sm">
-                                                    <Eye size={16} />
-                                                </Button>
-                                            </Link>
                                         </TableCell>
                                     </TableRow>
                                 ))
