@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AccountType;
 use App\Enums\TransactionStatus;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Payable;
 use App\Models\Receivable;
@@ -153,7 +154,10 @@ class ReportService
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', TransactionStatus::Posted)
+            // Sertakan jurnal Voided agar pasangan reversal-nya saling
+            // meniadakan secara natural; jika hanya filter Posted, reversal
+            // berdiri sendiri dan membuat laporan salah.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
             ->whereDate('journal_entries.date', '>=', $from)
             ->whereDate('journal_entries.date', '<=', $to)
             ->whereIn('accounts.type', [AccountType::Revenue->value, AccountType::Expense->value])
@@ -218,7 +222,9 @@ class ReportService
             )
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', TransactionStatus::Posted)
+            // Sertakan jurnal Voided agar pasangan reversal-nya saling
+            // meniadakan secara natural di neraca.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
             ->whereDate('journal_entries.date', '<=', $asOf)
             ->groupBy('journal_lines.account_id')
             ->get()
@@ -317,7 +323,9 @@ class ReportService
             )
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', TransactionStatus::Posted)
+            // Sertakan jurnal Voided agar pasangan reversal-nya saling
+            // meniadakan secara natural di laporan arus kas.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
             ->whereDate('journal_entries.date', '>=', $from)
             ->whereDate('journal_entries.date', '<=', $to)
             ->whereIn('journal_lines.account_id', $cashAccountIds)
@@ -326,20 +334,12 @@ class ReportService
 
         $accounts = Account::whereIn('id', $cashAccountIds)->get()->keyBy('id');
 
-        // Classify by source_type label
-        $sourceLabels = [
-            'App\\Models\\Transaction' => 'Transaksi Kas',
-            'App\\Models\\Payment'     => 'Pembayaran',
-            'App\\Models\\Receivable'  => 'Penerimaan Piutang',
-            'App\\Models\\Payable'     => 'Pembayaran Hutang',
-        ];
-
         $inflows  = [];
         $outflows = [];
 
         foreach ($lines as $line) {
             $account = $accounts[$line->account_id] ?? null;
-            $label   = $sourceLabels[$line->source_type] ?? 'Lainnya';
+            $label   = JournalEntry::labelForSourceType($line->source_type);
             $acctName = $account ? $account->name : '—';
 
             if ((float) $line->total_inflow > 0) {

@@ -34,6 +34,7 @@ interface Entry {
     is_manual: boolean;
     is_adjusting: boolean;
     source_type: string | null;
+    source_label: string | null;
     source_id: number | null;
     voided_at: string | null;
     void_reason: string | null;
@@ -177,10 +178,19 @@ export default function Show({ entry: e }: Props) {
                                 </>
                             }
                         />
-                        {!e.is_manual && e.source_type && (
+                        {!e.is_manual && e.source_label && (
                             <DetailRow
                                 label="Sumber"
-                                value={<span className="text-xs font-mono">{e.source_type} #{e.source_id}</span>}
+                                value={
+                                    <span className="text-sm">
+                                        {e.source_label}
+                                        {e.source_id && (
+                                            <span className="ml-1 text-xs font-mono text-muted-foreground">
+                                                #{e.source_id}
+                                            </span>
+                                        )}
+                                    </span>
+                                }
                             />
                         )}
                         {e.created_by && (

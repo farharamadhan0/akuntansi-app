@@ -90,7 +90,7 @@ class GeneralLedgerService
                 'description'     => $line->description ?: $entry->description,
                 'source_type'     => $entry->source_type,
                 'source_id'       => $entry->source_id,
-                'source_label'    => $this->sourceLabel($entry->source_type),
+                'source_label'    => $entry->source_label,
                 'status'          => $entry->status->value,
                 'debit'           => $debit,
                 'credit'          => $credit,
@@ -115,20 +115,4 @@ class GeneralLedgerService
         ];
     }
 
-    protected function sourceLabel(?string $type): string
-    {
-        if (! $type) {
-            return 'Jurnal Manual';
-        }
-
-        return match (class_basename($type)) {
-            'Transaction'       => 'Transaksi',
-            'Receivable'        => 'Piutang',
-            'Payable'           => 'Hutang',
-            'ReceivablePayment' => 'Pelunasan Piutang',
-            'PayablePayment'    => 'Pembayaran Hutang',
-            'JournalEntry'      => 'Pembalikan Jurnal',
-            default             => class_basename($type),
-        };
-    }
 }

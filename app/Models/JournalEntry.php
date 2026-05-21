@@ -81,4 +81,31 @@ class JournalEntry extends Model
     {
         return bccomp($this->total_debit, $this->total_credit, 2) === 0;
     }
+
+    public function getSourceLabelAttribute(): string
+    {
+        return self::labelForSourceType($this->source_type);
+    }
+
+    public static function labelForSourceType(?string $type): string
+    {
+        if (! $type) {
+            return 'Jurnal Manual';
+        }
+
+        return match (class_basename($type)) {
+            'Transaction'       => 'Transaksi Kas/Bank',
+            'Sale'              => 'Penjualan',
+            'Purchase'          => 'Pembelian',
+            'Payment'           => 'Pembayaran',
+            'Receivable'        => 'Piutang',
+            'Payable'           => 'Hutang',
+            'ReceivablePayment' => 'Pelunasan Piutang',
+            'PayablePayment'    => 'Pembayaran Hutang',
+            'StockAdjustment'   => 'Penyesuaian Stok',
+            'CashBankAccount'   => 'Saldo Awal Kas/Bank',
+            'JournalEntry'      => 'Pembalikan Jurnal',
+            default             => class_basename($type),
+        };
+    }
 }

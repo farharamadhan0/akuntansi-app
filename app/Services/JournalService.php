@@ -188,9 +188,12 @@ class JournalService
             ];
         })->toArray();
 
+        // Reversal harus berada pada periode yang sama dengan jurnal asli
+        // agar laporan periode tersebut tetap akurat (original Voided +
+        // reversal Posted saling meniadakan di ledger).
         return $this->createEntry(
             $originalEntry->company_id,
-            now()->toDateString(),
+            $originalEntry->date->toDateString(),
             'Pembalikan: ' . $originalEntry->description,
             $reversalLines,
             $originalEntry->source,
@@ -236,8 +239,10 @@ class JournalService
     {
         $query = JournalLine::where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
-                $q->where('status', TransactionStatus::Posted);
-                
+                // Voided entries are kept in the ledger so that their
+                // companion reversal entries cancel them out naturally.
+                $q->whereIn('status', [TransactionStatus::Posted, TransactionStatus::Voided]);
+
                 if ($startDate) {
                     $q->where('date', '>=', $startDate);
                 }

@@ -300,6 +300,26 @@ class ReportServiceTest extends TestCase
         $this->assertEquals(0, $result['net_income']);
     }
 
+    public function test_income_statement_unchanged_after_voiding_posted_transaction(): void
+    {
+        // Skenario regresi: jurnal awal di-void (status=Voided) lalu sistem
+        // membuat jurnal pembalikan (status=Posted). Sebelum perbaikan, laporan
+        // hanya menghitung jurnal pembalikan sehingga muncul saldo negatif.
+        // Setelah perbaikan, original Voided + reversal Posted saling
+        // meniadakan, sehingga laporan menunjukkan nol bersih.
+        $income  = $this->postIncome(2000000);
+        $expense = $this->postExpense(800000);
+
+        $this->incomeService->void($income, 'Salah input');
+        $this->expenseService->void($expense, 'Salah input');
+
+        $result = $this->service->incomeStatement($this->companyId, $this->today, $this->today);
+
+        $this->assertEquals(0.0, (float) $result['total_revenue']);
+        $this->assertEquals(0.0, (float) $result['total_expense']);
+        $this->assertEquals(0.0, (float) $result['net_income']);
+    }
+
     public function test_income_statement_excludes_out_of_range(): void
     {
         $this->postIncome(5000000);

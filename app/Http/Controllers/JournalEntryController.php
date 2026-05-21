@@ -240,6 +240,7 @@ class JournalEntryController extends Controller
             'is_manual'    => (bool) $entry->is_manual,
             'is_adjusting' => (bool) $entry->is_adjusting,
             'source_type'  => $entry->source_type,
+            'source_label' => $entry->source_label,
             'source_id'    => $entry->source_id,
             'voided_at'    => $entry->voided_at?->format('Y-m-d H:i'),
             'void_reason'  => $entry->void_reason,
