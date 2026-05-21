@@ -22,7 +22,7 @@ class Receivable extends Model
     protected $fillable = [
         'company_id',
         'receivable_number',
-        'customer_id',
+        'partner_id',
         'date',
         'due_date',
         'amount',
@@ -51,9 +51,9 @@ class Receivable extends Model
         'attachments' => 'array',
     ];
 
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class)->withTrashed();
+        return $this->belongsTo(Partner::class)->withTrashed();
     }
 
     public function category(): BelongsTo

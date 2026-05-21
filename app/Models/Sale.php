@@ -21,7 +21,7 @@ class Sale extends Model
     protected $fillable = [
         'company_id',
         'sale_number',
-        'customer_id',
+        'partner_id',
         'date',
         'due_date',
         'payment_type',
@@ -54,9 +54,9 @@ class Sale extends Model
         'attachments' => 'array',
     ];
 
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Partner::class)->withTrashed();
     }
 
     public function cashBankAccount(): BelongsTo

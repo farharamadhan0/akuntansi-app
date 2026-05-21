@@ -22,7 +22,7 @@ class Payable extends Model
     protected $fillable = [
         'company_id',
         'payable_number',
-        'supplier_id',
+        'partner_id',
         'date',
         'due_date',
         'amount',
@@ -51,9 +51,9 @@ class Payable extends Model
         'attachments' => 'array',
     ];
 
-    public function supplier(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class)->withTrashed();
+        return $this->belongsTo(Partner::class)->withTrashed();
     }
 
     public function category(): BelongsTo

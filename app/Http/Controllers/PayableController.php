@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PayableRequest;
 use App\Models\Payable;
-use App\Models\Supplier;
+use App\Models\Partner;
 use App\Models\TransactionCategory;
 use App\Services\PayableService;
 use App\Enums\TransactionStatus;
@@ -25,7 +25,7 @@ class PayableController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $query = Payable::where('company_id', $companyId)
-            ->with(['supplier:id,name', 'category:id,name'])
+            ->with(['partner:id,name', 'category:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at');
 
@@ -40,7 +40,7 @@ class PayableController extends Controller
         $payables = $query->get()->map(fn(Payable $p) => [
             'id' => $p->id,
             'payable_number' => $p->payable_number,
-            'supplier_name' => $p->supplier->name,
+            'partner_name' => $p->partner->name,
             'date' => $p->date->format('Y-m-d'),
             'due_date' => $p->due_date->format('Y-m-d'),
             'amount' => (float) $p->amount,
@@ -81,8 +81,9 @@ class PayableController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        $suppliers = Supplier::where('company_id', $companyId)
+        $partners = Partner::where('company_id', $companyId)
             ->active()
+            ->supplier()
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
@@ -93,7 +94,7 @@ class PayableController extends Controller
             ->get(['id', 'name']);
 
         return Inertia::render('Payables/Create', [
-            'suppliers' => $suppliers,
+            'partners' => $partners,
             'categories' => $categories,
         ]);
     }
@@ -122,7 +123,7 @@ class PayableController extends Controller
             abort(403);
         }
 
-        $payable->load(['supplier:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
+        $payable->load(['partner:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
 
         $journalEntries = $payable->journalEntries()
             ->with(['lines.account:id,code,name'])
@@ -145,7 +146,7 @@ class PayableController extends Controller
             'payable' => [
                 'id' => $payable->id,
                 'payable_number' => $payable->payable_number,
-                'supplier' => $payable->supplier,
+                'partner' => $payable->partner,
                 'category_name' => $payable->category?->name,
                 'date' => $payable->date->format('Y-m-d'),
                 'due_date' => $payable->due_date->format('Y-m-d'),

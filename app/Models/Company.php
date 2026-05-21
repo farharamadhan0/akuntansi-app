@@ -53,14 +53,9 @@ class Company extends Model
         return $this->hasMany(CashBankAccount::class);
     }
 
-    public function customers(): HasMany
+    public function partners(): HasMany
     {
-        return $this->hasMany(Customer::class);
-    }
-
-    public function suppliers(): HasMany
-    {
-        return $this->hasMany(Supplier::class);
+        return $this->hasMany(Partner::class);
     }
 
     public function transactions(): HasMany

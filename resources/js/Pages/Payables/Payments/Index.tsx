@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { Plus, Eye, Banknote } from 'lucide-react';
 interface Payment {
     id: number;
     payment_number: string;
-    supplier_name: string;
+    partner_name: string;
     cash_bank_name: string;
     date: string;
     amount: number;
@@ -119,7 +119,7 @@ export default function Index({ payments }: Props) {
                                         <TableCell className="font-mono text-sm">
                                             {p.payment_number}
                                         </TableCell>
-                                        <TableCell className="font-medium">{p.supplier_name}</TableCell>
+                                        <TableCell className="font-medium">{p.partner_name}</TableCell>
                                         <TableCell>{formatDate(p.date)}</TableCell>
                                         <TableCell>{p.cash_bank_name}</TableCell>
                                         <TableCell className="text-right font-medium text-orange-600">

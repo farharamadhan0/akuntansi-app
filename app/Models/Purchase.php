@@ -21,7 +21,7 @@ class Purchase extends Model
     protected $fillable = [
         'company_id',
         'purchase_number',
-        'supplier_id',
+        'partner_id',
         'date',
         'due_date',
         'payment_type',
@@ -54,9 +54,9 @@ class Purchase extends Model
         'attachments' => 'array',
     ];
 
-    public function supplier(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Partner::class)->withTrashed();
     }
 
     public function cashBankAccount(): BelongsTo

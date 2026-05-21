@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,7 +27,7 @@ interface Allocation {
     amount: number;
 }
 
-interface Supplier {
+interface Partner {
     id: number;
     name: string;
     code?: string;
@@ -36,7 +36,7 @@ interface Supplier {
 interface Payment {
     id: number;
     payment_number: string;
-    supplier: Supplier;
+    partner: Partner;
     cash_bank_name: string;
     date: string;
     amount: number;
@@ -142,7 +142,7 @@ export default function Show({ payment: p, journalEntries }: Props) {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-gray-500">Supplier</p>
-                                <p className="font-medium text-gray-900">{p.supplier.name}</p>
+                                <p className="font-medium text-gray-900">{p.partner.name}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Dibayar dari</p>

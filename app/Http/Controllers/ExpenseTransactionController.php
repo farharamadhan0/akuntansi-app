@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\TransactionType;
 use App\Http\Requests\ExpenseTransactionRequest;
 use App\Models\CashBankAccount;
-use App\Models\Supplier;
+use App\Models\Partner;
 use App\Models\Transaction;
 use App\Models\TransactionCategory;
 use App\Services\ExpenseService;
@@ -25,7 +25,7 @@ class ExpenseTransactionController extends Controller
 
         $transactions = Transaction::where('company_id', $companyId)
             ->ofType(TransactionType::Expense)
-            ->with(['supplier:id,name'])
+            ->with(['partner:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -39,7 +39,7 @@ class ExpenseTransactionController extends Controller
                 'status'               => $t->status->value,
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
-                'supplier_name'        => $t->supplier?->name,
+                'partner_name'         => $t->partner?->name,
             ]);
 
         return Inertia::render('Transactions/Expense/Index', [
@@ -70,15 +70,16 @@ class ExpenseTransactionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $suppliers = Supplier::where('company_id', $companyId)
+        $partners = Partner::where('company_id', $companyId)
             ->active()
+            ->supplier()
             ->orderBy('name')
             ->get(['id', 'name']);
 
         return Inertia::render('Transactions/Expense/Create', [
             'cashBankAccounts' => $cashBankAccounts,
             'categories'       => $categories,
-            'suppliers'        => $suppliers,
+            'partners'         => $partners,
             'defaultDate'      => now()->format('Y-m-d'),
         ]);
     }
@@ -121,7 +122,7 @@ class ExpenseTransactionController extends Controller
         $expense->load([
             'cashBankAccount:id,name,type',
             'category:id,name',
-            'supplier:id,name',
+            'partner:id,name',
             'journalEntries.lines.account:id,code,name',
         ]);
 
@@ -139,7 +140,7 @@ class ExpenseTransactionController extends Controller
                 'cash_bank_name'     => $expense->cashBankAccount->name,
                 'cash_bank_type'     => $expense->cashBankAccount->type->value,
                 'category_name'      => $expense->category?->name,
-                'supplier_name'      => $expense->supplier?->name,
+                'partner_name'       => $expense->partner?->name,
                 'posted_at'          => $expense->posted_at?->format('Y-m-d H:i'),
                 'journal_entries'    => $expense->journalEntries->map(fn($entry) => [
                     'entry_number' => $entry->entry_number,

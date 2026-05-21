@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ interface Category {
     name: string;
 }
 
-interface Customer {
+interface Partner {
     id: number;
     name: string;
 }
@@ -29,7 +29,7 @@ interface Customer {
 interface Props {
     cashBankAccounts: CashBankAccount[];
     categories: Category[];
-    customers: Customer[];
+    partners: Partner[];
     defaultDate: string;
 }
 
@@ -39,7 +39,7 @@ function formatCurrency(value: string) {
     return new Intl.NumberFormat('id-ID').format(num);
 }
 
-export default function Create({ cashBankAccounts, categories, customers, defaultDate }: Props) {
+export default function Create({ cashBankAccounts, categories, partners, defaultDate }: Props) {
     const { props } = usePage<{ flash?: { error?: string } }>();
     const flashError = props.flash?.error;
 
@@ -48,7 +48,7 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
         amount: '' as string | number,
         cash_bank_account_id: '',
         category_id: '',
-        customer_id: '',
+        partner_id: '',
         description: '',
         reference: '',
     });
@@ -186,17 +186,17 @@ export default function Create({ cashBankAccounts, categories, customers, defaul
 
                                 <FormField
                                     label="Dari Pelanggan"
-                                    error={errors.customer_id}
+                                    error={errors.partner_id}
                                     hint="Opsional"
                                 >
                                     <select
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 aria-invalid:border-destructive"
-                                        value={data.customer_id}
-                                        onChange={(e) => setData('customer_id', e.target.value)}
-                                        aria-invalid={!!errors.customer_id}
+                                        value={data.partner_id}
+                                        onChange={(e) => setData('partner_id', e.target.value)}
+                                        aria-invalid={!!errors.partner_id}
                                     >
                                         <option value="">-- Tanpa Pelanggan --</option>
-                                        {customers.map((c) => (
+                                        {partners.map((c) => (
                                             <option key={c.id} value={c.id}>
                                                 {c.name}
                                             </option>

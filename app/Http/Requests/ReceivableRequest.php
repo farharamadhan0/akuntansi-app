@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\TransactionCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -18,15 +18,15 @@ class ReceivableRequest extends FormRequest
         $companyId = auth()->user()->current_company_id;
 
         return [
-            'customer_id' => [
+            'partner_id' => [
                 'required',
                 'integer',
                 function ($attribute, $value, $fail) use ($companyId) {
-                    $exists = Customer::where('id', $value)
+                    $partner = Partner::where('id', $value)
                         ->where('company_id', $companyId)
                         ->where('is_active', true)
-                        ->exists();
-                    if (!$exists) {
+                        ->first();
+                    if (! $partner || ! $partner->hasType(Partner::TYPE_CUSTOMER)) {
                         $fail('Pelanggan tidak valid.');
                     }
                 },
@@ -58,7 +58,7 @@ class ReceivableRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer_id.required' => 'Pelanggan wajib dipilih.',
+            'partner_id.required' => 'Pelanggan wajib dipilih.',
             'date.required' => 'Tanggal wajib diisi.',
             'date.before_or_equal' => 'Tanggal tidak boleh di masa depan.',
             'due_date.required' => 'Tanggal jatuh tempo wajib diisi.',

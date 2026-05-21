@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Wallet } from 'lucide-react';
 
-interface Supplier {
+interface Partner {
     id: number;
     name: string;
     code?: string;
@@ -21,15 +21,15 @@ interface Category {
 }
 
 interface Props {
-    suppliers: Supplier[];
+    partners: Partner[];
     categories: Category[];
 }
 
-export default function Create({ suppliers, categories }: Props) {
+export default function Create({ partners, categories }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
 
     const { data, setData, post, processing, errors } = useForm({
-        supplier_id: '',
+        partner_id: '',
         date: new Date().toISOString().split('T')[0],
         due_date: '',
         amount: '',
@@ -75,14 +75,14 @@ export default function Create({ suppliers, categories }: Props) {
                 <Card>
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
-                            <FormField label="Supplier" error={errors.supplier_id} required>
+                            <FormField label="Supplier" error={errors.partner_id} required>
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={data.supplier_id}
-                                    onChange={(e) => setData('supplier_id', e.target.value)}
+                                    value={data.partner_id}
+                                    onChange={(e) => setData('partner_id', e.target.value)}
                                 >
                                     <option value="">-- Pilih Supplier --</option>
-                                    {suppliers.map((s) => (
+                                    {partners.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.code ? `[${s.code}] ` : ''}{s.name}
                                         </option>

@@ -27,7 +27,7 @@ interface SaleData {
     reference?: string | null;
     status: string;
     status_label: string;
-    customer?: { name: string; code?: string | null; } | null;
+    partner?: { name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
     receivable?: { receivable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
     items: SaleItem[];
@@ -73,7 +73,7 @@ export default function Show({ sale, journalEntries }: Props) {
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div><div className="text-sm text-muted-foreground">Tanggal</div><div className="font-medium">{sale.date}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Jatuh Tempo</div><div className="font-medium">{sale.due_date ?? '-'}</div></div>
-                                <div><div className="text-sm text-muted-foreground">Pelanggan</div><div className="font-medium">{sale.customer?.name ?? '-'}</div></div>
+                                <div><div className="text-sm text-muted-foreground">Pelanggan</div><div className="font-medium">{sale.partner?.name ?? '-'}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Kas/Bank</div><div className="font-medium">{sale.cash_bank_account?.name ?? '-'}</div></div>
                             </div>
 

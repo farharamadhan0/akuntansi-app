@@ -28,8 +28,7 @@ class Transaction extends Model
         'cash_bank_account_id',
         'destination_cash_bank_account_id',
         'category_id',
-        'customer_id',
-        'supplier_id',
+        'partner_id',
         'status',
         'posted_at',
         'voided_at',
@@ -64,14 +63,9 @@ class Transaction extends Model
         return $this->belongsTo(TransactionCategory::class, 'category_id');
     }
 
-    public function customer(): BelongsTo
+    public function partner(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
-    }
-
-    public function supplier(): BelongsTo
-    {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Partner::class)->withTrashed();
     }
 
     public function createdBy(): BelongsTo

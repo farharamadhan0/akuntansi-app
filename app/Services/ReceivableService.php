@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Receivable;
 use App\Models\Account;
 use App\Enums\TransactionStatus;
@@ -22,15 +22,15 @@ class ReceivableService
         return DB::transaction(function () use ($data) {
             $companyId = $data['company_id'] ?? auth()->user()->current_company_id;
 
-            $customer = Customer::find($data['customer_id']);
-            if ($customer && $customer->credit_limit !== null) {
-                $outstanding = (float) $customer->outstanding_receivables;
+            $partner = Partner::find($data['partner_id']);
+            if ($partner && $partner->credit_limit !== null) {
+                $outstanding = (float) $partner->outstanding_receivables;
                 $newAmount   = (float) $data['amount'];
-                if (($outstanding + $newAmount) > (float) $customer->credit_limit) {
-                    $remaining = max((float) $customer->credit_limit - $outstanding, 0);
+                if (($outstanding + $newAmount) > (float) $partner->credit_limit) {
+                    $remaining = max((float) $partner->credit_limit - $outstanding, 0);
                     throw new \Exception(sprintf(
                         'Jumlah piutang melebihi limit kredit pelanggan. Limit: Rp %s, Terpakai: Rp %s, Sisa: Rp %s.',
-                        number_format((float) $customer->credit_limit, 0, ',', '.'),
+                        number_format((float) $partner->credit_limit, 0, ',', '.'),
                         number_format($outstanding, 0, ',', '.'),
                         number_format($remaining, 0, ',', '.')
                     ));
@@ -40,7 +40,7 @@ class ReceivableService
             $receivable = Receivable::create([
                 'company_id' => $companyId,
                 'receivable_number' => $this->numberGenerator->generateReceivableNumber($companyId),
-                'customer_id' => $data['customer_id'],
+                'partner_id' => $data['partner_id'],
                 'date' => $data['date'],
                 'due_date' => $data['due_date'],
                 'amount' => $data['amount'],

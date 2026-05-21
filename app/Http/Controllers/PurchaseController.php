@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PurchaseRequest;
 use App\Models\CashBankAccount;
+use App\Models\Partner;
 use App\Models\Product;
 use App\Models\Purchase;
-use App\Models\Supplier;
 use App\Services\PurchaseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +24,7 @@ class PurchaseController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $purchases = Purchase::where('company_id', $companyId)
-            ->with(['supplier:id,name', 'cashBankAccount:id,name', 'payable:id,payment_status'])
+            ->with(['partner:id,name', 'cashBankAccount:id,name', 'payable:id,payment_status'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -35,7 +35,7 @@ class PurchaseController extends Controller
                 'due_date' => $purchase->due_date?->format('Y-m-d'),
                 'payment_type' => $purchase->payment_type,
                 'payable_payment_status' => $purchase->payable?->payment_status?->value,
-                'supplier_name' => $purchase->supplier?->name,
+                'partner_name' => $purchase->partner?->name,
                 'cash_bank_name' => $purchase->cashBankAccount?->name,
                 'total_amount' => (float) $purchase->total_amount,
                 'status' => $purchase->status->value,
@@ -53,7 +53,7 @@ class PurchaseController extends Controller
 
         return Inertia::render('Purchases/Create', [
             'purchase' => null,
-            'suppliers' => Supplier::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name', 'code']),
+            'partners' => Partner::where('company_id', $companyId)->active()->supplier()->orderBy('name')->get(['id', 'name', 'code']),
             'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
             'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
         ]);
@@ -79,7 +79,7 @@ class PurchaseController extends Controller
         $this->authorizeCompany($purchase);
 
         $purchase->load([
-            'supplier:id,name,code',
+            'partner:id,name,code',
             'cashBankAccount:id,name',
             'payable:id,payable_number,payment_status,amount,paid_amount',
             'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'product_type', 'unit', 'deleted_at'),

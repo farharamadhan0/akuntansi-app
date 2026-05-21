@@ -27,14 +27,14 @@ class ReceivablePaymentController extends Controller
 
         $payments = Payment::where('company_id', $companyId)
             ->where('type', PaymentType::Receivable)
-            ->with(['customer:id,name', 'cashBankAccount:id,name'])
+            ->with(['partner:id,name', 'cashBankAccount:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
             ->map(fn(Payment $p) => [
                 'id' => $p->id,
                 'payment_number' => $p->payment_number,
-                'customer_name' => $p->customer->name,
+                'partner_name' => $p->partner->name,
                 'cash_bank_name' => $p->cashBankAccount->name,
                 'date' => $p->date->format('Y-m-d'),
                 'amount' => (float) $p->amount,
@@ -56,14 +56,14 @@ class ReceivablePaymentController extends Controller
         $receivables = Receivable::where('company_id', $companyId)
             ->where('status', TransactionStatus::Posted)
             ->where('payment_status', '!=', PaymentStatus::Paid)
-            ->with('customer:id,name')
+            ->with('partner:id,name')
             ->orderBy('due_date')
             ->get()
             ->map(fn(Receivable $r) => [
                 'id' => $r->id,
                 'receivable_number' => $r->receivable_number,
-                'customer_id' => $r->customer_id,
-                'customer_name' => $r->customer->name,
+                'partner_id' => $r->partner_id,
+                'partner_name' => $r->partner->name,
                 'date' => $r->date->format('Y-m-d'),
                 'due_date' => $r->due_date->format('Y-m-d'),
                 'amount' => (float) $r->amount,
@@ -73,8 +73,8 @@ class ReceivablePaymentController extends Controller
                 'is_overdue' => $r->isOverdue(),
             ]);
 
-        // Filter by customer if specified
-        $customerId = $request->query('customer_id');
+        // Filter by partner if specified
+        $partnerId = $request->query('partner_id');
 
         $cashBankAccounts = CashBankAccount::where('company_id', $companyId)
             ->active()
@@ -85,7 +85,7 @@ class ReceivablePaymentController extends Controller
         return Inertia::render('Receivables/Payments/Create', [
             'receivables' => $receivables,
             'cashBankAccounts' => $cashBankAccounts,
-            'preselectedCustomerId' => $customerId ? (int) $customerId : null,
+            'preselectedPartnerId' => $partnerId ? (int) $partnerId : null,
         ]);
     }
 
@@ -111,7 +111,7 @@ class ReceivablePaymentController extends Controller
                 'amount' => $totalAmount,
                 'description' => $validated['description'] ?? null,
                 'cash_bank_account_id' => $validated['cash_bank_account_id'],
-                'customer_id' => $firstReceivable->customer_id,
+                'partner_id' => $firstReceivable->partner_id,
                 'reference' => $validated['reference'] ?? null,
                 'allocations' => $validated['allocations'],
             ]);
@@ -137,7 +137,7 @@ class ReceivablePaymentController extends Controller
         }
 
         $payment->load([
-            'customer:id,name,code',
+            'partner:id,name,code',
             'cashBankAccount:id,name,type',
             'allocations.allocatable',
             'createdBy:id,name',
@@ -165,7 +165,7 @@ class ReceivablePaymentController extends Controller
             'payment' => [
                 'id' => $payment->id,
                 'payment_number' => $payment->payment_number,
-                'customer' => $payment->customer,
+                'partner' => $payment->partner,
                 'cash_bank_name' => $payment->cashBankAccount->name,
                 'date' => $payment->date->format('Y-m-d'),
                 'amount' => (float) $payment->amount,

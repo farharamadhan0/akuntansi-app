@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,8 +12,8 @@ import { Banknote, AlertTriangle, Check } from 'lucide-react';
 interface Receivable {
     id: number;
     receivable_number: string;
-    customer_id: number;
-    customer_name: string;
+    partner_id: number;
+    partner_name: string;
     date: string;
     due_date: string;
     amount: number;
@@ -32,7 +32,7 @@ interface CashBankAccount {
 interface Props {
     receivables: Receivable[];
     cashBankAccounts: CashBankAccount[];
-    preselectedCustomerId: number | null;
+    preselectedPartnerId: number | null;
 }
 
 interface Allocation {
@@ -57,11 +57,11 @@ function formatDate(dateStr: string) {
     });
 }
 
-export default function Create({ receivables, cashBankAccounts, preselectedCustomerId }: Props) {
+export default function Create({ receivables, cashBankAccounts, preselectedPartnerId }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
     const flashError = flash?.error;
 
-    const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(preselectedCustomerId);
+    const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(preselectedPartnerId);
     const [allocations, setAllocations] = useState<Record<number, string>>({});
 
     const { data, setData, post, processing, errors } = useForm({
@@ -74,12 +74,12 @@ export default function Create({ receivables, cashBankAccounts, preselectedCusto
 
     // Filter receivables by selected customer
     const filteredReceivables = selectedCustomerId
-        ? receivables.filter(r => r.customer_id === selectedCustomerId)
+        ? receivables.filter(r => r.partner_id === selectedCustomerId)
         : receivables;
 
-    // Unique customers
-    const customers = Array.from(
-        new Map(receivables.map(r => [r.customer_id, { id: r.customer_id, name: r.customer_name }])).values()
+    // Unique partners
+    const partners = Array.from(
+        new Map(receivables.map(r => [r.partner_id, { id: r.partner_id, name: r.partner_name }])).values()
     );
 
     // Calculate total
@@ -209,7 +209,7 @@ export default function Create({ receivables, cashBankAccounts, preselectedCusto
                                     }}
                                 >
                                     <option value="">-- Semua Pelanggan --</option>
-                                    {customers.map((c) => (
+                                    {partners.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -252,7 +252,7 @@ export default function Create({ receivables, cashBankAccounts, preselectedCusto
                                                         )}
                                                     </div>
                                                     <p className="font-medium text-gray-900 truncate">
-                                                        {r.customer_name}
+                                                        {r.partner_name}
                                                     </p>
                                                     <p className="text-sm text-gray-500 truncate">
                                                         {r.description}

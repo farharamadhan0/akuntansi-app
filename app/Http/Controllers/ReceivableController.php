@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ReceivableRequest;
 use App\Models\Receivable;
-use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\TransactionCategory;
 use App\Services\ReceivableService;
 use App\Enums\TransactionStatus;
@@ -25,7 +25,7 @@ class ReceivableController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $query = Receivable::where('company_id', $companyId)
-            ->with(['customer:id,name', 'category:id,name'])
+            ->with(['partner:id,name', 'category:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at');
 
@@ -42,7 +42,7 @@ class ReceivableController extends Controller
         $receivables = $query->get()->map(fn(Receivable $r) => [
             'id' => $r->id,
             'receivable_number' => $r->receivable_number,
-            'customer_name' => $r->customer->name,
+            'partner_name' => $r->partner->name,
             'date' => $r->date->format('Y-m-d'),
             'due_date' => $r->due_date->format('Y-m-d'),
             'amount' => (float) $r->amount,
@@ -84,8 +84,9 @@ class ReceivableController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        $customers = Customer::where('company_id', $companyId)
+        $partners = Partner::where('company_id', $companyId)
             ->active()
+            ->customer()
             ->orderBy('name')
             ->get(['id', 'name', 'code']);
 
@@ -96,7 +97,7 @@ class ReceivableController extends Controller
             ->get(['id', 'name']);
 
         return Inertia::render('Receivables/Create', [
-            'customers' => $customers,
+            'partners' => $partners,
             'categories' => $categories,
         ]);
     }
@@ -125,7 +126,7 @@ class ReceivableController extends Controller
             abort(403);
         }
 
-        $receivable->load(['customer:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
+        $receivable->load(['partner:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
 
         // Get journal entries
         $journalEntries = $receivable->journalEntries()
@@ -149,7 +150,7 @@ class ReceivableController extends Controller
             'receivable' => [
                 'id' => $receivable->id,
                 'receivable_number' => $receivable->receivable_number,
-                'customer' => $receivable->customer,
+                'partner' => $receivable->partner,
                 'category_name' => $receivable->category?->name,
                 'date' => $receivable->date->format('Y-m-d'),
                 'due_date' => $receivable->due_date->format('Y-m-d'),

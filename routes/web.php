@@ -10,8 +10,7 @@ use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
 use App\Http\Controllers\JournalEntryController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
@@ -91,26 +90,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
         
-        // Master Data - Pelanggan
+        // Master Data - Mitra (gabungan pelanggan & supplier)
         Route::prefix('master')->group(function () {
-            Route::get('pelanggan', [CustomerController::class, 'index'])->middleware('permission:customers.view')->name('customers.index');
-            Route::get('pelanggan/tambah', [CustomerController::class, 'create'])->middleware('permission:customers.create')->name('customers.create');
-            Route::post('pelanggan', [CustomerController::class, 'store'])->middleware('permission:customers.create')->name('customers.store');
-            Route::get('pelanggan/{customer}', [CustomerController::class, 'show'])->middleware('permission:customers.view')->name('customers.show');
-            Route::get('pelanggan/{customer}/edit', [CustomerController::class, 'edit'])->middleware('permission:customers.edit')->name('customers.edit');
-            Route::put('pelanggan/{customer}', [CustomerController::class, 'update'])->middleware('permission:customers.edit')->name('customers.update');
-            Route::delete('pelanggan/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete')->name('customers.destroy');
-            Route::post('pelanggan/{customer}/toggle', [CustomerController::class, 'toggleActive'])->middleware('permission:customers.edit')->name('customers.toggle');
-
-            // Master Data - Supplier
-            Route::get('supplier', [SupplierController::class, 'index'])->middleware('permission:suppliers.view')->name('suppliers.index');
-            Route::get('supplier/tambah', [SupplierController::class, 'create'])->middleware('permission:suppliers.create')->name('suppliers.create');
-            Route::post('supplier', [SupplierController::class, 'store'])->middleware('permission:suppliers.create')->name('suppliers.store');
-            Route::get('supplier/{supplier}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view')->name('suppliers.show');
-            Route::get('supplier/{supplier}/edit', [SupplierController::class, 'edit'])->middleware('permission:suppliers.edit')->name('suppliers.edit');
-            Route::put('supplier/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.edit')->name('suppliers.update');
-            Route::delete('supplier/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete')->name('suppliers.destroy');
-            Route::post('supplier/{supplier}/toggle', [SupplierController::class, 'toggleActive'])->middleware('permission:suppliers.edit')->name('suppliers.toggle');
+            Route::get('mitra', [PartnerController::class, 'index'])->middleware('permission:partners.view')->name('partners.index');
+            Route::get('mitra/tambah', [PartnerController::class, 'create'])->middleware('permission:partners.create')->name('partners.create');
+            Route::post('mitra', [PartnerController::class, 'store'])->middleware('permission:partners.create')->name('partners.store');
+            Route::get('mitra/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners.view')->name('partners.show');
+            Route::get('mitra/{partner}/edit', [PartnerController::class, 'edit'])->middleware('permission:partners.edit')->name('partners.edit');
+            Route::put('mitra/{partner}', [PartnerController::class, 'update'])->middleware('permission:partners.edit')->name('partners.update');
+            Route::delete('mitra/{partner}', [PartnerController::class, 'destroy'])->middleware('permission:partners.delete')->name('partners.destroy');
+            Route::post('mitra/{partner}/toggle', [PartnerController::class, 'toggleActive'])->middleware('permission:partners.edit')->name('partners.toggle');
 
         // Master Data - Kas & Bank
             Route::get('kas-bank', [CashBankAccountController::class, 'index'])->middleware('permission:cash_bank.view')->name('cash-bank.index');

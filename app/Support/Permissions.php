@@ -47,12 +47,8 @@ class Permissions
                 'label' => 'Jurnal Umum',
                 'actions' => $crud,
             ],
-            'customers' => [
-                'label' => 'Pelanggan',
-                'actions' => $crud,
-            ],
-            'suppliers' => [
-                'label' => 'Supplier',
+            'partners' => [
+                'label' => 'Mitra (Pelanggan & Supplier)',
                 'actions' => $crud,
             ],
             'cash_bank' => [

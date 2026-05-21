@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -9,18 +9,18 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-interface Customer { id: number; name: string; code?: string; }
+interface Partner { id: number; name: string; code?: string; }
 interface CashBankAccount { id: number; name: string; }
 interface Product { id: number; product_code: string; name: string; unit: string; sales_price: number; is_stock_tracked: boolean; current_stock?: string; }
 interface Flash { error?: string; }
-interface Props { customers: Customer[]; cashBankAccounts: CashBankAccount[]; products: Product[]; }
+interface Props { partners: Partner[]; cashBankAccounts: CashBankAccount[]; products: Product[]; }
 interface ItemRow { product_id: string; description: string; quantity: string; unit: string; unit_price: string; discount_amount: string; tax_amount: string; }
 
-export default function Create({ customers, cashBankAccounts, products }: Props) {
+export default function Create({ partners, cashBankAccounts, products }: Props) {
     const { flash } = usePage().props as { flash?: Flash };
     const [items, setItems] = useState<ItemRow[]>([{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
     const { data, setData, post, processing, errors } = useForm({
-        customer_id: '',
+        partner_id: '',
         date: new Date().toISOString().split('T')[0],
         due_date: '',
         payment_type: 'cash',
@@ -90,10 +90,10 @@ export default function Create({ customers, cashBankAccounts, products }: Props)
                             <FormField label="Tanggal" error={errors.date} required>
                                 <Input type="date" value={data.date} onChange={(e) => setData('date', e.target.value)} />
                             </FormField>
-                            <FormField label="Pelanggan" error={errors.customer_id}>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.customer_id} onChange={(e) => setData('customer_id', e.target.value)}>
+                            <FormField label="Pelanggan" error={errors.partner_id}>
+                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)}>
                                     <option value="">-- Pilih Pelanggan --</option>
-                                    {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.code ? `[${customer.code}] ` : ''}{customer.name}</option>)}
+                                    {partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.code ? `[${partner.code}] ` : ''}{partner.name}</option>)}
                                 </select>
                             </FormField>
                             <FormField label="Kas/Bank" error={errors.cash_bank_account_id}>

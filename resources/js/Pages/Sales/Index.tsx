@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ interface Sale {
     due_date?: string | null;
     payment_type: string;
     receivable_payment_status?: 'unpaid' | 'partial' | 'paid' | null;
-    customer_name?: string | null;
+    partner_name?: string | null;
     cash_bank_name?: string | null;
     total_amount: number;
 }
@@ -100,7 +100,7 @@ export default function Index({ sales }: Props) {
                                 <TableRow key={sale.id}>
                                     <TableCell className="font-mono text-sm">{sale.sale_number}</TableCell>
                                     <TableCell>{sale.date}</TableCell>
-                                    <TableCell>{sale.customer_name ?? sale.cash_bank_name ?? '-'}</TableCell>
+                                    <TableCell>{sale.partner_name ?? sale.cash_bank_name ?? '-'}</TableCell>
                                     <TableCell>{formatPaymentType(sale)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(sale.total_amount)}</TableCell>
                                     <TableCell className="flex justify-center">

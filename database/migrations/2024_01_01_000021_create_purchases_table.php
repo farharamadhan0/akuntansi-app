@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->string('purchase_number', 30);
-            $table->foreignId('supplier_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('partner_id')->nullable()->constrained()->nullOnDelete();
             $table->date('date');
             $table->date('due_date')->nullable();
             $table->string('payment_type', 20);
@@ -35,7 +35,7 @@ return new class extends Migration
 
             $table->unique(['company_id', 'purchase_number']);
             $table->index(['company_id', 'date']);
-            $table->index(['company_id', 'supplier_id', 'status']);
+            $table->index(['company_id', 'partner_id', 'status']);
         });
     }
 

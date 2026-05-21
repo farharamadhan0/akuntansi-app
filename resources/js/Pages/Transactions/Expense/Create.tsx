@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ interface Category {
     name: string;
 }
 
-interface Supplier {
+interface Partner {
     id: number;
     name: string;
 }
@@ -29,14 +29,14 @@ interface Supplier {
 interface Props {
     cashBankAccounts: CashBankAccount[];
     categories: Category[];
-    suppliers: Supplier[];
+    partners: Partner[];
     defaultDate: string;
 }
 
 const SELECT_CLASS =
     'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 aria-invalid:border-destructive';
 
-export default function Create({ cashBankAccounts, categories, suppliers, defaultDate }: Props) {
+export default function Create({ cashBankAccounts, categories, partners, defaultDate }: Props) {
     const { props } = usePage<{ flash?: { error?: string } }>();
     const flashError = props.flash?.error;
 
@@ -45,7 +45,7 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
         amount: '' as string | number,
         cash_bank_account_id: '',
         category_id: '',
-        supplier_id: '',
+        partner_id: '',
         description: '',
         reference: '',
     });
@@ -183,17 +183,17 @@ export default function Create({ cashBankAccounts, categories, suppliers, defaul
 
                                 <FormField
                                     label="Kepada Supplier"
-                                    error={errors.supplier_id}
+                                    error={errors.partner_id}
                                     hint="Opsional"
                                 >
                                     <select
                                         className={SELECT_CLASS}
-                                        value={data.supplier_id}
-                                        onChange={(e) => setData('supplier_id', e.target.value)}
-                                        aria-invalid={!!errors.supplier_id}
+                                        value={data.partner_id}
+                                        onChange={(e) => setData('partner_id', e.target.value)}
+                                        aria-invalid={!!errors.partner_id}
                                     >
                                         <option value="">-- Tanpa Supplier --</option>
-                                        {suppliers.map((s) => (
+                                        {partners.map((s) => (
                                             <option key={s.id} value={s.id}>
                                                 {s.name}
                                             </option>

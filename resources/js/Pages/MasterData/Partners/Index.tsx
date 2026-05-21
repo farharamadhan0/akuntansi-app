@@ -23,91 +23,105 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-interface Customer {
+interface Partner {
     id: number;
     code?: string;
     name: string;
     email?: string;
     phone?: string;
     is_active: boolean;
+    types: string[];
 }
 
 interface Props {
-    customers: Customer[];
-    filters: { search?: string; status?: string };
+    partners: Partner[];
+    filters: { search?: string; status?: string; type?: string };
 }
 
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value);
-}
+const typeLabel: Record<string, string> = {
+    customer: 'Pelanggan',
+    supplier: 'Supplier',
+};
 
-export default function Index({ customers, filters }: Props) {
+const typeBadgeClass: Record<string, string> = {
+    customer: 'bg-blue-100 text-blue-700',
+    supplier: 'bg-amber-100 text-amber-700',
+};
+
+export default function Index({ partners, filters }: Props) {
     const { can } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
-    const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<Partner | null>(null);
+
+    const buildQuery = (overrides: Partial<Props['filters']>) => ({
+        search,
+        status: filters.status,
+        type: filters.type,
+        ...overrides,
+    });
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/master/pelanggan', { search, status: filters.status }, { preserveState: true, replace: true });
+        router.get('/master/mitra', buildQuery({ search }), { preserveState: true, replace: true });
     };
 
     const handleStatusFilter = (status: string) => {
-        router.get('/master/pelanggan', { search, status }, { preserveState: true, replace: true });
+        router.get('/master/mitra', buildQuery({ status }), { preserveState: true, replace: true });
     };
 
-    const handleToggle = (customer: Customer) => {
-        router.post(`/master/pelanggan/${customer.id}/toggle`, {}, { preserveScroll: true });
+    const handleTypeFilter = (type: string) => {
+        router.get('/master/mitra', buildQuery({ type }), { preserveState: true, replace: true });
     };
 
-    const handleDelete = (customer: Customer) => {
-        router.delete(`/master/pelanggan/${customer.id}`, {
+    const handleToggle = (partner: Partner) => {
+        router.post(`/master/mitra/${partner.id}/toggle`, {}, { preserveScroll: true });
+    };
+
+    const handleDelete = (partner: Partner) => {
+        router.delete(`/master/mitra/${partner.id}`, {
             onFinish: () => setDeleteTarget(null),
         });
     };
 
-    const activeFilter = filters.status ?? 'active';
+    const activeStatus = filters.status ?? 'active';
+    const activeType = filters.type ?? 'all';
 
     return (
         <AuthenticatedLayout>
-            <Head title="Data Pelanggan" />
+            <Head title="Data Mitra" />
 
             <Breadcrumb items={[
                 { label: 'Master Data' },
-                { label: 'Pelanggan' },
+                { label: 'Mitra' },
             ]} />
 
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Users className="text-blue-500" size={26} />
-                        Data Pelanggan
+                        Data Mitra
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                        Kelola daftar pelanggan perusahaan
+                        Kelola daftar mitra (pelanggan & supplier) perusahaan
                     </p>
                 </div>
-                {can('customers.create') && (
-                    <Link href="/master/pelanggan/tambah">
+                {can('partners.create') && (
+                    <Link href="/master/mitra/tambah">
                         <Button className="gap-1.5">
                             <Plus size={18} />
-                            Tambah Pelanggan
+                            Tambah Mitra
                         </Button>
                     </Link>
                 )}
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex flex-col gap-3 mb-4">
                 <form onSubmit={handleSearch} className="flex gap-2 flex-1">
                     <div className="relative flex-1 max-w-sm">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <Input
-                            placeholder="Cari nama, kode, telepon..."
+                            placeholder="Cari nama, kode, telepon, email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-9"
@@ -115,19 +129,36 @@ export default function Index({ customers, filters }: Props) {
                     </div>
                     <Button type="submit" variant="outline">Cari</Button>
                 </form>
-                <div className="flex gap-2">
-                    {(['all', 'active', 'inactive'] as const).map((s) => (
-                        <Button
-                            key={s}
-                            variant={activeFilter === s ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => handleStatusFilter(s)}
-                        >
-                            {s === 'all' && 'Semua'}
-                            {s === 'active' && 'Aktif'}
-                            {s === 'inactive' && 'Nonaktif'}
-                        </Button>
-                    ))}
+
+                <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-500">Tipe:</span>
+                        {(['all', 'customer', 'supplier'] as const).map((t) => (
+                            <Button
+                                key={t}
+                                variant={activeType === t ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handleTypeFilter(t)}
+                            >
+                                {t === 'all' ? 'Semua' : typeLabel[t]}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-500">Status:</span>
+                        {(['all', 'active', 'inactive'] as const).map((s) => (
+                            <Button
+                                key={s}
+                                variant={activeStatus === s ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handleStatusFilter(s)}
+                            >
+                                {s === 'all' && 'Semua'}
+                                {s === 'active' && 'Aktif'}
+                                {s === 'inactive' && 'Nonaktif'}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -138,32 +169,49 @@ export default function Index({ customers, filters }: Props) {
                             <TableRow>
                                 <TableHead>Kode</TableHead>
                                 <TableHead>Nama</TableHead>
+                                <TableHead>Tipe</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Telepon</TableHead>
                                 <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {customers.length === 0 ? (
+                            {partners.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
-                                        Belum ada data pelanggan. Klik "Tambah Pelanggan" untuk memulai.
+                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                                        Belum ada data mitra. Klik "Tambah Mitra" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                customers.map((c) => (
-                                    <TableRow key={c.id} className={!c.is_active ? 'opacity-60' : ''}>
+                                partners.map((p) => (
+                                    <TableRow key={p.id} className={!p.is_active ? 'opacity-60' : ''}>
                                         <TableCell className="font-mono text-sm">
                                             <Link
-                                                href={`/master/pelanggan/${c.id}`}
+                                                href={`/master/mitra/${p.id}`}
                                                 className="text-blue-600 hover:underline"
                                             >
-                                                {c.code || 'Tanpa kode'}
+                                                {p.code || 'Tanpa kode'}
                                             </Link>
                                         </TableCell>
-                                        <TableCell className="font-medium">{c.name}</TableCell>
-                                        <TableCell className="text-gray-500">{c.email || '-'}</TableCell>
-                                        <TableCell className="text-gray-500">{c.phone || '-'}</TableCell>
+                                        <TableCell className="font-medium">{p.name}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap gap-1">
+                                                {p.types.length === 0 ? (
+                                                    <span className="text-xs text-gray-400">-</span>
+                                                ) : (
+                                                    p.types.map((t) => (
+                                                        <span
+                                                            key={t}
+                                                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass[t] ?? 'bg-slate-100 text-slate-700'}`}
+                                                        >
+                                                            {typeLabel[t] ?? t}
+                                                        </span>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-gray-500">{p.email || '-'}</TableCell>
+                                        <TableCell className="text-gray-500">{p.phone || '-'}</TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -172,27 +220,27 @@ export default function Index({ customers, filters }: Props) {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    {can('customers.edit') && (
+                                                    {can('partners.edit') && (
                                                         <DropdownMenuItem asChild>
-                                                            <Link href={`/master/pelanggan/${c.id}/edit`} className="flex items-center gap-2">
+                                                            <Link href={`/master/mitra/${p.id}/edit`} className="flex items-center gap-2">
                                                                 <Pencil size={14} />
                                                                 Edit
                                                             </Link>
                                                         </DropdownMenuItem>
                                                     )}
-                                                    {can('customers.edit') && (
-                                                        <DropdownMenuItem onClick={() => handleToggle(c)} className="flex items-center gap-2">
-                                                            {c.is_active
+                                                    {can('partners.edit') && (
+                                                        <DropdownMenuItem onClick={() => handleToggle(p)} className="flex items-center gap-2">
+                                                            {p.is_active
                                                                 ? <><ToggleRight size={14} className="text-green-600" /> Nonaktifkan</>
                                                                 : <><ToggleLeft size={14} className="text-gray-400" /> Aktifkan</>
                                                             }
                                                         </DropdownMenuItem>
                                                     )}
-                                                    {can('customers.delete') && (
+                                                    {can('partners.delete') && (
                                                         <>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
-                                                                onClick={() => setDeleteTarget(c)}
+                                                                onClick={() => setDeleteTarget(p)}
                                                                 className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
                                                             >
                                                                 <Trash2 size={14} />
@@ -215,9 +263,9 @@ export default function Index({ customers, filters }: Props) {
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-                        <h3 className="text-lg font-semibold mb-2">Hapus Pelanggan</h3>
+                        <h3 className="text-lg font-semibold mb-2">Hapus Mitra</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            Hapus pelanggan <strong>{deleteTarget.name}</strong>? Pelanggan yang masih memiliki piutang aktif tidak dapat dihapus.
+                            Hapus mitra <strong>{deleteTarget.name}</strong>? Mitra yang masih memiliki piutang atau hutang aktif tidak dapat dihapus.
                         </p>
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setDeleteTarget(null)}>

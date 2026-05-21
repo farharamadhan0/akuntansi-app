@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ interface Purchase {
     due_date?: string | null;
     payment_type: string;
     payable_payment_status?: 'unpaid' | 'partial' | 'paid' | null;
-    supplier_name?: string | null;
+    partner_name?: string | null;
     cash_bank_name?: string | null;
     total_amount: number;
     status: string;
@@ -103,7 +103,7 @@ export default function Index({ purchases }: Props) {
                                 <TableRow key={purchase.id}>
                                     <TableCell>{purchase.purchase_number}</TableCell>
                                     <TableCell>{purchase.date}</TableCell>
-                                    <TableCell>{purchase.supplier_name ?? purchase.cash_bank_name ?? '-'}</TableCell>
+                                    <TableCell>{purchase.partner_name ?? purchase.cash_bank_name ?? '-'}</TableCell>
                                     <TableCell>{formatPaymentType(purchase)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(purchase.total_amount)}</TableCell>
                                     <TableCell>{purchase.status_label}</TableCell>

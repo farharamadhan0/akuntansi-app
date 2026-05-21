@@ -18,11 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
 
             $table->foreignId('cash_bank_account_id')->constrained()->restrictOnDelete();
-            $table->foreignId('customer_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-            $table->foreignId('supplier_id')
+            $table->foreignId('partner_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();

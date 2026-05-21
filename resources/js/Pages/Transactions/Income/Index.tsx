@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
@@ -29,7 +29,7 @@ interface Transaction {
     cash_bank_name: string;
     cash_bank_type: string;
     category_name?: string;
-    customer_name?: string;
+    partner_name?: string;
 }
 
 interface Props {
@@ -189,7 +189,7 @@ export default function Index({ transactions }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             <p className="text-xs text-muted-foreground">
-                                                {t.customer_name}
+                                                {t.partner_name}
                                             </p>
                                         </TableCell>
                                         <TableCell>

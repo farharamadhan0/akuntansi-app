@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
@@ -29,7 +29,7 @@ interface Transaction {
     cash_bank_name: string;
     cash_bank_type: string;
     category_name?: string;
-    supplier_name?: string;
+    partner_name?: string;
 }
 
 interface Props {
@@ -188,7 +188,7 @@ export default function Index({ transactions }: Props) {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-sm">
-                                            {t.supplier_name}
+                                            {t.partner_name}
                                         </TableCell>
                                         <TableCell>
                                             <span

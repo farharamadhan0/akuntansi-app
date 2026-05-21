@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Supplier;
+use App\Models\Partner;
 use App\Models\TransactionCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -18,15 +18,15 @@ class PayableRequest extends FormRequest
         $companyId = auth()->user()->current_company_id;
 
         return [
-            'supplier_id' => [
+            'partner_id' => [
                 'required',
                 'integer',
                 function ($attribute, $value, $fail) use ($companyId) {
-                    $exists = Supplier::where('id', $value)
+                    $partner = Partner::where('id', $value)
                         ->where('company_id', $companyId)
                         ->where('is_active', true)
-                        ->exists();
-                    if (!$exists) {
+                        ->first();
+                    if (! $partner || ! $partner->hasType(Partner::TYPE_SUPPLIER)) {
                         $fail('Supplier tidak valid.');
                     }
                 },
@@ -58,7 +58,7 @@ class PayableRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supplier_id.required' => 'Supplier wajib dipilih.',
+            'partner_id.required' => 'Supplier wajib dipilih.',
             'date.required' => 'Tanggal wajib diisi.',
             'date.before_or_equal' => 'Tanggal tidak boleh di masa depan.',
             'due_date.required' => 'Tanggal jatuh tempo wajib diisi.',

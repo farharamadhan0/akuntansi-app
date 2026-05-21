@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,8 +12,8 @@ import { Banknote, AlertTriangle, Check } from 'lucide-react';
 interface Payable {
     id: number;
     payable_number: string;
-    supplier_id: number;
-    supplier_name: string;
+    partner_id: number;
+    partner_name: string;
     date: string;
     due_date: string;
     amount: number;
@@ -32,7 +32,7 @@ interface CashBankAccount {
 interface Props {
     payables: Payable[];
     cashBankAccounts: CashBankAccount[];
-    preselectedSupplierId: number | null;
+    preselectedPartnerId: number | null;
 }
 
 interface Allocation {
@@ -57,11 +57,11 @@ function formatDate(dateStr: string) {
     });
 }
 
-export default function Create({ payables, cashBankAccounts, preselectedSupplierId }: Props) {
+export default function Create({ payables, cashBankAccounts, preselectedPartnerId }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
     const flashError = flash?.error;
 
-    const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(preselectedSupplierId);
+    const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(preselectedPartnerId);
     const [allocations, setAllocations] = useState<Record<number, string>>({});
 
     const { data, setData, post, processing, errors } = useForm({
@@ -73,11 +73,11 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
     });
 
     const filteredPayables = selectedSupplierId
-        ? payables.filter(p => p.supplier_id === selectedSupplierId)
+        ? payables.filter(p => p.partner_id === selectedSupplierId)
         : payables;
 
-    const suppliers = Array.from(
-        new Map(payables.map(p => [p.supplier_id, { id: p.supplier_id, name: p.supplier_name }])).values()
+    const partners = Array.from(
+        new Map(payables.map(p => [p.partner_id, { id: p.partner_id, name: p.partner_name }])).values()
     );
 
     const totalAllocation = Object.values(allocations).reduce(
@@ -205,7 +205,7 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
                                     }}
                                 >
                                     <option value="">-- Semua Supplier --</option>
-                                    {suppliers.map((s) => (
+                                    {partners.map((s) => (
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
@@ -248,7 +248,7 @@ export default function Create({ payables, cashBankAccounts, preselectedSupplier
                                                         )}
                                                     </div>
                                                     <p className="font-medium text-gray-900 truncate">
-                                                        {p.supplier_name}
+                                                        {p.partner_name}
                                                     </p>
                                                     <p className="text-sm text-gray-500 truncate">
                                                         {p.description}

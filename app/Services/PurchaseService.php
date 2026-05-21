@@ -29,7 +29,7 @@ class PurchaseService
             $purchase = Purchase::create([
                 'company_id' => $companyId,
                 'purchase_number' => $this->numberGenerator->generatePurchaseNumber($companyId),
-                'supplier_id' => $data['supplier_id'] ?? null,
+                'partner_id' => $data['partner_id'] ?? null,
                 'date' => $data['date'],
                 'due_date' => $data['due_date'] ?? null,
                 'payment_type' => $data['payment_type'],
@@ -176,7 +176,7 @@ class PurchaseService
         return Payable::create([
             'company_id' => $purchase->company_id,
             'payable_number' => $this->numberGenerator->generatePayableNumber($purchase->company_id),
-            'supplier_id' => $purchase->supplier_id,
+            'partner_id' => $purchase->partner_id,
             'date' => $purchase->date,
             'due_date' => $purchase->due_date,
             'amount' => $purchase->total_amount,
@@ -201,7 +201,7 @@ class PurchaseService
         }
 
         if ($purchase->payment_type === 'credit') {
-            if (! $purchase->supplier_id) {
+            if (! $purchase->partner_id) {
                 throw new \Exception('Pembelian kredit harus memiliki supplier.');
             }
 

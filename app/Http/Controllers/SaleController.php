@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SaleRequest;
 use App\Models\CashBankAccount;
-use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\SaleService;
@@ -25,7 +25,7 @@ class SaleController extends Controller
         $companyId = auth()->user()->current_company_id;
 
         $sales = Sale::where('company_id', $companyId)
-            ->with(['customer:id,name', 'cashBankAccount:id,name', 'receivable:id,payment_status'])
+            ->with(['partner:id,name', 'cashBankAccount:id,name', 'receivable:id,payment_status'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -36,7 +36,7 @@ class SaleController extends Controller
                 'due_date' => $sale->due_date?->format('Y-m-d'),
                 'payment_type' => $sale->payment_type,
                 'receivable_payment_status' => $sale->receivable?->payment_status?->value,
-                'customer_name' => $sale->customer?->name,
+                'partner_name' => $sale->partner?->name,
                 'cash_bank_name' => $sale->cashBankAccount?->name,
                 'total_amount' => (float) $sale->total_amount,
             ]);
@@ -52,7 +52,7 @@ class SaleController extends Controller
 
         return Inertia::render('Sales/Create', [
             'sale' => null,
-            'customers' => Customer::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name', 'code']),
+            'partners' => Partner::where('company_id', $companyId)->active()->customer()->orderBy('name')->get(['id', 'name', 'code']),
             'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
             'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'sales_price', 'is_stock_tracked', 'current_stock']),
         ]);
@@ -80,7 +80,7 @@ class SaleController extends Controller
         $this->authorizeCompany($sale);
 
         $sale->load([
-            'customer:id,name,code',
+            'partner:id,name,code',
             'cashBankAccount:id,name',
             'receivable:id,receivable_number,payment_status,amount,paid_amount',
             'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'product_type', 'unit', 'deleted_at'),

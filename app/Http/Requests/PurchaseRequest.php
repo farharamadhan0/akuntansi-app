@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Partner;
 use App\Models\Product;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,11 +20,18 @@ class PurchaseRequest extends FormRequest
         $companyId = $this->user()->current_company_id;
 
         return [
-            'supplier_id' => [
+            'partner_id' => [
                 'nullable',
-                Rule::exists('suppliers', 'id')
-                    ->where('company_id', $companyId)
-                    ->where('is_active', true),
+                'integer',
+                function ($attribute, $value, $fail) use ($companyId) {
+                    $partner = Partner::where('id', $value)
+                        ->where('company_id', $companyId)
+                        ->where('is_active', true)
+                        ->first();
+                    if (! $partner || ! $partner->hasType(Partner::TYPE_SUPPLIER)) {
+                        $fail('Supplier tidak valid atau tidak aktif.');
+                    }
+                },
             ],
             'date' => ['required', 'date', 'before_or_equal:today'],
             'due_date' => ['nullable', 'date', 'after_or_equal:date'],
@@ -64,7 +72,6 @@ class PurchaseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supplier_id.exists' => 'Supplier tidak valid atau tidak aktif.',
             'date.required' => 'Tanggal pembelian wajib diisi.',
             'date.before_or_equal' => 'Tanggal pembelian tidak boleh di masa depan.',
             'due_date.date' => 'Tanggal jatuh tempo tidak valid.',
@@ -106,8 +113,8 @@ class PurchaseRequest extends FormRequest
             }
 
             if ($this->input('payment_type') === 'credit') {
-                if (! $this->filled('supplier_id')) {
-                    $v->errors()->add('supplier_id', 'Pembelian kredit harus memiliki supplier.');
+                if (! $this->filled('partner_id')) {
+                    $v->errors()->add('partner_id', 'Pembelian kredit harus memiliki supplier.');
                 }
 
                 if (! $this->filled('due_date')) {

@@ -24,7 +24,7 @@ class PayableService
             $payable = Payable::create([
                 'company_id' => $companyId,
                 'payable_number' => $this->numberGenerator->generatePayableNumber($companyId),
-                'supplier_id' => $data['supplier_id'],
+                'partner_id' => $data['partner_id'],
                 'date' => $data['date'],
                 'due_date' => $data['due_date'],
                 'amount' => $data['amount'],

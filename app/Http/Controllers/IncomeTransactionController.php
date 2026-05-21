@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\TransactionType;
 use App\Http\Requests\IncomeTransactionRequest;
 use App\Models\CashBankAccount;
-use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Transaction;
 use App\Models\TransactionCategory;
 use App\Services\IncomeService;
@@ -25,7 +25,7 @@ class IncomeTransactionController extends Controller
 
         $transactions = Transaction::where('company_id', $companyId)
             ->ofType(TransactionType::Income)
-            ->with(['customer:id,name'])
+            ->with(['partner:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
@@ -39,7 +39,7 @@ class IncomeTransactionController extends Controller
                 'status'               => $t->status->value,
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
-                'customer_name'        => $t->customer?->name,
+                'partner_name'         => $t->partner?->name,
             ]);
 
         return Inertia::render('Transactions/Income/Index', [
@@ -70,15 +70,16 @@ class IncomeTransactionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        $customers = Customer::where('company_id', $companyId)
+        $partners = Partner::where('company_id', $companyId)
             ->active()
+            ->customer()
             ->orderBy('name')
             ->get(['id', 'name']);
 
         return Inertia::render('Transactions/Income/Create', [
             'cashBankAccounts' => $cashBankAccounts,
             'categories'       => $categories,
-            'customers'        => $customers,
+            'partners'         => $partners,
             'defaultDate'      => now()->format('Y-m-d'),
         ]);
     }
@@ -121,7 +122,7 @@ class IncomeTransactionController extends Controller
         $income->load([
             'cashBankAccount:id,name,type',
             'category:id,name',
-            'customer:id,name',
+            'partner:id,name',
             'journalEntries.lines.account:id,code,name',
         ]);
 
@@ -139,7 +140,7 @@ class IncomeTransactionController extends Controller
                 'cash_bank_name'     => $income->cashBankAccount->name,
                 'cash_bank_type'     => $income->cashBankAccount->type->value,
                 'category_name'      => $income->category?->name,
-                'customer_name'      => $income->customer?->name,
+                'partner_name'       => $income->partner?->name,
                 'posted_at'          => $income->posted_at?->format('Y-m-d H:i'),
                 'journal_entries'    => $income->journalEntries->map(fn($entry) => [
                     'entry_number' => $entry->entry_number,

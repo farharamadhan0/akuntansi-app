@@ -27,14 +27,14 @@ class PayablePaymentController extends Controller
 
         $payments = Payment::where('company_id', $companyId)
             ->where('type', PaymentType::Payable)
-            ->with(['supplier:id,name', 'cashBankAccount:id,name'])
+            ->with(['partner:id,name', 'cashBankAccount:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get()
             ->map(fn(Payment $p) => [
                 'id' => $p->id,
                 'payment_number' => $p->payment_number,
-                'supplier_name' => $p->supplier->name,
+                'partner_name' => $p->partner->name,
                 'cash_bank_name' => $p->cashBankAccount->name,
                 'date' => $p->date->format('Y-m-d'),
                 'amount' => (float) $p->amount,
@@ -55,14 +55,14 @@ class PayablePaymentController extends Controller
         $payables = Payable::where('company_id', $companyId)
             ->where('status', TransactionStatus::Posted)
             ->where('payment_status', '!=', PaymentStatus::Paid)
-            ->with('supplier:id,name')
+            ->with('partner:id,name')
             ->orderBy('due_date')
             ->get()
             ->map(fn(Payable $p) => [
                 'id' => $p->id,
                 'payable_number' => $p->payable_number,
-                'supplier_id' => $p->supplier_id,
-                'supplier_name' => $p->supplier->name,
+                'partner_id' => $p->partner_id,
+                'partner_name' => $p->partner->name,
                 'date' => $p->date->format('Y-m-d'),
                 'due_date' => $p->due_date->format('Y-m-d'),
                 'amount' => (float) $p->amount,
@@ -72,7 +72,7 @@ class PayablePaymentController extends Controller
                 'is_overdue' => $p->isOverdue(),
             ]);
 
-        $supplierId = $request->query('supplier_id');
+        $partnerId = $request->query('partner_id');
 
         $cashBankAccounts = CashBankAccount::where('company_id', $companyId)
             ->active()
@@ -83,7 +83,7 @@ class PayablePaymentController extends Controller
         return Inertia::render('Payables/Payments/Create', [
             'payables' => $payables,
             'cashBankAccounts' => $cashBankAccounts,
-            'preselectedSupplierId' => $supplierId ? (int) $supplierId : null,
+            'preselectedPartnerId' => $partnerId ? (int) $partnerId : null,
         ]);
     }
 
@@ -107,7 +107,7 @@ class PayablePaymentController extends Controller
                 'amount' => $totalAmount,
                 'description' => $validated['description'] ?? null,
                 'cash_bank_account_id' => $validated['cash_bank_account_id'],
-                'supplier_id' => $firstPayable->supplier_id,
+                'partner_id' => $firstPayable->partner_id,
                 'reference' => $validated['reference'] ?? null,
                 'allocations' => $validated['allocations'],
             ]);
@@ -133,7 +133,7 @@ class PayablePaymentController extends Controller
         }
 
         $payment->load([
-            'supplier:id,name,code',
+            'partner:id,name,code',
             'cashBankAccount:id,name,type',
             'allocations.allocatable',
             'createdBy:id,name',
@@ -160,7 +160,7 @@ class PayablePaymentController extends Controller
             'payment' => [
                 'id' => $payment->id,
                 'payment_number' => $payment->payment_number,
-                'supplier' => $payment->supplier,
+                'partner' => $payment->partner,
                 'cash_bank_name' => $payment->cashBankAccount->name,
                 'date' => $payment->date->format('Y-m-d'),
                 'amount' => (float) $payment->amount,

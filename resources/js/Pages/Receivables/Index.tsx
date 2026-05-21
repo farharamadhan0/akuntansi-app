@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { usePermissions } from '@/lib/permissions';
 interface Receivable {
     id: number;
     receivable_number: string;
-    customer_name: string;
+    partner_name: string;
     date: string;
     due_date: string;
     amount: number;
@@ -225,7 +225,7 @@ export default function Index({ receivables, summary }: Props) {
                                                 {r.receivable_number}
                                             </Link>
                                         </TableCell>
-                                        <TableCell className="font-medium">{r.customer_name}</TableCell>
+                                        <TableCell className="font-medium">{r.partner_name}</TableCell>
                                         <TableCell>{formatDate(r.date)}</TableCell>
                                         <TableCell>
                                             <span className={r.is_overdue ? 'text-red-600 font-medium' : ''}>

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ interface JournalEntry {
     lines: JournalLine[];
 }
 
-interface Supplier {
+interface Partner {
     id: number;
     name: string;
     code?: string;
@@ -32,7 +32,7 @@ interface Supplier {
 interface Payable {
     id: number;
     payable_number: string;
-    supplier: Supplier;
+    partner: Partner;
     category_name?: string;
     date: string;
     due_date: string;
@@ -156,9 +156,9 @@ export default function Show({ payable: p, journalEntries }: Props) {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-gray-500">Supplier</p>
-                                <p className="font-semibold text-gray-900">{p.supplier.name}</p>
-                                {p.supplier.phone && (
-                                    <p className="text-gray-400 text-xs">{p.supplier.phone}</p>
+                                <p className="font-semibold text-gray-900">{p.partner.name}</p>
+                                {p.partner.phone && (
+                                    <p className="text-gray-400 text-xs">{p.partner.phone}</p>
                                 )}
                             </div>
                             <div>
@@ -271,7 +271,7 @@ export default function Show({ payable: p, journalEntries }: Props) {
                 {p.status === 'posted' && (
                     <div className="flex justify-end gap-2">
                         {p.payment_status !== 'paid' && (
-                            <Link href={`/transaksi/hutang-bayar/catat?supplier_id=${p.supplier.id}`}>
+                            <Link href={`/transaksi/hutang-bayar/catat?partner_id=${p.partner.id}`}>
                                 <Button size="sm" className="gap-1.5">
                                     <Banknote size={16} />
                                     Bayar Hutang

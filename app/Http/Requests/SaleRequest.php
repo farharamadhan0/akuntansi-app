@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Partner;
 use App\Models\Product;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,11 +20,18 @@ class SaleRequest extends FormRequest
         $companyId = $this->user()->current_company_id;
 
         return [
-            'customer_id' => [
+            'partner_id' => [
                 'nullable',
-                Rule::exists('customers', 'id')
-                    ->where('company_id', $companyId)
-                    ->where('is_active', true),
+                'integer',
+                function ($attribute, $value, $fail) use ($companyId) {
+                    $partner = Partner::where('id', $value)
+                        ->where('company_id', $companyId)
+                        ->where('is_active', true)
+                        ->first();
+                    if (! $partner || ! $partner->hasType(Partner::TYPE_CUSTOMER)) {
+                        $fail('Pelanggan tidak valid atau tidak aktif.');
+                    }
+                },
             ],
             'date' => ['required', 'date', 'before_or_equal:today'],
             'due_date' => ['nullable', 'date', 'after_or_equal:date'],
@@ -68,7 +76,6 @@ class SaleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer_id.exists' => 'Pelanggan tidak valid atau tidak aktif.',
             'date.required' => 'Tanggal penjualan wajib diisi.',
             'date.before_or_equal' => 'Tanggal penjualan tidak boleh di masa depan.',
             'due_date.date' => 'Tanggal jatuh tempo tidak valid.',
@@ -111,8 +118,8 @@ class SaleRequest extends FormRequest
             }
 
             if ($this->input('payment_type') === 'credit') {
-                if (! $this->filled('customer_id')) {
-                    $v->errors()->add('customer_id', 'Penjualan kredit harus memiliki pelanggan.');
+                if (! $this->filled('partner_id')) {
+                    $v->errors()->add('partner_id', 'Penjualan kredit harus memiliki pelanggan.');
                 }
 
                 if (! $this->filled('due_date')) {

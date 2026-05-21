@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Partner;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,10 +32,17 @@ class IncomeTransactionRequest extends FormRequest
                     ->where('company_id', $companyId)
                     ->where('type', 'income'),
             ],
-            'customer_id' => [
+            'partner_id' => [
                 'nullable',
-                Rule::exists('customers', 'id')
-                    ->where('company_id', $companyId),
+                'integer',
+                function ($attribute, $value, $fail) use ($companyId) {
+                    $partner = Partner::where('id', $value)
+                        ->where('company_id', $companyId)
+                        ->first();
+                    if (! $partner || ! $partner->hasType(Partner::TYPE_CUSTOMER)) {
+                        $fail('Pelanggan tidak valid');
+                    }
+                },
             ],
             'description' => ['required', 'string', 'max:500'],
             'reference'   => ['nullable', 'string', 'max:100'],
@@ -53,7 +61,6 @@ class IncomeTransactionRequest extends FormRequest
             'cash_bank_account_id.required' => 'Pilih kas/bank yang menerima uang',
             'cash_bank_account_id.exists'   => 'Kas/bank tidak valid atau tidak aktif',
             'category_id.exists'            => 'Kategori tidak valid',
-            'customer_id.exists'            => 'Pelanggan tidak valid',
             'description.required'          => 'Keterangan wajib diisi',
             'description.max'               => 'Keterangan maksimal 500 karakter',
             'reference.max'                 => 'No. referensi maksimal 100 karakter',

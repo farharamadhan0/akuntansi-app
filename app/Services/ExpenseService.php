@@ -30,7 +30,7 @@ class ExpenseService
                 'description' => $data['description'] ?? null,
                 'cash_bank_account_id' => $data['cash_bank_account_id'],
                 'category_id' => $data['category_id'] ?? null,
-                'supplier_id' => $data['supplier_id'] ?? null,
+                'partner_id' => $data['partner_id'] ?? null,
                 'status' => TransactionStatus::Draft,
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,

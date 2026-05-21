@@ -25,7 +25,7 @@ interface PurchaseData {
     reference?: string | null;
     status: string;
     status_label: string;
-    supplier?: { name: string; code?: string | null; } | null;
+    partner?: { name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
     payable?: { payable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
     items: PurchaseItem[];
@@ -71,7 +71,7 @@ export default function Show({ purchase, journalEntries }: Props) {
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div><div className="text-sm text-muted-foreground">Tanggal</div><div className="font-medium">{purchase.date}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Jatuh Tempo</div><div className="font-medium">{purchase.due_date ?? '-'}</div></div>
-                                <div><div className="text-sm text-muted-foreground">Supplier</div><div className="font-medium">{purchase.supplier?.name ?? '-'}</div></div>
+                                <div><div className="text-sm text-muted-foreground">Supplier</div><div className="font-medium">{purchase.partner?.name ?? '-'}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Kas/Bank</div><div className="font-medium">{purchase.cash_bank_account?.name ?? '-'}</div></div>
                             </div>
 

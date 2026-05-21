@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
@@ -19,7 +19,7 @@ import { Plus, Eye, Wallet, AlertTriangle, Banknote } from 'lucide-react';
 interface Payable {
     id: number;
     payable_number: string;
-    supplier_name: string;
+    partner_name: string;
     date: string;
     due_date: string;
     amount: number;
@@ -218,7 +218,7 @@ export default function Index({ payables, summary, filters }: Props) {
                                             </Link>
                                         </TableCell>
                                         <TableCell>
-                                            <p className="font-medium">{p.supplier_name}</p>
+                                            <p className="font-medium">{p.partner_name}</p>
                                             <p className="text-xs text-muted-foreground truncate max-w-40">
                                                 {p.description}
                                             </p>

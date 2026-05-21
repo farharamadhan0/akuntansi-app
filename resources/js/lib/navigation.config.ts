@@ -82,7 +82,7 @@ export const topNavCategories: TopNavCategory[] = [
     {
         key: "master-data",
         label: "Master Data",
-        href: "/master/pelanggan",
+        href: "/master/mitra",
         icon: Package,
         matchPaths: ["/master"],
     },
@@ -121,8 +121,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
         { key: "jurnal", label: "Jurnal Umum", href: "/jurnal", icon: BookOpen, permission: "journals.view" },
     ],
     "master-data": [
-        { key: "pelanggan", label: "Pelanggan", href: "/master/pelanggan", icon: UserCheck, permission: "customers.view" },
-        { key: "supplier", label: "Supplier", href: "/master/supplier", icon: Truck, permission: "suppliers.view" },
+        { key: "mitra", label: "Mitra", href: "/master/mitra", icon: UserCheck, permission: "partners.view" },
         { key: "produk", label: "Produk", href: "/master/produk", icon: Package, permission: "products.view" },
         { key: "kas-bank", label: "Kas & Bank", href: "/master/kas-bank", icon: Wallet, permission: "cash_bank.view" },
         { key: "kategori", label: "Daftar Akun", href: "/master/kategori", icon: Tags, permission: "accounts.view" },

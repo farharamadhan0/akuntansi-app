@@ -29,7 +29,7 @@ class SaleService
             $sale = Sale::create([
                 'company_id' => $companyId,
                 'sale_number' => $this->numberGenerator->generateSaleNumber($companyId),
-                'customer_id' => $data['customer_id'] ?? null,
+                'partner_id' => $data['partner_id'] ?? null,
                 'date' => $data['date'],
                 'due_date' => $data['due_date'] ?? null,
                 'payment_type' => $data['payment_type'],
@@ -182,7 +182,7 @@ class SaleService
         return Receivable::create([
             'company_id' => $sale->company_id,
             'receivable_number' => $this->numberGenerator->generateReceivableNumber($sale->company_id),
-            'customer_id' => $sale->customer_id,
+            'partner_id' => $sale->partner_id,
             'date' => $sale->date,
             'due_date' => $sale->due_date,
             'amount' => $sale->total_amount,
@@ -207,7 +207,7 @@ class SaleService
         }
 
         if ($sale->payment_type === 'credit') {
-            if (! $sale->customer_id) {
+            if (! $sale->partner_id) {
                 throw new \Exception('Penjualan kredit harus memiliki pelanggan.');
             }
 

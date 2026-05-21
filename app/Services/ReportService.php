@@ -76,7 +76,7 @@ class ReportService
         $rows = $query->get()->map(fn($r) => [
             'id'              => $r->id,
             'number'          => $r->receivable_number,
-            'customer'        => $r->customer->name,
+            'customer'        => $r->partner->name,
             'date'            => $r->date->format('Y-m-d'),
             'due_date'        => $r->due_date->format('Y-m-d'),
             'amount'          => (float) $r->amount,
@@ -118,7 +118,7 @@ class ReportService
         $rows = $query->get()->map(fn($p) => [
             'id'              => $p->id,
             'number'          => $p->payable_number,
-            'supplier'        => $p->supplier->name,
+            'supplier'        => $p->partner->name,
             'date'            => $p->date->format('Y-m-d'),
             'due_date'        => $p->due_date->format('Y-m-d'),
             'amount'          => (float) $p->amount,

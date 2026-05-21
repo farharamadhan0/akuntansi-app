@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,7 +32,7 @@ interface Transaction {
     cash_bank_name: string;
     cash_bank_type: string;
     category_name?: string;
-    supplier_name?: string;
+    partner_name?: string;
     posted_at?: string;
     journal_entries: JournalEntry[];
 }
@@ -133,7 +133,7 @@ export default function Show({ transaction: t }: Props) {
                         <DetailRow label="Keterangan" value={t.description} />
                         <DetailRow label="Dibayar dari" value={t.cash_bank_name} />
                         <DetailRow label="Akun" value={t.category_name ?? 'Tanpa akun'} />
-                        <DetailRow label="Supplier" value={t.supplier_name ?? 'Tidak ditentukan'} />
+                        <DetailRow label="Supplier" value={t.partner_name ?? 'Tidak ditentukan'} />
                         {t.reference && (
                             <DetailRow label="No. Referensi" value={t.reference} />
                         )}

@@ -34,7 +34,7 @@ class PaymentService
                 'amount' => $data['amount'],
                 'description' => $data['description'] ?? null,
                 'cash_bank_account_id' => $data['cash_bank_account_id'],
-                'customer_id' => $data['customer_id'],
+                'partner_id' => $data['partner_id'],
                 'status' => TransactionStatus::Draft,
                 'reference' => $data['reference'] ?? null,
                 'created_by' => auth()->id(),
@@ -61,7 +61,7 @@ class PaymentService
                 'amount' => $data['amount'],
                 'description' => $data['description'] ?? null,
                 'cash_bank_account_id' => $data['cash_bank_account_id'],
-                'supplier_id' => $data['supplier_id'],
+                'partner_id' => $data['partner_id'],
                 'status' => TransactionStatus::Draft,
                 'reference' => $data['reference'] ?? null,
                 'created_by' => auth()->id(),
@@ -148,13 +148,13 @@ class PaymentService
         $journalLines = [
             [
                 'account_id' => $cashBankAccount->id,
-                'description' => 'Penerimaan piutang dari ' . $payment->customer->name,
+                'description' => 'Penerimaan piutang dari ' . $payment->partner->name,
                 'debit' => $payment->amount,
                 'credit' => 0,
             ],
             [
                 'account_id' => $receivableAccount->id,
-                'description' => 'Penerimaan piutang dari ' . $payment->customer->name,
+                'description' => 'Penerimaan piutang dari ' . $payment->partner->name,
                 'debit' => 0,
                 'credit' => $payment->amount,
             ],
@@ -180,13 +180,13 @@ class PaymentService
         $journalLines = [
             [
                 'account_id' => $payableAccount->id,
-                'description' => 'Pembayaran hutang ke ' . $payment->supplier->name,
+                'description' => 'Pembayaran hutang ke ' . $payment->partner->name,
                 'debit' => $payment->amount,
                 'credit' => 0,
             ],
             [
                 'account_id' => $cashBankAccount->id,
-                'description' => 'Pembayaran hutang ke ' . $payment->supplier->name,
+                'description' => 'Pembayaran hutang ke ' . $payment->partner->name,
                 'debit' => 0,
                 'credit' => $payment->amount,
             ],

@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+﻿import { Head, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form-field';
 import { Users } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
-interface Customer {
+interface Partner {
     id: number;
     name: string;
     code?: string;
@@ -21,16 +21,16 @@ interface Category {
 }
 
 interface Props {
-    customers: Customer[];
+    partners: Partner[];
     categories: Category[];
 }
 
-export default function Create({ customers, categories }: Props) {
+export default function Create({ partners, categories }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
     const flashError = flash?.error;
 
     const { data, setData, post, processing, errors } = useForm({
-        customer_id: '',
+        partner_id: '',
         date: new Date().toISOString().split('T')[0],
         due_date: '',
         amount: '',
@@ -76,14 +76,14 @@ export default function Create({ customers, categories }: Props) {
                 <Card>
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
-                            <FormField label="Pelanggan" error={errors.customer_id} required>
+                            <FormField label="Pelanggan" error={errors.partner_id} required>
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={data.customer_id}
-                                    onChange={(e) => setData('customer_id', e.target.value)}
+                                    value={data.partner_id}
+                                    onChange={(e) => setData('partner_id', e.target.value)}
                                 >
                                     <option value="">-- Pilih Pelanggan --</option>
-                                    {customers.map((c) => (
+                                    {partners.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.code ? `[${c.code}] ` : ''}{c.name}
                                         </option>

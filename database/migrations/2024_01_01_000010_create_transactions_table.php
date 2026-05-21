@@ -26,11 +26,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('transaction_categories')
                 ->nullOnDelete();
-            $table->foreignId('customer_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-            $table->foreignId('supplier_id')
+            $table->foreignId('partner_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
