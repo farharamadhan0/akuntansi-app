@@ -8,8 +8,10 @@ import {
     Trash2,
     ToggleLeft,
     ToggleRight,
+    MoreVertical,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usePermissions } from "@/lib/permissions";
@@ -88,20 +90,19 @@ export default function Index({ categories }: { categories: Category[] }) {
                             <TableRow>
                                 <TableHead>Nama Akun</TableHead>
                                 <TableHead>Jenis</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Aksi</TableHead>
+                                <TableHead className='w-10'></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                         {filtered.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
                                         Belum ada akun. Klik "Tambah Akun" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filtered.map((cat) => (
-                                    <TableRow key={cat.id}>
+                                    <TableRow key={cat.id} className={!cat.is_active ? 'opacity-60' : ''}>
                                         <TableCell>
                                             <p className="font-medium">{cat.name}</p>
                                             {cat.description && (
@@ -117,49 +118,47 @@ export default function Index({ categories }: { categories: Category[] }) {
                                                 {cat.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-center">
-                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                                cat.is_active
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-600"
-                                            }`}>
-                                                {cat.is_active ? "Aktif" : "Nonaktif"}
-                                            </span>
-                                        </TableCell>
                                         <TableCell>
-                                            <div className="flex justify-center gap-1">
-                                                {can('accounts.edit') && (
-                                                    <Link href={`/master/kategori/${cat.id}/edit`}>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                            <Pencil size={16} />
-                                                        </Button>
-                                                    </Link>
-                                                )}
-                                                {can('accounts.edit') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => handleToggle(cat.id)}
-                                                    >
-                                                        {cat.is_active ? (
-                                                            <ToggleRight size={16} className="text-green-600" />
-                                                        ) : (
-                                                            <ToggleLeft size={16} className="text-gray-400" />
-                                                        )}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm">
+                                                        <MoreVertical size={16} />
                                                     </Button>
-                                                )}
-                                                {can('accounts.delete') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() => handleDelete(cat.id)}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </Button>
-                                                )}
-                                            </div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {can('accounts.edit') && (
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/master/kategori/${cat.id}/edit`} className="flex items-center gap-2">
+                                                                <Pencil size={15} />
+                                                                Edit
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('accounts.edit') && (
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleToggle(cat.id)}
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            {cat.is_active
+                                                                ? <><ToggleRight size={15} className="text-green-600" />Nonaktifkan</>
+                                                                : <><ToggleLeft size={15} className="text-gray-400" />Aktifkan</>
+                                                            }
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {can('accounts.delete') && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDelete(cat.id)}
+                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                            >
+                                                                <Trash2 size={15} />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))
