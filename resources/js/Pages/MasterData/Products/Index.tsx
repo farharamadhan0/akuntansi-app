@@ -105,7 +105,7 @@ export default function Index({ products }: Props) {
                                     </TableCell>
                                     <TableCell className="text-right">{formatCurrency(product.sales_price)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(product.purchase_price)}</TableCell>
-                                    <TableCell className="text-right">{product.is_stock_tracked ? product.current_stock.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-right">{product.is_stock_tracked ? `${product.current_stock.toFixed(2)} ${product.unit}` : '-'}</TableCell>
                                     <TableCell className="text-right">{product.is_stock_tracked ? formatCurrency(product.average_cost) : '-'}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>

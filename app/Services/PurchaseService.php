@@ -76,7 +76,7 @@ class PurchaseService
         }
 
         return DB::transaction(function () use ($purchase) {
-            $purchase->load('items.product', 'cashBankAccount.account', 'supplier');
+            $purchase->load('items.product', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($purchase);
 
             $journalLines = [];

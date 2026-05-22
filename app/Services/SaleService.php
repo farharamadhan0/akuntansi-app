@@ -79,7 +79,7 @@ class SaleService
         }
 
         return DB::transaction(function () use ($sale) {
-            $sale->load('items.product', 'cashBankAccount.account', 'customer');
+            $sale->load('items.product', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($sale);
 
             $journalLines = [];
