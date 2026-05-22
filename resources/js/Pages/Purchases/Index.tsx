@@ -77,7 +77,7 @@ function formatPaymentType(purchase: Purchase) {
 
 export default function Index({ purchases }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'posted' | 'voided'>('all');
+    const [filter, setFilter] = useState<'all' | 'posted' | 'voided'>('posted');
 
     const filtered =
         filter === 'all' ? purchases : purchases.filter((p) => p.status === filter);

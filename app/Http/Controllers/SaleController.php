@@ -39,6 +39,8 @@ class SaleController extends Controller
                 'partner_name' => $sale->partner?->name,
                 'cash_bank_name' => $sale->cashBankAccount?->name,
                 'total_amount' => (float) $sale->total_amount,
+                'status' => $sale->status->value,
+                'status_label' => $sale->status->label(),
             ]);
 
         return Inertia::render('Sales/Index', [
