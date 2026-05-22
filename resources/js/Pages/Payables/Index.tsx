@@ -190,10 +190,9 @@ export default function Index({ payables, summary, filters }: Props) {
                                 <TableHead>Supplier</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jatuh Tempo</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
                                 <TableHead className="text-right">Sisa Hutang</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -234,6 +233,7 @@ export default function Index({ payables, summary, filters }: Props) {
                                                 </span>
                                             )}
                                         </TableCell>
+                                        <TableCell>{paymentStatusBadge(p)}</TableCell>
                                         <TableCell className="text-right">
                                             {formatCurrency(p.amount)}
                                         </TableCell>
@@ -242,14 +242,6 @@ export default function Index({ payables, summary, filters }: Props) {
                                                 ? formatCurrency(p.remaining_amount)
                                                 : <span className="text-green-600">Lunas</span>
                                             }
-                                        </TableCell>
-                                        <TableCell>{paymentStatusBadge(p)}</TableCell>
-                                        <TableCell>
-                                            <Link href={`/transaksi/hutang/${p.id}`}>
-                                                <Button variant="ghost" size="sm">
-                                                    <Eye size={16} />
-                                                </Button>
-                                            </Link>
                                         </TableCell>
                                     </TableRow>
                                 ))
