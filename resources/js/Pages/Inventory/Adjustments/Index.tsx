@@ -12,8 +12,15 @@ interface Adjustment {
     adjustment_number: string;
     date: string;
     notes?: string | null;
+    status: string;
     status_label: string;
 }
+
+const statusBadge: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-700',
+    posted: 'bg-green-100 text-green-700',
+    voided: 'bg-red-100 text-red-700',
+};
 
 interface Props {
     adjustments: Adjustment[];
@@ -61,7 +68,10 @@ export default function Index({ adjustments }: Props) {
                                     <TableCell><Link href={`/transaksi/stok-penyesuaian/${adjustment.id}`} className="font-mono text-sm text-primary hover:underline">{adjustment.adjustment_number}</Link></TableCell>
                                     <TableCell>{adjustment.date}</TableCell>
                                     <TableCell>{adjustment.notes || '-'}</TableCell>
-                                    <TableCell>{adjustment.status_label}</TableCell>
+                                    <TableCell>
+                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                            {adjustment.status_label}
+                                        </span></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
