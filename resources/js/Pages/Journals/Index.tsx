@@ -172,37 +172,31 @@ export default function Index({ entries }: Props) {
 
             <Card>
                 {/* Filter bar */}
-                <div className="px-6 py-4 border-b space-y-3">
+                <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-muted-foreground mr-1">Status:</span>
                         {STATUS_FILTER.map((f) => (
-                            <button
+                            <Button
                                 key={f.value}
+                                variant={status === f.value ? 'default' : 'outline'}
+                                size="sm"
                                 onClick={() => setStatus(f.value as typeof status)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                    status === f.value
-                                        ? 'bg-gray-900 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
                             >
                                 {f.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-muted-foreground mr-1">Sumber:</span>
                         {SOURCE_FILTER.map((f) => (
-                            <button
+                            <Button
                                 key={f.value}
+                                variant={source === f.value ? 'default' : 'outline'}
+                                size="sm"
                                 onClick={() => setSource(f.value as typeof source)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                    source === f.value
-                                        ? 'bg-gray-900 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
                             >
                                 {f.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -211,13 +205,12 @@ export default function Index({ entries }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Tanggal</TableHead>
                                 <TableHead>No. Jurnal</TableHead>
+                                <TableHead>Tanggal</TableHead>
                                 <TableHead>Keterangan</TableHead>
                                 <TableHead className="text-center">Sumber</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Aksi</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -237,11 +230,13 @@ export default function Index({ entries }: Props) {
                             ) : (
                                 filtered.map((e) => (
                                     <TableRow key={e.id}>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            <Link href={`/jurnal/${e.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                {e.entry_number}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                                             {formatDate(e.date)}
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs text-muted-foreground">
-                                            {e.entry_number}
                                         </TableCell>
                                         <TableCell>
                                             <p className="font-medium text-sm">{e.description}</p>
@@ -263,9 +258,6 @@ export default function Index({ entries }: Props) {
                                                 </span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold whitespace-nowrap">
-                                            {formatCurrency(e.total_debit)}
-                                        </TableCell>
                                         <TableCell className="text-center">
                                             <span
                                                 className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[e.status]}`}
@@ -273,13 +265,8 @@ export default function Index({ entries }: Props) {
                                                 {e.status_label}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-center">
-                                            <Link href={`/jurnal/${e.id}`}>
-                                                <Button variant="ghost" size="sm" className="gap-1">
-                                                    <Eye size={14} />
-                                                    Detail
-                                                </Button>
-                                            </Link>
+                                        <TableCell className="text-right font-semibold whitespace-nowrap">
+                                            {formatCurrency(e.total_debit)}
                                         </TableCell>
                                     </TableRow>
                                 ))
