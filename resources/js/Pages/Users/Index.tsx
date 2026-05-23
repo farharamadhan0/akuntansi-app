@@ -12,7 +12,14 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Plus, Pencil, Trash2, Users as UsersIcon, Crown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, MoreVertical } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface Member {
     id: number;
@@ -93,7 +100,7 @@ export default function Index({ members, can_add_member }: Props) {
                                 <TableHead>Status</TableHead>
                                 <TableHead>Verified</TableHead>
                                 <TableHead>Terakhir Login</TableHead>
-                                <TableHead className="w-24">Aksi</TableHead>
+                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -146,25 +153,35 @@ export default function Index({ members, can_add_member }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             {m.is_owner ? (
-                                                <span className="text-xs text-gray-400">—</span>
+                                                <span className="text-xs text-gray-400"></span>
                                             ) : (
-                                                <div className="flex items-center gap-1">
-                                                    <Link href={`/pengaturan/pengguna/${m.id}/edit`}>
-                                                        <Button variant="ghost" size="sm" title="Edit">
-                                                            <Pencil size={15} />
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm">
+                                                            <MoreVertical size={16} />
                                                         </Button>
-                                                    </Link>
-                                                    {!m.is_self && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setDeleteTarget(m)}
-                                                            title="Hapus"
-                                                        >
-                                                            <Trash2 size={15} className="text-red-500" />
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href={`/pengaturan/pengguna/${m.id}/edit`} className="flex items-center gap-2">
+                                                                <Pencil size={14} />
+                                                                Edit
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        {!m.is_self && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() => setDeleteTarget(m)}
+                                                                    className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                    Hapus
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             )}
                                         </TableCell>
                                     </TableRow>
