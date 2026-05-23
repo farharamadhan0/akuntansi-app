@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
@@ -100,13 +101,10 @@ function QuickActionButton() {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
-            >
+            <Button onClick={() => setIsOpen(!isOpen)} className="gap-2">
                 <Plus size={16} />
                 <span className="hidden sm:inline">Tambah</span>
-            </button>
+            </Button>
 
             {isOpen && (
                 <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
