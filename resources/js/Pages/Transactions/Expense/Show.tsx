@@ -3,7 +3,7 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingDown, BookOpen, XCircle } from 'lucide-react';
+import { TrendingDown, BookOpen, XCircle, Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface JournalLine {
@@ -19,6 +19,11 @@ interface JournalEntry {
     lines: JournalLine[];
 }
 
+interface CorrectionRef {
+    id: number;
+    transaction_number: string;
+}
+
 interface Transaction {
     id: number;
     transaction_number: string;
@@ -26,7 +31,7 @@ interface Transaction {
     amount: number;
     description: string;
     reference?: string;
-    status: 'draft' | 'posted' | 'voided';
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     status_color: string;
     cash_bank_name: string;
@@ -34,6 +39,9 @@ interface Transaction {
     category_name?: string;
     partner_name?: string;
     posted_at?: string;
+    corrected_at?: string;
+    corrected_by?: CorrectionRef;
+    corrects?: CorrectionRef;
     journal_entries: JournalEntry[];
 }
 
@@ -45,6 +53,7 @@ const statusBadge: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
     posted: 'bg-red-100 text-red-700',
     voided: 'bg-gray-100 text-gray-500',
+    corrected: 'bg-amber-100 text-amber-700',
 };
 
 function formatCurrency(value: number) {
@@ -143,7 +152,34 @@ export default function Show({ transaction: t }: Props) {
                     </CardContent>
                 </Card>
 
-                {/* Journal entries */}
+                {t.status === 'corrected' && t.corrected_by && (
+                    <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-sm text-amber-800">
+                            <strong>Transaksi ini telah dikoreksi</strong> pada {t.corrected_at} oleh transaksi{' '}
+                            <Link
+                                href={`/transaksi/uang-keluar/${t.corrected_by.id}`}
+                                className="font-mono font-medium underline hover:text-amber-900"
+                            >
+                                {t.corrected_by.transaction_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
+
+                {t.corrects && (
+                    <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                        <p className="text-sm text-blue-800">
+                            <strong>Transaksi ini adalah koreksi</strong> dari transaksi{' '}
+                            <Link
+                                href={`/transaksi/uang-keluar/${t.corrects.id}`}
+                                className="font-mono font-medium underline hover:text-blue-900"
+                            >
+                                {t.corrects.transaction_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
+
                 {t.journal_entries.length > 0 && (
                     <Card className="mb-5">
                         <div className="px-5 py-3.5 border-b flex items-center gap-2">
@@ -195,7 +231,16 @@ export default function Show({ transaction: t }: Props) {
 
                 {/* Void action */}
                 {t.status === 'posted' && (
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-3">
+                        <Link href={`/transaksi/uang-keluar/${t.id}/koreksi`}>
+                            <Button
+                                variant="outline"
+                                className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+                            >
+                                <Edit3 size={16} />
+                                Koreksi Transaksi
+                            </Button>
+                        </Link>
                         <Button
                             variant="outline"
                             className="gap-2 text-red-600 border-red-200 hover:bg-red-50"

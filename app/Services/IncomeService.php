@@ -34,6 +34,7 @@ class IncomeService
                 'status' => TransactionStatus::Draft,
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,
+                'corrects_id' => $data['corrects_id'] ?? null,
                 'created_by' => auth()->id(),
             ]);
 

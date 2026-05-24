@@ -147,6 +147,8 @@ Route::middleware('auth')->group(function () {
             Route::post('uang-keluar', [ExpenseTransactionController::class, 'store'])->middleware('permission:expense.create')->name('expense.store');
             Route::get('uang-keluar/{expense}', [ExpenseTransactionController::class, 'show'])->middleware('permission:expense.view')->name('expense.show');
             Route::post('uang-keluar/{expense}/batal', [ExpenseTransactionController::class, 'void'])->middleware('permission:expense.delete')->name('expense.void');
+            Route::get('uang-keluar/{expense}/koreksi', [ExpenseTransactionController::class, 'edit'])->middleware('permission:expense.edit')->name('expense.edit');
+            Route::post('uang-keluar/{expense}/koreksi', [ExpenseTransactionController::class, 'correct'])->middleware('permission:expense.edit')->name('expense.correct');
 
             // Piutang
             Route::get('piutang', [ReceivableController::class, 'index'])->middleware('permission:receivables.view')->name('receivables.index');
