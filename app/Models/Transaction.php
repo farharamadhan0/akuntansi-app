@@ -33,6 +33,9 @@ class Transaction extends Model
         'posted_at',
         'voided_at',
         'void_reason',
+        'corrected_by_id',
+        'corrects_id',
+        'corrected_at',
         'reference',
         'attachments',
         'created_by',
@@ -45,6 +48,7 @@ class Transaction extends Model
         'amount' => 'decimal:2',
         'posted_at' => 'datetime',
         'voided_at' => 'datetime',
+        'corrected_at' => 'datetime',
         'attachments' => 'array',
     ];
 
@@ -101,5 +105,20 @@ class Transaction extends Model
     public function isVoided(): bool
     {
         return $this->status === TransactionStatus::Voided;
+    }
+
+    public function isCorrected(): bool
+    {
+        return $this->status === TransactionStatus::Corrected;
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'corrected_by_id');
+    }
+
+    public function corrects(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'corrects_id');
     }
 }

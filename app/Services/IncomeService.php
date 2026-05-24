@@ -114,6 +114,42 @@ class IncomeService
         });
     }
 
+    public function correct(Transaction $oldTransaction, array $newData): Transaction
+    {
+        if ($oldTransaction->type !== TransactionType::Income) {
+            throw new \Exception('Transaksi bukan tipe uang masuk.');
+        }
+
+        if ($oldTransaction->status !== TransactionStatus::Posted) {
+            throw new \Exception('Hanya transaksi yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        return DB::transaction(function () use ($oldTransaction, $newData) {
+            $journalEntry = $oldTransaction->journalEntries()
+                ->where('status', TransactionStatus::Posted)
+                ->first();
+
+            if ($journalEntry) {
+                $this->journalService->voidEntry($journalEntry, 'Koreksi transaksi: ' . $oldTransaction->transaction_number);
+            }
+
+            $newTransaction = $this->create(array_merge($newData, [
+                'company_id' => $oldTransaction->company_id,
+                'corrects_id' => $oldTransaction->id,
+            ]));
+
+            $this->post($newTransaction);
+
+            $oldTransaction->update([
+                'status' => TransactionStatus::Corrected,
+                'corrected_at' => now(),
+                'corrected_by_id' => $newTransaction->id,
+            ]);
+
+            return $newTransaction;
+        });
+    }
+
     protected function getRevenueAccount(Transaction $transaction): Account
     {
         if ($transaction->category_id && $transaction->category->account_id) {

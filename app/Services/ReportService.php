@@ -154,10 +154,10 @@ class ReportService
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
             ->where('journal_entries.company_id', $companyId)
-            // Sertakan jurnal Voided agar pasangan reversal-nya saling
-            // meniadakan secara natural; jika hanya filter Posted, reversal
-            // berdiri sendiri dan membuat laporan salah.
-            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
+            // Sertakan jurnal Voided dan Corrected agar pasangan reversal-nya
+            // saling meniadakan secara natural; jika hanya filter Posted,
+            // reversal berdiri sendiri dan membuat laporan salah.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided, TransactionStatus::Corrected])
             ->whereDate('journal_entries.date', '>=', $from)
             ->whereDate('journal_entries.date', '<=', $to)
             ->whereIn('accounts.type', [AccountType::Revenue->value, AccountType::Expense->value])
@@ -222,9 +222,9 @@ class ReportService
             )
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.company_id', $companyId)
-            // Sertakan jurnal Voided agar pasangan reversal-nya saling
-            // meniadakan secara natural di neraca.
-            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
+            // Sertakan jurnal Voided dan Corrected agar pasangan reversal-nya
+            // saling meniadakan secara natural di neraca.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided, TransactionStatus::Corrected])
             ->whereDate('journal_entries.date', '<=', $asOf)
             ->groupBy('journal_lines.account_id')
             ->get()
@@ -318,14 +318,14 @@ class ReportService
         $lines = JournalLine::select(
                 'journal_lines.account_id',
                 'journal_entries.source_type',
-                DB::raw('SUM(journal_lines.debit) as total_inflow'),
-                DB::raw('SUM(journal_lines.credit) as total_outflow')
+                DB::raw('SUM(journal_lines.debit) as total_debit'),
+                DB::raw('SUM(journal_lines.credit) as total_credit')
             )
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.company_id', $companyId)
-            // Sertakan jurnal Voided agar pasangan reversal-nya saling
-            // meniadakan secara natural di laporan arus kas.
-            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided])
+            // Sertakan jurnal Voided dan Corrected agar pasangan reversal-nya
+            // saling meniadakan secara natural di laporan arus kas.
+            ->whereIn('journal_entries.status', [TransactionStatus::Posted, TransactionStatus::Voided, TransactionStatus::Corrected])
             ->whereDate('journal_entries.date', '>=', $from)
             ->whereDate('journal_entries.date', '<=', $to)
             ->whereIn('journal_lines.account_id', $cashAccountIds)
@@ -342,19 +342,21 @@ class ReportService
             $label   = JournalEntry::labelForSourceType($line->source_type);
             $acctName = $account ? $account->name : '—';
 
-            if ((float) $line->total_inflow > 0) {
+            // Hitung net movement: debit = inflow, credit = outflow untuk akun kas
+            // Net positif = inflow, net negatif = outflow
+            $netMovement = (float) $line->total_debit - (float) $line->total_credit;
+
+            if ($netMovement > 0) {
                 $inflows[] = [
                     'account' => $acctName,
                     'source'  => $label,
-                    'amount'  => (float) $line->total_inflow,
+                    'amount'  => $netMovement,
                 ];
-            }
-
-            if ((float) $line->total_outflow > 0) {
+            } elseif ($netMovement < 0) {
                 $outflows[] = [
                     'account' => $acctName,
                     'source'  => $label,
-                    'amount'  => (float) $line->total_outflow,
+                    'amount'  => abs($netMovement),
                 ];
             }
         }

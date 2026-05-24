@@ -23,7 +23,7 @@ interface Transaction {
     amount: number;
     description: string;
     reference?: string;
-    status: 'draft' | 'posted' | 'voided';
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     status_color: string;
     cash_bank_name: string;
@@ -40,6 +40,7 @@ const statusBadge: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
     posted: 'bg-green-100 text-green-700',
     voided: 'bg-red-100 text-red-700',
+    corrected: 'bg-amber-100 text-amber-700',
 };
 
 function formatCurrency(value: number) {
@@ -61,7 +62,7 @@ function formatDate(dateStr: string) {
 
 export default function Index({ transactions }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'posted' | 'voided'>('all');
+    const [filter, setFilter] = useState<'all' | 'posted' | 'voided' | 'corrected'>('posted');
 
     const filtered =
         filter === 'all' ? transactions : transactions.filter((t) => t.status === filter);
@@ -129,13 +130,14 @@ export default function Index({ transactions }: Props) {
                 </Card>
             </div>
 
-            <FilterTabs<'all' | 'posted' | 'voided'>
+            <FilterTabs<'all' | 'posted' | 'voided' | 'corrected'>
                 className="mb-4"
                 value={filter}
                 onChange={setFilter}
                 items={[
                     { value: 'all', label: 'Semua', count: transactions.length },
                     { value: 'posted', label: 'Diposting', count: transactions.filter(t => t.status === 'posted').length },
+                    { value: 'corrected', label: 'Dikoreksi', count: transactions.filter(t => t.status === 'corrected').length },
                     { value: 'voided', label: 'Dibatalkan', count: transactions.filter(t => t.status === 'voided').length },
                 ]}
             />

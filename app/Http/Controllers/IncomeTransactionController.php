@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Http\Requests\IncomeTransactionRequest;
 use App\Models\CashBankAccount;
@@ -124,6 +125,8 @@ class IncomeTransactionController extends Controller
             'category:id,name',
             'partner:id,name',
             'journalEntries.lines.account:id,code,name',
+            'correctedBy:id,transaction_number',
+            'corrects:id,transaction_number',
         ]);
 
         return Inertia::render('Transactions/Income/Show', [
@@ -142,6 +145,15 @@ class IncomeTransactionController extends Controller
                 'category_name'      => $income->category?->name,
                 'partner_name'       => $income->partner?->name,
                 'posted_at'          => $income->posted_at?->format('Y-m-d H:i'),
+                'corrected_at'       => $income->corrected_at?->format('Y-m-d H:i'),
+                'corrected_by'       => $income->correctedBy ? [
+                    'id'                 => $income->correctedBy->id,
+                    'transaction_number' => $income->correctedBy->transaction_number,
+                ] : null,
+                'corrects'           => $income->corrects ? [
+                    'id'                 => $income->corrects->id,
+                    'transaction_number' => $income->corrects->transaction_number,
+                ] : null,
                 'journal_entries'    => $income->journalEntries->map(fn($entry) => [
                     'entry_number' => $entry->entry_number,
                     'date'         => $entry->date->format('Y-m-d'),
@@ -168,6 +180,90 @@ class IncomeTransactionController extends Controller
 
         return redirect()->route('income.index')
             ->with('success', 'Transaksi berhasil dibatalkan');
+    }
+
+    public function edit(Transaction $income): Response
+    {
+        $this->authorizeTransaction($income);
+
+        if ($income->status !== TransactionStatus::Posted) {
+            abort(403, 'Hanya transaksi yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        $companyId = auth()->user()->current_company_id;
+
+        $cashBankAccounts = CashBankAccount::where('company_id', $companyId)
+            ->active()
+            ->with('account:id,code,name')
+            ->orderBy('type')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($a) => [
+                'id'         => $a->id,
+                'name'       => $a->name,
+                'type'       => $a->type->value,
+                'type_label' => $a->type->label(),
+            ]);
+
+        $categories = TransactionCategory::where('company_id', $companyId)
+            ->income()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $partners = Partner::where('company_id', $companyId)
+            ->active()
+            ->customer()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $income->load(['partner:id,name', 'category:id,name', 'cashBankAccount:id,name,type']);
+
+        return Inertia::render('Transactions/Income/Edit', [
+            'transaction' => [
+                'id'                   => $income->id,
+                'transaction_number'   => $income->transaction_number,
+                'date'                 => $income->date->format('Y-m-d'),
+                'amount'               => (float) $income->amount,
+                'description'          => $income->description,
+                'reference'            => $income->reference,
+                'cash_bank_account_id' => $income->cash_bank_account_id,
+                'category_id'          => $income->category_id,
+                'partner_id'           => $income->partner_id,
+            ],
+            'cashBankAccounts' => $cashBankAccounts,
+            'categories'       => $categories,
+            'partners'         => $partners,
+            'defaultDate'      => now()->format('Y-m-d'),
+        ]);
+    }
+
+    public function correct(IncomeTransactionRequest $request, Transaction $income): RedirectResponse
+    {
+        $this->authorizeTransaction($income);
+
+        $companyId = auth()->user()->current_company_id;
+        $this->authorizeAccount($request->cash_bank_account_id, $companyId);
+
+        try {
+            DB::transaction(function () use ($request, $income) {
+                $this->incomeService->correct($income, $request->validated());
+            });
+        } catch (\Throwable $e) {
+            Log::error('Gagal mengoreksi uang masuk', [
+                'user_id'        => auth()->id(),
+                'company_id'     => $companyId,
+                'transaction_id' => $income->id,
+                'error'          => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal mengoreksi transaksi: ' . $e->getMessage());
+        }
+
+        return redirect()->route('income.index')
+            ->with('success', 'Transaksi berhasil dikoreksi');
     }
 
     protected function authorizeTransaction(Transaction $transaction): void

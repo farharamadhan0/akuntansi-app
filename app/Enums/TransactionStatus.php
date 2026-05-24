@@ -7,6 +7,7 @@ enum TransactionStatus: string
     case Draft = 'draft';
     case Posted = 'posted';
     case Voided = 'voided';
+    case Corrected = 'corrected';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum TransactionStatus: string
             self::Draft => 'Draft',
             self::Posted => 'Diposting',
             self::Voided => 'Dibatalkan',
+            self::Corrected => 'Dikoreksi',
         };
     }
 
@@ -23,6 +25,7 @@ enum TransactionStatus: string
             self::Draft => 'gray',
             self::Posted => 'green',
             self::Voided => 'red',
+            self::Corrected => 'amber',
         };
     }
 }

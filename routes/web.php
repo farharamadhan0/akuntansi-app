@@ -138,6 +138,8 @@ Route::middleware('auth')->group(function () {
             Route::post('uang-masuk', [IncomeTransactionController::class, 'store'])->middleware('permission:income.create')->name('income.store');
             Route::get('uang-masuk/{income}', [IncomeTransactionController::class, 'show'])->middleware('permission:income.view')->name('income.show');
             Route::post('uang-masuk/{income}/batal', [IncomeTransactionController::class, 'void'])->middleware('permission:income.delete')->name('income.void');
+            Route::get('uang-masuk/{income}/koreksi', [IncomeTransactionController::class, 'edit'])->middleware('permission:income.edit')->name('income.edit');
+            Route::post('uang-masuk/{income}/koreksi', [IncomeTransactionController::class, 'correct'])->middleware('permission:income.edit')->name('income.correct');
 
             // Uang Keluar
             Route::get('uang-keluar', [ExpenseTransactionController::class, 'index'])->middleware('permission:expense.view')->name('expense.index');
