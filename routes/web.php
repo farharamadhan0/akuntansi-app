@@ -165,6 +165,8 @@ Route::middleware('auth')->group(function () {
             Route::post('hutang', [PayableController::class, 'store'])->middleware('permission:payables.create')->name('payables.store');
             Route::get('hutang/{payable}', [PayableController::class, 'show'])->middleware('permission:payables.view')->name('payables.show');
             Route::post('hutang/{payable}/batal', [PayableController::class, 'void'])->middleware('permission:payables.delete')->name('payables.void');
+            Route::get('hutang/{payable}/koreksi', [PayableController::class, 'edit'])->middleware('permission:payables.edit')->name('payables.edit');
+            Route::post('hutang/{payable}/koreksi', [PayableController::class, 'correct'])->middleware('permission:payables.edit')->name('payables.correct');
 
             // Pembayaran Piutang
             Route::get('piutang-bayar', [ReceivablePaymentController::class, 'index'])->middleware('permission:receivables.view')->name('receivable-payments.index');

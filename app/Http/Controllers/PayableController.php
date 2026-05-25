@@ -123,7 +123,13 @@ class PayableController extends Controller
             abort(403);
         }
 
-        $payable->load(['partner:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
+        $payable->load([
+            'partner:id,name,code,phone,email',
+            'category:id,name',
+            'createdBy:id,name',
+            'correctedBy:id,payable_number',
+            'corrects:id,payable_number',
+        ]);
 
         $journalEntries = $payable->journalEntries()
             ->with(['lines.account:id,code,name'])
@@ -163,10 +169,84 @@ class PayableController extends Controller
                 'posted_at' => $payable->posted_at?->format('Y-m-d H:i'),
                 'voided_at' => $payable->voided_at?->format('Y-m-d H:i'),
                 'void_reason' => $payable->void_reason,
+                'corrected_at' => $payable->corrected_at?->format('Y-m-d H:i'),
+                'corrected_by' => $payable->correctedBy ? [
+                    'id' => $payable->correctedBy->id,
+                    'payable_number' => $payable->correctedBy->payable_number,
+                ] : null,
+                'corrects' => $payable->corrects ? [
+                    'id' => $payable->corrects->id,
+                    'payable_number' => $payable->corrects->payable_number,
+                ] : null,
                 'created_by_name' => $payable->createdBy?->name,
             ],
             'journalEntries' => $journalEntries,
         ]);
+    }
+
+    public function edit(Payable $payable): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($payable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        if ($payable->status !== TransactionStatus::Posted) {
+            abort(403, 'Hanya hutang yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        $partners = Partner::where('company_id', $companyId)
+            ->active()
+            ->supplier()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        $categories = TransactionCategory::where('company_id', $companyId)
+            ->where('type', 'expense')
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $payable->load(['partner:id,name', 'category:id,name']);
+
+        return Inertia::render('Payables/Edit', [
+            'payable' => [
+                'id' => $payable->id,
+                'payable_number' => $payable->payable_number,
+                'partner_id' => $payable->partner_id,
+                'date' => $payable->date->format('Y-m-d'),
+                'due_date' => $payable->due_date->format('Y-m-d'),
+                'amount' => (float) $payable->amount,
+                'paid_amount' => (float) $payable->paid_amount,
+                'description' => $payable->description,
+                'category_id' => $payable->category_id,
+                'reference' => $payable->reference,
+            ],
+            'partners' => $partners,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function correct(PayableRequest $request, Payable $payable): RedirectResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($payable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        try {
+            $newPayable = $this->payableService->correct($payable, $request->validated());
+
+            return redirect()
+                ->route('payables.show', $newPayable)
+                ->with('success', 'Hutang berhasil dikoreksi.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function void(Request $request, Payable $payable): RedirectResponse

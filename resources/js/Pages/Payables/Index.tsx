@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
-import { Plus, Eye, Wallet, AlertTriangle, Banknote } from 'lucide-react';
+import { Plus, Wallet, AlertTriangle, Banknote } from 'lucide-react';
 
 interface Payable {
     id: number;
@@ -26,7 +26,7 @@ interface Payable {
     paid_amount: number;
     remaining_amount: number;
     description: string;
-    status: string;
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     payment_status: 'unpaid' | 'partial' | 'paid';
     payment_status_label: string;
@@ -38,15 +38,9 @@ interface Summary {
     totalOverdue: number;
 }
 
-interface Filters {
-    status?: string;
-    payment_status?: string;
-}
-
 interface Props {
     payables: Payable[];
     summary: Summary;
-    filters: Filters;
 }
 
 function formatCurrency(value: number) {
@@ -66,23 +60,39 @@ function formatDate(dateStr: string) {
     });
 }
 
-export default function Index({ payables, summary, filters }: Props) {
+export default function Index({ payables, summary }: Props) {
     const { can } = usePermissions();
-    type PaymentFilter = '' | 'unpaid' | 'partial' | 'paid';
-    const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(
-        (filters.payment_status as PaymentFilter) ?? ''
-    );
+    const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue' | 'paid'>('outstanding');
 
-    const filtered = paymentFilter
-        ? payables.filter(p => p.payment_status === paymentFilter)
-        : payables;
+    const visiblePayables = payables.filter((payable) => payable.status !== 'corrected');
 
-    const paymentStatusBadge = (p: Payable) => {
+    const filtered = visiblePayables.filter((payable) => {
+        if (filter === 'outstanding') {
+            return payable.status === 'posted' && payable.payment_status !== 'paid';
+        }
+
+        if (filter === 'overdue') {
+            return payable.is_overdue;
+        }
+
+        if (filter === 'paid') {
+            return payable.payment_status === 'paid';
+        }
+
+        return true;
+    });
+
+    const statusBadge = (p: Payable) => {
+        if (p.status === 'voided') {
+            return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">Dibatalkan</span>;
+        }
+
         const colors: Record<string, string> = {
             unpaid: 'bg-red-100 text-red-700',
             partial: 'bg-yellow-100 text-yellow-700',
             paid: 'bg-green-100 text-green-700',
         };
+
         return (
             <span className={`px-2 py-0.5 text-xs rounded-full ${colors[p.payment_status]}`}>
                 {p.payment_status_label}
@@ -169,15 +179,27 @@ export default function Index({ payables, summary, filters }: Props) {
             </div>
 
             {/* Filter */}
-            <FilterTabs
+            <FilterTabs<'all' | 'outstanding' | 'overdue' | 'paid'>
                 className="mb-4"
-                value={paymentFilter}
-                onChange={setPaymentFilter}
+                value={filter}
+                onChange={setFilter}
                 items={[
-                    { value: '', label: 'Semua', count: payables.length },
-                    { value: 'unpaid', label: 'Belum Bayar', count: payables.filter(p => p.payment_status === 'unpaid').length },
-                    { value: 'partial', label: 'Sebagian', count: payables.filter(p => p.payment_status === 'partial').length },
-                    { value: 'paid', label: 'Lunas', count: payables.filter(p => p.payment_status === 'paid').length },
+                    { value: 'all', label: 'Semua', count: visiblePayables.length },
+                    {
+                        value: 'outstanding',
+                        label: 'Belum Lunas',
+                        count: visiblePayables.filter((payable) => payable.status === 'posted' && payable.payment_status !== 'paid').length,
+                    },
+                    {
+                        value: 'overdue',
+                        label: 'Jatuh Tempo',
+                        count: visiblePayables.filter((payable) => payable.is_overdue).length,
+                    },
+                    {
+                        value: 'paid',
+                        label: 'Lunas',
+                        count: visiblePayables.filter((payable) => payable.payment_status === 'paid').length,
+                    },
                 ]}
             />
 
@@ -233,7 +255,7 @@ export default function Index({ payables, summary, filters }: Props) {
                                                 </span>
                                             )}
                                         </TableCell>
-                                        <TableCell>{paymentStatusBadge(p)}</TableCell>
+                                        <TableCell>{statusBadge(p)}</TableCell>
                                         <TableCell className="text-right">
                                             {formatCurrency(p.amount)}
                                         </TableCell>

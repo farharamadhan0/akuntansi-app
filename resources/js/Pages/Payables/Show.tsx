@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Wallet, BookOpen, XCircle, AlertTriangle, Banknote } from 'lucide-react';
+import { Wallet, BookOpen, XCircle, AlertTriangle, Banknote, Edit3 } from 'lucide-react';
 
 interface JournalLine {
     account_code: string;
@@ -29,6 +29,11 @@ interface Partner {
     email?: string;
 }
 
+interface CorrectionRef {
+    id: number;
+    payable_number: string;
+}
+
 interface Payable {
     id: number;
     payable_number: string;
@@ -41,7 +46,7 @@ interface Payable {
     remaining_amount: number;
     description: string;
     reference?: string;
-    status: 'draft' | 'posted' | 'voided';
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     payment_status: 'unpaid' | 'partial' | 'paid';
     payment_status_label: string;
@@ -49,6 +54,9 @@ interface Payable {
     posted_at?: string;
     voided_at?: string;
     void_reason?: string;
+    corrected_at?: string;
+    corrected_by?: CorrectionRef;
+    corrects?: CorrectionRef;
     created_by_name?: string;
 }
 
@@ -99,6 +107,7 @@ export default function Show({ payable: p, journalEntries }: Props) {
         draft: 'bg-gray-100 text-gray-600',
         posted: 'bg-blue-100 text-blue-700',
         voided: 'bg-red-100 text-red-600',
+        corrected: 'bg-amber-100 text-amber-700',
     };
 
     return (
@@ -139,6 +148,34 @@ export default function Show({ payable: p, journalEntries }: Props) {
                     <div className="mb-4 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm">
                         <p className="font-medium text-gray-700">Dibatalkan pada {p.voided_at}</p>
                         <p className="text-gray-600">Alasan: {p.void_reason}</p>
+                    </div>
+                )}
+
+                {p.status === 'corrected' && p.corrected_by && (
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-sm text-amber-800">
+                            <strong>Hutang ini telah dikoreksi</strong> pada {p.corrected_at} oleh hutang{' '}
+                            <Link
+                                href={`/transaksi/hutang/${p.corrected_by.id}`}
+                                className="font-mono font-medium underline hover:text-amber-900"
+                            >
+                                {p.corrected_by.payable_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
+
+                {p.corrects && (
+                    <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                        <p className="text-sm text-blue-800">
+                            <strong>Hutang ini adalah koreksi</strong> dari hutang{' '}
+                            <Link
+                                href={`/transaksi/hutang/${p.corrects.id}`}
+                                className="font-mono font-medium underline hover:text-blue-900"
+                            >
+                                {p.corrects.payable_number}
+                            </Link>
+                        </p>
                     </div>
                 )}
 
@@ -278,6 +315,16 @@ export default function Show({ payable: p, journalEntries }: Props) {
                                 </Button>
                             </Link>
                         )}
+                        <Link href={`/transaksi/hutang/${p.id}/koreksi`}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50"
+                            >
+                                <Edit3 size={16} />
+                                Koreksi Hutang
+                            </Button>
+                        </Link>
                         {p.paid_amount === 0 && (
                             <Button
                                 variant="destructive"

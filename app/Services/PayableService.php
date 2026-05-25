@@ -33,6 +33,7 @@ class PayableService
                 'category_id' => $data['category_id'] ?? null,
                 'status' => TransactionStatus::Draft,
                 'payment_status' => PaymentStatus::Unpaid,
+                'corrects_id' => $data['corrects_id'] ?? null,
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,
                 'created_by' => auth()->id(),
@@ -123,6 +124,54 @@ class PayableService
         };
 
         $payable->update(['payment_status' => $status]);
+    }
+
+    public function correct(Payable $oldPayable, array $newData): Payable
+    {
+        if ($oldPayable->status !== TransactionStatus::Posted) {
+            throw new \Exception('Hanya hutang yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        return DB::transaction(function () use ($oldPayable, $newData) {
+            $journalEntry = $oldPayable->journalEntries()
+                ->where('status', TransactionStatus::Posted)
+                ->first();
+
+            if ($journalEntry) {
+                $this->journalService->voidEntry($journalEntry, 'Koreksi hutang: ' . $oldPayable->payable_number);
+            }
+
+            $existingAllocations = $oldPayable->paymentAllocations()->get();
+            $totalPaid = (float) $existingAllocations->sum('amount');
+
+            $newPayable = $this->create(array_merge($newData, [
+                'company_id' => $oldPayable->company_id,
+                'corrects_id' => $oldPayable->id,
+            ]));
+
+            $this->post($newPayable);
+
+            foreach ($existingAllocations as $allocation) {
+                $allocation->update([
+                    'allocatable_id' => $newPayable->id,
+                ]);
+            }
+
+            if ($totalPaid > 0) {
+                $newPayable->update(['paid_amount' => $totalPaid]);
+                $this->updatePaymentStatus($newPayable->fresh());
+            }
+
+            $oldPayable->update([
+                'paid_amount' => 0,
+                'payment_status' => PaymentStatus::Unpaid,
+                'status' => TransactionStatus::Corrected,
+                'corrected_at' => now(),
+                'corrected_by_id' => $newPayable->id,
+            ]);
+
+            return $newPayable->fresh();
+        });
     }
 
     protected function getPayableAccount(Payable $payable): Account

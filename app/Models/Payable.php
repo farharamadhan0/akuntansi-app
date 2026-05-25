@@ -34,6 +34,9 @@ class Payable extends Model
         'posted_at',
         'voided_at',
         'void_reason',
+        'corrects_id',
+        'corrected_by_id',
+        'corrected_at',
         'reference',
         'attachments',
         'created_by',
@@ -48,6 +51,7 @@ class Payable extends Model
         'paid_amount' => 'decimal:2',
         'posted_at' => 'datetime',
         'voided_at' => 'datetime',
+        'corrected_at' => 'datetime',
         'attachments' => 'array',
     ];
 
@@ -69,6 +73,16 @@ class Payable extends Model
     public function paymentAllocations(): MorphMany
     {
         return $this->morphMany(PaymentAllocation::class, 'allocatable');
+    }
+
+    public function corrects(): BelongsTo
+    {
+        return $this->belongsTo(Payable::class, 'corrects_id');
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(Payable::class, 'corrected_by_id');
     }
 
     public function scopePosted(Builder $query): Builder
@@ -94,6 +108,8 @@ class Payable extends Model
 
     public function isOverdue(): bool
     {
-        return $this->due_date->isPast() && $this->payment_status !== PaymentStatus::Paid;
+        return $this->due_date->isPast()
+            && $this->payment_status !== PaymentStatus::Paid
+            && $this->status === TransactionStatus::Posted;
     }
 }
