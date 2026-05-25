@@ -40,6 +40,7 @@ class SaleService
                 'total_amount' => $totals['total_amount'],
                 'notes' => $data['notes'] ?? null,
                 'status' => TransactionStatus::Draft,
+                'corrects_id' => $data['corrects_id'] ?? null,
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,
                 'created_by' => auth()->id(),
@@ -82,48 +83,8 @@ class SaleService
             $sale->load('items.product', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($sale);
 
-            $journalLines = [];
-            $debitAccountId = $sale->payment_type === 'cash'
-                ? $sale->cashBankAccount->account_id
-                : $this->getReceivableAccountId($sale->company_id);
-
-            $this->pushLine($journalLines, $debitAccountId, (float) $sale->total_amount, 0);
-
-            foreach ($sale->items as $item) {
-                $revenueAccountId = $item->revenue_account_id ?: $item->product->revenue_account_id ?: $this->getDefaultRevenueAccountId($sale->company_id);
-                $this->pushLine($journalLines, $revenueAccountId, 0, (float) $item->line_total);
-
-                if ($item->is_stock_tracked) {
-                    $movement = $this->inventoryService->issue(
-                        $item->product,
-                        $sale->date->toDateString(),
-                        (float) $item->quantity,
-                        'sale',
-                        $sale,
-                        $item,
-                        'Penjualan barang'
-                    );
-
-                    $item->update([
-                        'unit_cost' => $movement->unit_cost,
-                        'cost_amount' => $movement->total_cost,
-                    ]);
-
-                    $cogsAccountId = $item->cogs_account_id ?: $item->product->cogs_account_id ?: $this->getDefaultCogsAccountId($sale->company_id);
-                    $inventoryAccountId = $item->inventory_account_id ?: $item->product->inventory_account_id ?: $this->getDefaultInventoryAccountId($sale->company_id);
-
-                    $this->pushLine($journalLines, $cogsAccountId, (float) $movement->total_cost, 0);
-                    $this->pushLine($journalLines, $inventoryAccountId, 0, (float) $movement->total_cost);
-                }
-            }
-
-            $this->journalService->createEntry(
-                $sale->company_id,
-                $sale->date->toDateString(),
-                'Penjualan: ' . $sale->sale_number,
-                array_values($journalLines),
-                $sale
-            );
+            $this->applyPostedStock($sale);
+            $this->createSaleJournalEntry($sale);
 
             if ($sale->payment_type === 'credit') {
                 $receivable = $this->createLinkedReceivable($sale);
@@ -136,6 +97,98 @@ class SaleService
             ]);
 
             return $sale->fresh()->load('items.product', 'receivable');
+        });
+    }
+
+    public function correct(Sale $oldSale, array $newData): Sale
+    {
+        if ($oldSale->status !== TransactionStatus::Posted) {
+            throw new \Exception('Hanya penjualan yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        return DB::transaction(function () use ($oldSale, $newData) {
+            $oldSale->load('items.product', 'receivable.paymentAllocations');
+
+            $existingAllocations = $oldSale->receivable?->paymentAllocations()->get() ?? collect();
+            $totalPaid = (float) $existingAllocations->sum('amount');
+
+            $newSale = $this->create(array_merge($newData, [
+                'company_id' => $oldSale->company_id,
+                'corrects_id' => $oldSale->id,
+            ]));
+
+            $newSale->load('items.product', 'cashBankAccount.account', 'partner');
+            $this->validatePaymentData($newSale);
+
+            if ($totalPaid > 0 && $newSale->payment_type !== 'credit') {
+                throw new \Exception('Penjualan koreksi dengan pembayaran piutang yang sudah ada harus tetap menggunakan pembayaran kredit.');
+            }
+
+            if ($totalPaid > 0 && bccomp((string) $newSale->total_amount, (string) $totalPaid, 2) < 0) {
+                throw new \Exception('Nilai koreksi penjualan tidak boleh lebih kecil dari total pembayaran yang sudah ada.');
+            }
+
+            $this->ensureStockSufficientForCorrection($oldSale, $newSale);
+
+            $journalEntry = $oldSale->journalEntries()
+                ->where('status', TransactionStatus::Posted)
+                ->first();
+
+            if ($journalEntry) {
+                $this->journalService->voidEntry($journalEntry, 'Koreksi penjualan: ' . $oldSale->sale_number);
+            }
+
+            $this->applyCorrectionStock($oldSale, $newSale);
+            $this->createSaleJournalEntry($newSale);
+
+            $newReceivable = null;
+
+            if ($newSale->payment_type === 'credit') {
+                $newReceivable = $this->createLinkedReceivable($newSale, $oldSale->receivable?->id);
+                $newSale->update(['receivable_id' => $newReceivable->id]);
+            }
+
+            $newSale->update([
+                'status' => TransactionStatus::Posted,
+                'posted_at' => now(),
+            ]);
+
+            if ($oldSale->receivable) {
+                if ($newReceivable) {
+                    foreach ($existingAllocations as $allocation) {
+                        $allocation->update([
+                            'allocatable_id' => $newReceivable->id,
+                        ]);
+                    }
+
+                    if ($totalPaid > 0) {
+                        $newReceivable->update(['paid_amount' => $totalPaid]);
+                        $this->updateReceivablePaymentStatus($newReceivable->fresh());
+                    }
+
+                    $oldSale->receivable->update([
+                        'paid_amount' => 0,
+                        'payment_status' => PaymentStatus::Unpaid,
+                        'status' => TransactionStatus::Corrected,
+                        'corrected_at' => now(),
+                        'corrected_by_id' => $newReceivable->id,
+                    ]);
+                } else {
+                    $oldSale->receivable->update([
+                        'status' => TransactionStatus::Voided,
+                        'voided_at' => now(),
+                        'void_reason' => 'Dikoreksi oleh penjualan ' . $newSale->sale_number,
+                    ]);
+                }
+            }
+
+            $oldSale->update([
+                'status' => TransactionStatus::Corrected,
+                'corrected_at' => now(),
+                'corrected_by_id' => $newSale->id,
+            ]);
+
+            return $newSale->fresh()->load('items.product', 'receivable');
         });
     }
 
@@ -177,7 +230,7 @@ class SaleService
         });
     }
 
-    protected function createLinkedReceivable(Sale $sale): Receivable
+    protected function createLinkedReceivable(Sale $sale, ?int $correctsId = null): Receivable
     {
         return Receivable::create([
             'company_id' => $sale->company_id,
@@ -190,10 +243,225 @@ class SaleService
             'description' => 'Dari penjualan ' . $sale->sale_number,
             'status' => TransactionStatus::Posted,
             'payment_status' => PaymentStatus::Unpaid,
+            'corrects_id' => $correctsId,
             'reference' => $sale->reference,
             'created_by' => auth()->id(),
             'posted_at' => now(),
         ]);
+    }
+
+    protected function applyPostedStock(Sale $sale): void
+    {
+        foreach ($sale->items as $item) {
+            if (! $item->is_stock_tracked) {
+                continue;
+            }
+
+            $movement = $this->inventoryService->issue(
+                $item->product,
+                $sale->date->toDateString(),
+                (float) $item->quantity,
+                'sale',
+                $sale,
+                $item,
+                'Penjualan barang'
+            );
+
+            $item->update([
+                'unit_cost' => $movement->unit_cost,
+                'cost_amount' => $movement->total_cost,
+            ]);
+        }
+
+        $sale->load('items.product', 'cashBankAccount.account');
+    }
+
+    protected function createSaleJournalEntry(Sale $sale): void
+    {
+        $this->journalService->createEntry(
+            $sale->company_id,
+            $sale->date->toDateString(),
+            'Penjualan: ' . $sale->sale_number,
+            $this->buildJournalLines($sale),
+            $sale
+        );
+    }
+
+    protected function buildJournalLines(Sale $sale): array
+    {
+        $journalLines = [];
+        $debitAccountId = $sale->payment_type === 'cash'
+            ? $sale->cashBankAccount->account_id
+            : $this->getReceivableAccountId($sale->company_id);
+
+        $this->pushLine($journalLines, $debitAccountId, (float) $sale->total_amount, 0);
+
+        foreach ($sale->items as $item) {
+            $revenueAccountId = $item->revenue_account_id ?: $item->product->revenue_account_id ?: $this->getDefaultRevenueAccountId($sale->company_id);
+            $this->pushLine($journalLines, $revenueAccountId, 0, (float) $item->line_total);
+
+            if (! $item->is_stock_tracked) {
+                continue;
+            }
+
+            $cogsAccountId = $item->cogs_account_id ?: $item->product->cogs_account_id ?: $this->getDefaultCogsAccountId($sale->company_id);
+            $inventoryAccountId = $item->inventory_account_id ?: $item->product->inventory_account_id ?: $this->getDefaultInventoryAccountId($sale->company_id);
+
+            $this->pushLine($journalLines, $cogsAccountId, (float) $item->cost_amount, 0);
+            $this->pushLine($journalLines, $inventoryAccountId, 0, (float) $item->cost_amount);
+        }
+
+        return array_values($journalLines);
+    }
+
+    protected function ensureStockSufficientForCorrection(Sale $oldSale, Sale $newSale): void
+    {
+        $oldItems = $this->summarizeTrackedItems($oldSale);
+        $newItems = $this->summarizeTrackedItems($newSale);
+        $productIds = array_unique(array_merge(array_keys($oldItems), array_keys($newItems)));
+
+        foreach ($productIds as $productId) {
+            $oldQuantity = $oldItems[$productId]['quantity'] ?? 0;
+            $newQuantity = $newItems[$productId]['quantity'] ?? 0;
+            $deltaQuantity = round($newQuantity - $oldQuantity, 2);
+
+            if ($deltaQuantity <= 0) {
+                continue;
+            }
+
+            $product = $newItems[$productId]['product'] ?? $oldItems[$productId]['product'];
+            $availableStock = (float) $product->current_stock;
+
+            if ($deltaQuantity - $availableStock > 0.00001) {
+                throw new \Exception("Stok produk {$product->name} tidak cukup untuk tambahan koreksi penjualan. Tersedia {$availableStock}, membutuhkan {$deltaQuantity}.");
+            }
+        }
+    }
+
+    protected function applyCorrectionStock(Sale $oldSale, Sale $newSale): void
+    {
+        $oldItems = $this->summarizeTrackedItems($oldSale);
+        $newItems = $this->summarizeTrackedItems($newSale);
+        $productIds = array_unique(array_merge(array_keys($oldItems), array_keys($newItems)));
+        $costsByProduct = [];
+
+        foreach ($productIds as $productId) {
+            $oldQuantity = $oldItems[$productId]['quantity'] ?? 0;
+            $newQuantity = $newItems[$productId]['quantity'] ?? 0;
+            $oldCostAmount = $oldItems[$productId]['cost_amount'] ?? 0;
+            $deltaQuantity = round($newQuantity - $oldQuantity, 2);
+            $product = $newItems[$productId]['product'] ?? $oldItems[$productId]['product'];
+            $newCostAmount = $oldCostAmount;
+
+            if (abs($deltaQuantity) >= 0.00001) {
+                if ($deltaQuantity > 0) {
+                    $movement = $this->inventoryService->issue(
+                        $product,
+                        $newSale->date->toDateString(),
+                        $deltaQuantity,
+                        'sale_correction',
+                        $newSale,
+                        null,
+                        'Selisih koreksi penjualan'
+                    );
+
+                    $newCostAmount += (float) $movement->total_cost;
+                } else {
+                    $reverseQuantity = abs($deltaQuantity);
+                    $reverseUnitCost = $oldQuantity > 0
+                        ? round($oldCostAmount / $oldQuantity, 2)
+                        : 0;
+
+                    $this->inventoryService->receive(
+                        $product,
+                        $newSale->date->toDateString(),
+                        $reverseQuantity,
+                        $reverseUnitCost,
+                        'sale_correction',
+                        $newSale,
+                        null,
+                        'Selisih koreksi penjualan'
+                    );
+
+                    $newCostAmount -= round($reverseQuantity * $reverseUnitCost, 2);
+                }
+            }
+
+            $costsByProduct[$productId] = [
+                'quantity' => $newQuantity,
+                'cost_amount' => round(max(0, $newCostAmount), 2),
+            ];
+        }
+
+        $this->assignTrackedItemCosts($newSale, $costsByProduct);
+        $newSale->load('items.product', 'cashBankAccount.account');
+    }
+
+    protected function assignTrackedItemCosts(Sale $sale, array $costsByProduct): void
+    {
+        $groupedItems = $sale->items
+            ->filter(fn ($item) => $item->is_stock_tracked)
+            ->groupBy('product_id');
+
+        foreach ($groupedItems as $productId => $items) {
+            $totalQuantity = (float) $items->sum(fn ($item) => (float) $item->quantity);
+            $totalCostAmount = (float) ($costsByProduct[$productId]['cost_amount'] ?? 0);
+            $allocatedCost = 0;
+
+            foreach ($items->values() as $index => $item) {
+                $isLastItem = $index === $items->count() - 1;
+                $costAmount = $isLastItem
+                    ? round($totalCostAmount - $allocatedCost, 2)
+                    : round(((float) $item->quantity / max($totalQuantity, 0.00001)) * $totalCostAmount, 2);
+
+                $allocatedCost += $costAmount;
+
+                $item->update([
+                    'unit_cost' => (float) $item->quantity > 0 ? round($costAmount / (float) $item->quantity, 2) : 0,
+                    'cost_amount' => $costAmount,
+                ]);
+            }
+        }
+    }
+
+    protected function summarizeTrackedItems(Sale $sale): array
+    {
+        $summary = [];
+
+        foreach ($sale->items as $item) {
+            if (! $item->is_stock_tracked || ! $item->product) {
+                continue;
+            }
+
+            $productId = $item->product->id;
+
+            if (! isset($summary[$productId])) {
+                $summary[$productId] = [
+                    'product' => $item->product,
+                    'quantity' => 0,
+                    'cost_amount' => 0,
+                ];
+            }
+
+            $summary[$productId]['quantity'] += (float) $item->quantity;
+            $summary[$productId]['cost_amount'] += (float) $item->cost_amount;
+        }
+
+        return $summary;
+    }
+
+    protected function updateReceivablePaymentStatus(Receivable $receivable): void
+    {
+        $paidAmount = (float) $receivable->paid_amount;
+        $totalAmount = (float) $receivable->amount;
+
+        $status = match (true) {
+            $paidAmount <= 0 => PaymentStatus::Unpaid,
+            bccomp((string) $paidAmount, (string) $totalAmount, 2) >= 0 => PaymentStatus::Paid,
+            default => PaymentStatus::Partial,
+        };
+
+        $receivable->update(['payment_status' => $status]);
     }
 
     protected function validatePaymentData(Sale $sale): void

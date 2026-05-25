@@ -1,9 +1,10 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Edit3 } from 'lucide-react';
 
 interface SaleItem {
     id: number;
@@ -14,6 +15,11 @@ interface SaleItem {
     unit_cost: number;
     cost_amount: number;
     product: { name: string; product_code: string; deleted_at: string | null; } | null;
+}
+
+interface CorrectionRef {
+    id: number;
+    sale_number: string;
 }
 
 interface SaleData {
@@ -27,9 +33,15 @@ interface SaleData {
     reference?: string | null;
     status: string;
     status_label: string;
+    posted_at?: string | null;
+    voided_at?: string | null;
+    void_reason?: string | null;
+    corrected_at?: string | null;
+    corrected_by?: CorrectionRef | null;
+    corrects?: CorrectionRef | null;
     partner?: { name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
-    receivable?: { receivable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
+    receivable?: { id: number; receivable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
     items: SaleItem[];
 }
 
@@ -50,6 +62,13 @@ function formatCurrency(value: number) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
 
+const statusBadge: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-700',
+    posted: 'bg-green-100 text-green-700',
+    voided: 'bg-red-100 text-red-700',
+    corrected: 'bg-amber-100 text-amber-700',
+};
+
 export default function Show({ sale, journalEntries }: Props) {
     const [reason, setReason] = useState('');
 
@@ -64,8 +83,30 @@ export default function Show({ sale, journalEntries }: Props) {
                         <h1 className="text-2xl font-bold text-gray-900">Penjualan {sale.sale_number}</h1>
                         <p className="mt-1 text-sm text-muted-foreground">{sale.payment_type === 'cash' ? 'Tunai' : 'Kredit'}</p>
                     </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">{sale.status_label}</span>
+                    <span className={`rounded-full px-3 py-1 text-sm ${statusBadge[sale.status] ?? 'bg-slate-100 text-slate-700'}`}>{sale.status_label}</span>
                 </div>
+
+                {sale.status === 'corrected' && sale.corrected_by && (
+                    <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-sm text-amber-800">
+                            <strong>Penjualan ini telah dikoreksi</strong> pada {sale.corrected_at} oleh penjualan{' '}
+                            <Link href={`/transaksi/penjualan/${sale.corrected_by.id}`} className="font-mono font-medium underline hover:text-amber-900">
+                                {sale.corrected_by.sale_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
+
+                {sale.corrects && (
+                    <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                        <p className="text-sm text-blue-800">
+                            <strong>Penjualan ini adalah koreksi</strong> dari penjualan{' '}
+                            <Link href={`/transaksi/penjualan/${sale.corrects.id}`} className="font-mono font-medium underline hover:text-blue-900">
+                                {sale.corrects.sale_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
 
                 <div className="grid gap-6 md:grid-cols-3">
                     <Card className="md:col-span-2">
@@ -112,7 +153,17 @@ export default function Show({ sale, journalEntries }: Props) {
                     <Card>
                         <CardContent className="space-y-4 p-6">
                             <div><div className="text-sm text-muted-foreground">Total</div><div className="text-2xl font-semibold">{formatCurrency(sale.total_amount)}</div></div>
-                            {sale.receivable && <div><div className="text-sm text-muted-foreground">Piutang Terkait</div><div className="font-medium">{sale.receivable.receivable_number}</div></div>}
+                            {sale.receivable && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Piutang Terkait</div>
+                                    <Link href={`/transaksi/piutang/${sale.receivable.id}`} className="font-medium underline hover:text-primary">
+                                        {sale.receivable.receivable_number}
+                                    </Link>
+                                    <div className="text-xs text-muted-foreground">
+                                        Dibayar {formatCurrency(sale.receivable.paid_amount)} dari {formatCurrency(sale.receivable.amount)}
+                                    </div>
+                                </div>
+                            )}
                             {sale.reference && <div><div className="text-sm text-muted-foreground">Referensi</div><div className="font-medium">{sale.reference}</div></div>}
                             {sale.notes && <div><div className="text-sm text-muted-foreground">Catatan</div><div>{sale.notes}</div></div>}
                         </CardContent>
@@ -147,17 +198,28 @@ export default function Show({ sale, journalEntries }: Props) {
                 )}
 
                 {sale.status === 'posted' && (
-                    <Card className="mt-6">
-                        <CardContent className="space-y-3 p-6">
-                            <h2 className="text-lg font-semibold">Batalkan Dokumen</h2>
-                            <textarea className="min-h-24 w-full rounded-md border p-3 text-sm" placeholder="Alasan pembatalan..." value={reason} onChange={(e) => setReason(e.target.value)} />
-                            <div className="flex justify-end">
-                                <Button variant="destructive" disabled={!reason.trim()} onClick={() => router.post(`/transaksi/penjualan/${sale.id}/batal`, { reason })}>
-                                    Batalkan Penjualan
+                    <div className="mt-6 space-y-4">
+                        <div className="flex justify-end">
+                            <Link href={`/transaksi/penjualan/${sale.id}/koreksi`}>
+                                <Button variant="outline" className="gap-2 border-amber-200 text-amber-600 hover:bg-amber-50">
+                                    <Edit3 size={16} />
+                                    Koreksi Penjualan
                                 </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </Link>
+                        </div>
+
+                        <Card>
+                            <CardContent className="space-y-3 p-6">
+                                <h2 className="text-lg font-semibold">Batalkan Dokumen</h2>
+                                <textarea className="min-h-24 w-full rounded-md border p-3 text-sm" placeholder="Alasan pembatalan..." value={reason} onChange={(e) => setReason(e.target.value)} />
+                                <div className="flex justify-end">
+                                    <Button variant="destructive" disabled={!reason.trim()} onClick={() => router.post(`/transaksi/penjualan/${sale.id}/batal`, { reason })}>
+                                        Batalkan Penjualan
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 )}
             </div>
         </AuthenticatedLayout>

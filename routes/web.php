@@ -196,6 +196,8 @@ Route::middleware('auth')->group(function () {
             Route::get('penjualan/buat', [SaleController::class, 'create'])->middleware('permission:sales.create')->name('sales.create');
             Route::post('penjualan', [SaleController::class, 'store'])->middleware('permission:sales.create')->name('sales.store');
             Route::get('penjualan/{sale}', [SaleController::class, 'show'])->middleware('permission:sales.view')->name('sales.show');
+            Route::get('penjualan/{sale}/koreksi', [SaleController::class, 'edit'])->middleware('permission:sales.edit')->name('sales.edit');
+            Route::post('penjualan/{sale}/koreksi', [SaleController::class, 'correct'])->middleware('permission:sales.edit')->name('sales.correct');
             Route::post('penjualan/{sale}/batal', [SaleController::class, 'void'])->middleware('permission:sales.delete')->name('sales.void');
 
             // Penyesuaian Stok

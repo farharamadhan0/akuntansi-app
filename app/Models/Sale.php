@@ -36,6 +36,9 @@ class Sale extends Model
         'posted_at',
         'voided_at',
         'void_reason',
+        'corrects_id',
+        'corrected_by_id',
+        'corrected_at',
         'reference',
         'attachments',
         'created_by',
@@ -51,6 +54,7 @@ class Sale extends Model
         'status' => TransactionStatus::class,
         'posted_at' => 'datetime',
         'voided_at' => 'datetime',
+        'corrected_at' => 'datetime',
         'attachments' => 'array',
     ];
 
@@ -72,6 +76,16 @@ class Sale extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function corrects(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'corrects_id');
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'corrected_by_id');
     }
 
     public function items(): HasMany
