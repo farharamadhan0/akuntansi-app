@@ -159,6 +159,10 @@ class ReceivableService
             $existingAllocations = $oldReceivable->paymentAllocations()->get();
             $totalPaid = (float) $existingAllocations->sum('amount');
 
+            if ($totalPaid > 0 && bccomp((string) $newData['amount'], (string) $totalPaid, 2) < 0) {
+                throw new \Exception('Nominal koreksi piutang tidak boleh lebih kecil dari total pembayaran yang sudah ada.');
+            }
+
             $newReceivable = $this->createForCorrection(array_merge($newData, [
                 'company_id' => $oldReceivable->company_id,
                 'corrects_id' => $oldReceivable->id,

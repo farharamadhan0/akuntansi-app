@@ -144,6 +144,10 @@ class PayableService
             $existingAllocations = $oldPayable->paymentAllocations()->get();
             $totalPaid = (float) $existingAllocations->sum('amount');
 
+            if ($totalPaid > 0 && bccomp((string) $newData['amount'], (string) $totalPaid, 2) < 0) {
+                throw new \Exception('Nominal koreksi hutang tidak boleh lebih kecil dari total pembayaran yang sudah ada.');
+            }
+
             $newPayable = $this->create(array_merge($newData, [
                 'company_id' => $oldPayable->company_id,
                 'corrects_id' => $oldPayable->id,
