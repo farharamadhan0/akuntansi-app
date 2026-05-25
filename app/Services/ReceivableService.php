@@ -141,6 +141,77 @@ class ReceivableService
         $receivable->update(['payment_status' => $status]);
     }
 
+    public function correct(Receivable $oldReceivable, array $newData): Receivable
+    {
+        if ($oldReceivable->status !== TransactionStatus::Posted) {
+            throw new \Exception('Hanya piutang yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        return DB::transaction(function () use ($oldReceivable, $newData) {
+            $journalEntry = $oldReceivable->journalEntries()
+                ->where('status', TransactionStatus::Posted)
+                ->first();
+
+            if ($journalEntry) {
+                $this->journalService->voidEntry($journalEntry, 'Koreksi piutang: ' . $oldReceivable->receivable_number);
+            }
+
+            $existingAllocations = $oldReceivable->paymentAllocations()->get();
+            $totalPaid = (float) $existingAllocations->sum('amount');
+
+            $newReceivable = $this->createForCorrection(array_merge($newData, [
+                'company_id' => $oldReceivable->company_id,
+                'corrects_id' => $oldReceivable->id,
+            ]));
+
+            $this->post($newReceivable);
+
+            foreach ($existingAllocations as $allocation) {
+                $allocation->update([
+                    'allocatable_id' => $newReceivable->id,
+                ]);
+            }
+
+            if ($totalPaid > 0) {
+                $newReceivable->update(['paid_amount' => $totalPaid]);
+                $this->updatePaymentStatus($newReceivable->fresh());
+            }
+
+            $oldReceivable->update([
+                'paid_amount' => 0,
+                'payment_status' => PaymentStatus::Unpaid,
+                'status' => TransactionStatus::Corrected,
+                'corrected_at' => now(),
+                'corrected_by_id' => $newReceivable->id,
+            ]);
+
+            return $newReceivable->fresh();
+        });
+    }
+
+    protected function createForCorrection(array $data): Receivable
+    {
+        $companyId = $data['company_id'] ?? auth()->user()->current_company_id;
+
+        return Receivable::create([
+            'company_id' => $companyId,
+            'receivable_number' => $this->numberGenerator->generateReceivableNumber($companyId),
+            'partner_id' => $data['partner_id'],
+            'date' => $data['date'],
+            'due_date' => $data['due_date'],
+            'amount' => $data['amount'],
+            'paid_amount' => 0,
+            'description' => $data['description'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
+            'status' => TransactionStatus::Draft,
+            'payment_status' => PaymentStatus::Unpaid,
+            'reference' => $data['reference'] ?? null,
+            'attachments' => $data['attachments'] ?? null,
+            'corrects_id' => $data['corrects_id'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+    }
+
     protected function getReceivableAccount(Receivable $receivable): Account
     {
         return Account::where('company_id', $receivable->company_id)

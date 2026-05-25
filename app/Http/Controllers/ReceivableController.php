@@ -126,7 +126,13 @@ class ReceivableController extends Controller
             abort(403);
         }
 
-        $receivable->load(['partner:id,name,code,phone,email', 'category:id,name', 'createdBy:id,name']);
+        $receivable->load([
+            'partner:id,name,code,phone,email',
+            'category:id,name',
+            'createdBy:id,name',
+            'correctedBy:id,receivable_number',
+            'corrects:id,receivable_number',
+        ]);
 
         // Get journal entries
         $journalEntries = $receivable->journalEntries()
@@ -167,6 +173,15 @@ class ReceivableController extends Controller
                 'posted_at' => $receivable->posted_at?->format('Y-m-d H:i'),
                 'voided_at' => $receivable->voided_at?->format('Y-m-d H:i'),
                 'void_reason' => $receivable->void_reason,
+                'corrected_at' => $receivable->corrected_at?->format('Y-m-d H:i'),
+                'corrected_by' => $receivable->correctedBy ? [
+                    'id' => $receivable->correctedBy->id,
+                    'receivable_number' => $receivable->correctedBy->receivable_number,
+                ] : null,
+                'corrects' => $receivable->corrects ? [
+                    'id' => $receivable->corrects->id,
+                    'receivable_number' => $receivable->corrects->receivable_number,
+                ] : null,
                 'created_by_name' => $receivable->createdBy?->name,
             ],
             'journalEntries' => $journalEntries,
@@ -193,6 +208,71 @@ class ReceivableController extends Controller
                 ->with('success', 'Piutang berhasil dibatalkan.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function edit(Receivable $receivable): Response
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($receivable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        if ($receivable->status !== TransactionStatus::Posted) {
+            abort(403, 'Hanya piutang yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        $partners = Partner::where('company_id', $companyId)
+            ->active()
+            ->customer()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        $categories = TransactionCategory::where('company_id', $companyId)
+            ->where('type', 'income')
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $receivable->load(['partner:id,name', 'category:id,name']);
+
+        return Inertia::render('Receivables/Edit', [
+            'receivable' => [
+                'id' => $receivable->id,
+                'receivable_number' => $receivable->receivable_number,
+                'partner_id' => $receivable->partner_id,
+                'date' => $receivable->date->format('Y-m-d'),
+                'due_date' => $receivable->due_date->format('Y-m-d'),
+                'amount' => (float) $receivable->amount,
+                'paid_amount' => (float) $receivable->paid_amount,
+                'description' => $receivable->description,
+                'category_id' => $receivable->category_id,
+                'reference' => $receivable->reference,
+            ],
+            'partners' => $partners,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function correct(ReceivableRequest $request, Receivable $receivable): RedirectResponse
+    {
+        $companyId = auth()->user()->current_company_id;
+
+        if ($receivable->company_id !== $companyId) {
+            abort(403);
+        }
+
+        try {
+            $newReceivable = $this->receivableService->correct($receivable, $request->validated());
+
+            return redirect()
+                ->route('receivables.show', $newReceivable)
+                ->with('success', 'Piutang berhasil dikoreksi.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
     }
 }

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, BookOpen, XCircle, AlertTriangle, Banknote } from 'lucide-react';
+import { Users, BookOpen, XCircle, AlertTriangle, Banknote, Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface JournalLine {
@@ -29,6 +29,11 @@ interface Partner {
     email?: string;
 }
 
+interface CorrectionRef {
+    id: number;
+    receivable_number: string;
+}
+
 interface Receivable {
     id: number;
     receivable_number: string;
@@ -41,7 +46,7 @@ interface Receivable {
     remaining_amount: number;
     description: string;
     reference?: string;
-    status: 'draft' | 'posted' | 'voided';
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     payment_status: 'unpaid' | 'partial' | 'paid';
     payment_status_label: string;
@@ -49,6 +54,9 @@ interface Receivable {
     posted_at?: string;
     voided_at?: string;
     void_reason?: string;
+    corrected_at?: string;
+    corrected_by?: CorrectionRef;
+    corrects?: CorrectionRef;
     created_by_name?: string;
 }
 
@@ -92,6 +100,9 @@ export default function Show({ receivable: r, journalEntries }: Props) {
     const statusBadge = () => {
         if (r.status === 'voided') {
             return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Dibatalkan</span>;
+        }
+        if (r.status === 'corrected') {
+            return <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700">Dikoreksi</span>;
         }
         const colors: Record<string, string> = {
             unpaid: 'bg-red-100 text-red-700',
@@ -146,6 +157,36 @@ export default function Show({ receivable: r, journalEntries }: Props) {
                     <div className="mb-4 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm">
                         <p className="font-medium text-gray-700">Dibatalkan pada {r.voided_at}</p>
                         <p className="text-gray-600">Alasan: {r.void_reason}</p>
+                    </div>
+                )}
+
+                {/* Corrected Info */}
+                {r.status === 'corrected' && r.corrected_by && (
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-sm text-amber-800">
+                            <strong>Piutang ini telah dikoreksi</strong> pada {r.corrected_at} oleh piutang{' '}
+                            <Link
+                                href={`/transaksi/piutang/${r.corrected_by.id}`}
+                                className="font-mono font-medium underline hover:text-amber-900"
+                            >
+                                {r.corrected_by.receivable_number}
+                            </Link>
+                        </p>
+                    </div>
+                )}
+
+                {/* Correction Source Info */}
+                {r.corrects && (
+                    <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                        <p className="text-sm text-blue-800">
+                            <strong>Piutang ini adalah koreksi</strong> dari piutang{' '}
+                            <Link
+                                href={`/transaksi/piutang/${r.corrects.id}`}
+                                className="font-mono font-medium underline hover:text-blue-900"
+                            >
+                                {r.corrects.receivable_number}
+                            </Link>
+                        </p>
                     </div>
                 )}
 
@@ -258,6 +299,16 @@ export default function Show({ receivable: r, journalEntries }: Props) {
                                 </Button>
                             </Link>
                         )}
+                        <Link href={`/transaksi/piutang/${r.id}/koreksi`}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50"
+                            >
+                                <Edit3 size={16} />
+                                Koreksi Piutang
+                            </Button>
+                        </Link>
                         {r.paid_amount === 0 && (
                             <Button
                                 variant="destructive"

@@ -156,6 +156,8 @@ Route::middleware('auth')->group(function () {
             Route::post('piutang', [ReceivableController::class, 'store'])->middleware('permission:receivables.create')->name('receivables.store');
             Route::get('piutang/{receivable}', [ReceivableController::class, 'show'])->middleware('permission:receivables.view')->name('receivables.show');
             Route::post('piutang/{receivable}/batal', [ReceivableController::class, 'void'])->middleware('permission:receivables.delete')->name('receivables.void');
+            Route::get('piutang/{receivable}/koreksi', [ReceivableController::class, 'edit'])->middleware('permission:receivables.edit')->name('receivables.edit');
+            Route::post('piutang/{receivable}/koreksi', [ReceivableController::class, 'correct'])->middleware('permission:receivables.edit')->name('receivables.correct');
 
             // Hutang
             Route::get('hutang', [PayableController::class, 'index'])->middleware('permission:payables.view')->name('payables.index');

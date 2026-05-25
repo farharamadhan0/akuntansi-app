@@ -26,7 +26,7 @@ interface Receivable {
     paid_amount: number;
     remaining_amount: number;
     description: string;
-    status: 'draft' | 'posted' | 'voided';
+    status: 'draft' | 'posted' | 'voided' | 'corrected';
     status_label: string;
     payment_status: 'unpaid' | 'partial' | 'paid';
     payment_status_label: string;
@@ -66,14 +66,19 @@ function formatDate(dateStr: string) {
 
 export default function Index({ receivables, summary }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue'>('all');
+    const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue' | 'paid'>('outstanding');
 
-    const filtered = receivables.filter((r) => {
+    const visibleReceivables = receivables.filter(r => r.status !== 'corrected');
+
+    const filtered = visibleReceivables.filter((r) => {
         if (filter === 'outstanding') {
             return r.status === 'posted' && r.payment_status !== 'paid';
         }
         if (filter === 'overdue') {
             return r.is_overdue;
+        }
+        if (filter === 'paid') {
+            return r.payment_status === 'paid';
         }
         return true;
     });
@@ -81,6 +86,9 @@ export default function Index({ receivables, summary }: Props) {
     const statusBadge = (r: Receivable) => {
         if (r.status === 'voided') {
             return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">Dibatalkan</span>;
+        }
+        if (r.status === 'corrected') {
+            return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">Dikoreksi</span>;
         }
         const colors: Record<string, string> = {
             unpaid: 'bg-red-100 text-red-700',
@@ -173,21 +181,26 @@ export default function Index({ receivables, summary }: Props) {
             </div>
 
             {/* Filter Tabs */}
-            <FilterTabs<'all' | 'outstanding' | 'overdue'>
+            <FilterTabs<'all' | 'outstanding' | 'overdue' | 'paid'>
                 className="mb-4"
                 value={filter}
                 onChange={setFilter}
                 items={[
-                    { value: 'all', label: 'Semua', count: receivables.length },
+                    { value: 'all', label: 'Semua', count: visibleReceivables.length },
                     {
                         value: 'outstanding',
                         label: 'Belum Lunas',
-                        count: receivables.filter(r => r.status === 'posted' && r.payment_status !== 'paid').length,
+                        count: visibleReceivables.filter(r => r.status === 'posted' && r.payment_status !== 'paid').length,
                     },
                     {
                         value: 'overdue',
                         label: 'Jatuh Tempo',
-                        count: receivables.filter(r => r.is_overdue).length,
+                        count: visibleReceivables.filter(r => r.is_overdue).length,
+                    },
+                    {
+                        value: 'paid',
+                        label: 'Lunas',
+                        count: visibleReceivables.filter(r => r.payment_status === 'paid').length,
                     },
                 ]}
             />
