@@ -101,9 +101,8 @@ export default function Index({ payments }: Props) {
                                 <TableHead>Pelanggan</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Diterima di</TableHead>
-                                <TableHead className="text-right">Jumlah</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="w-10"></TableHead>
+                                <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -117,21 +116,16 @@ export default function Index({ payments }: Props) {
                                 payments.map((p) => (
                                     <TableRow key={p.id}>
                                         <TableCell className="font-mono text-sm">
-                                            {p.payment_number}
+                                            <Link href={`/transaksi/piutang-bayar/${p.id}`} className="text-blue-600 hover:underline">
+                                                {p.payment_number}
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="font-medium">{p.partner_name}</TableCell>
                                         <TableCell>{formatDate(p.date)}</TableCell>
                                         <TableCell>{p.cash_bank_name}</TableCell>
-                                        <TableCell className="text-right font-medium text-green-600">
-                                            {formatCurrency(p.amount)}
-                                        </TableCell>
                                         <TableCell>{statusBadge(p.status, p.status_label)}</TableCell>
-                                        <TableCell>
-                                            <Link href={`/transaksi/piutang-bayar/${p.id}`}>
-                                                <Button variant="ghost" size="sm">
-                                                    <Eye size={16} />
-                                                </Button>
-                                            </Link>
+                                        <TableCell className="text-right font-medium">
+                                            {formatCurrency(p.amount)}
                                         </TableCell>
                                     </TableRow>
                                 ))
