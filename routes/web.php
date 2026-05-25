@@ -188,6 +188,8 @@ Route::middleware('auth')->group(function () {
             Route::post('pembelian', [PurchaseController::class, 'store'])->middleware('permission:purchases.create')->name('purchases.store');
             Route::get('pembelian/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchases.view')->name('purchases.show');
             Route::post('pembelian/{purchase}/batal', [PurchaseController::class, 'void'])->middleware('permission:purchases.delete')->name('purchases.void');
+            Route::get('pembelian/{purchase}/koreksi', [PurchaseController::class, 'edit'])->middleware('permission:purchases.edit')->name('purchases.edit');
+            Route::post('pembelian/{purchase}/koreksi', [PurchaseController::class, 'correct'])->middleware('permission:purchases.edit')->name('purchases.correct');
 
             // Penjualan
             Route::get('penjualan', [SaleController::class, 'index'])->middleware('permission:sales.view')->name('sales.index');

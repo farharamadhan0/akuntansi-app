@@ -36,6 +36,9 @@ class Purchase extends Model
         'posted_at',
         'voided_at',
         'void_reason',
+        'corrects_id',
+        'corrected_by_id',
+        'corrected_at',
         'reference',
         'attachments',
         'created_by',
@@ -51,6 +54,7 @@ class Purchase extends Model
         'status' => TransactionStatus::class,
         'posted_at' => 'datetime',
         'voided_at' => 'datetime',
+        'corrected_at' => 'datetime',
         'attachments' => 'array',
     ];
 
@@ -67,6 +71,16 @@ class Purchase extends Model
     public function payable(): BelongsTo
     {
         return $this->belongsTo(Payable::class);
+    }
+
+    public function corrects(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class, 'corrects_id');
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class, 'corrected_by_id');
     }
 
     public function createdBy(): BelongsTo

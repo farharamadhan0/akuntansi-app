@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TransactionStatus;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\CashBankAccount;
 use App\Models\Partner;
@@ -84,10 +85,62 @@ class PurchaseController extends Controller
             'payable:id,payable_number,payment_status,amount,paid_amount',
             'items.product' => fn ($q) => $q->withTrashed()->select('id', 'name', 'product_code', 'sku', 'product_type', 'unit', 'deleted_at'),
             'journalEntries.lines.account:id,code,name',
+            'correctedBy:id,purchase_number',
+            'corrects:id,purchase_number',
         ]);
 
         return Inertia::render('Purchases/Show', [
-            'purchase' => $purchase,
+            'purchase' => [
+                'id' => $purchase->id,
+                'purchase_number' => $purchase->purchase_number,
+                'date' => $purchase->date->format('Y-m-d'),
+                'due_date' => $purchase->due_date?->format('Y-m-d'),
+                'payment_type' => $purchase->payment_type,
+                'total_amount' => (float) $purchase->total_amount,
+                'notes' => $purchase->notes,
+                'reference' => $purchase->reference,
+                'status' => $purchase->status->value,
+                'status_label' => $purchase->status->label(),
+                'posted_at' => $purchase->posted_at?->format('Y-m-d H:i'),
+                'voided_at' => $purchase->voided_at?->format('Y-m-d H:i'),
+                'void_reason' => $purchase->void_reason,
+                'corrected_at' => $purchase->corrected_at?->format('Y-m-d H:i'),
+                'corrected_by' => $purchase->correctedBy ? [
+                    'id' => $purchase->correctedBy->id,
+                    'purchase_number' => $purchase->correctedBy->purchase_number,
+                ] : null,
+                'corrects' => $purchase->corrects ? [
+                    'id' => $purchase->corrects->id,
+                    'purchase_number' => $purchase->corrects->purchase_number,
+                ] : null,
+                'partner' => $purchase->partner ? [
+                    'name' => $purchase->partner->name,
+                    'code' => $purchase->partner->code,
+                ] : null,
+                'cash_bank_account' => $purchase->cashBankAccount ? [
+                    'name' => $purchase->cashBankAccount->name,
+                ] : null,
+                'payable' => $purchase->payable ? [
+                    'payable_number' => $purchase->payable->payable_number,
+                    'payment_status' => $purchase->payable->payment_status->value,
+                    'amount' => (float) $purchase->payable->amount,
+                    'paid_amount' => (float) $purchase->payable->paid_amount,
+                ] : null,
+                'items' => $purchase->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'description' => $item->description,
+                    'quantity' => (float) $item->quantity,
+                    'unit' => $item->unit,
+                    'unit_price' => (float) $item->unit_price,
+                    'line_total' => (float) $item->line_total,
+                    'product' => $item->product ? [
+                        'name' => $item->product->name,
+                        'product_code' => $item->product->product_code,
+                        'deleted_at' => $item->product->deleted_at,
+                    ] : null,
+                ]),
+            ],
             'journalEntries' => $purchase->journalEntries->map(fn ($entry) => [
                 'entry_number' => $entry->entry_number,
                 'date' => $entry->date->format('Y-m-d'),
@@ -101,6 +154,81 @@ class PurchaseController extends Controller
                 ]),
             ]),
         ]);
+    }
+
+    public function edit(Purchase $purchase): Response
+    {
+        $this->authorizeCompany($purchase);
+
+        if ($purchase->status !== TransactionStatus::Posted) {
+            abort(403, 'Hanya pembelian yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        $companyId = auth()->user()->current_company_id;
+
+        $purchase->load([
+            'items.product:id,product_code,name,unit,purchase_price,is_stock_tracked,current_stock',
+            'payable:id,payable_number,paid_amount',
+            'payable.paymentAllocations.payment:id,payment_number,date,status',
+        ]);
+
+        return Inertia::render('Purchases/Edit', [
+            'purchase' => [
+                'id' => $purchase->id,
+                'purchase_number' => $purchase->purchase_number,
+                'date' => $purchase->date->format('Y-m-d'),
+                'due_date' => $purchase->due_date?->format('Y-m-d'),
+                'payment_type' => $purchase->payment_type,
+                'partner_id' => $purchase->partner_id,
+                'cash_bank_account_id' => $purchase->cash_bank_account_id,
+                'notes' => $purchase->notes,
+                'reference' => $purchase->reference,
+                'payable' => $purchase->payable ? [
+                    'id' => $purchase->payable->id,
+                    'payable_number' => $purchase->payable->payable_number,
+                    'paid_amount' => (float) $purchase->payable->paid_amount,
+                    'payments' => $purchase->payable->paymentAllocations
+                        ->filter(fn ($allocation) => $allocation->payment)
+                        ->unique('payment_id')
+                        ->values()
+                        ->map(fn ($allocation) => [
+                            'id' => $allocation->payment->id,
+                            'payment_number' => $allocation->payment->payment_number,
+                            'date' => $allocation->payment->date?->format('Y-m-d'),
+                            'status' => $allocation->payment->status->value,
+                        ]),
+                ] : null,
+                'items' => $purchase->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'description' => $item->description,
+                    'quantity' => (float) $item->quantity,
+                    'unit' => $item->unit,
+                    'unit_price' => (float) $item->unit_price,
+                    'discount_amount' => (float) $item->discount_amount,
+                    'tax_amount' => (float) $item->tax_amount,
+                ]),
+            ],
+            'partners' => Partner::where('company_id', $companyId)->active()->supplier()->orderBy('name')->get(['id', 'name', 'code']),
+            'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
+            'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
+        ]);
+    }
+
+    public function correct(PurchaseRequest $request, Purchase $purchase): RedirectResponse
+    {
+        $this->authorizeCompany($purchase);
+
+        try {
+            $newPurchase = $this->purchaseService->correct($purchase, $request->validated());
+
+            return redirect()->route('purchases.show', $newPurchase)
+                ->with('success', 'Pembelian berhasil dikoreksi.');
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function void(Request $request, Purchase $purchase): RedirectResponse

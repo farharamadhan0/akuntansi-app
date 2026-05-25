@@ -40,6 +40,7 @@ class PurchaseService
                 'total_amount' => $totals['total_amount'],
                 'notes' => $data['notes'] ?? null,
                 'status' => TransactionStatus::Draft,
+                'corrects_id' => $data['corrects_id'] ?? null,
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,
                 'created_by' => auth()->id(),
@@ -79,45 +80,8 @@ class PurchaseService
             $purchase->load('items.product', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($purchase);
 
-            $journalLines = [];
-
-            foreach ($purchase->items as $item) {
-                $amount = (float) $item->line_total;
-
-                if ($item->is_stock_tracked) {
-                    $unitCost = round($amount / (float) $item->quantity, 2);
-                    $this->inventoryService->receive(
-                        $item->product,
-                        $purchase->date->toDateString(),
-                        (float) $item->quantity,
-                        $unitCost,
-                        'purchase',
-                        $purchase,
-                        $item,
-                        'Pembelian barang'
-                    );
-
-                    $accountId = $item->inventory_account_id ?: $item->product->inventory_account_id;
-                } else {
-                    $accountId = $item->expense_account_id ?: $item->product->expense_account_id ?: $this->getDefaultExpenseAccountId($purchase->company_id);
-                }
-
-                $this->pushLine($journalLines, $accountId, $amount, 0);
-            }
-
-            $creditAccountId = $purchase->payment_type === 'cash'
-                ? $purchase->cashBankAccount->account_id
-                : $this->getPayableAccountId($purchase->company_id);
-
-            $this->pushLine($journalLines, $creditAccountId, 0, (float) $purchase->total_amount);
-
-            $this->journalService->createEntry(
-                $purchase->company_id,
-                $purchase->date->toDateString(),
-                'Pembelian: ' . $purchase->purchase_number,
-                array_values($journalLines),
-                $purchase
-            );
+            $this->applyPostedStock($purchase);
+            $this->createPurchaseJournalEntry($purchase);
 
             if ($purchase->payment_type === 'credit') {
                 $payable = $this->createLinkedPayable($purchase);
@@ -130,6 +94,78 @@ class PurchaseService
             ]);
 
             return $purchase->fresh()->load('items.product', 'payable');
+        });
+    }
+
+    public function correct(Purchase $oldPurchase, array $newData): Purchase
+    {
+        if ($oldPurchase->status !== TransactionStatus::Posted) {
+            throw new \Exception('Hanya pembelian yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        return DB::transaction(function () use ($oldPurchase, $newData) {
+            $oldPurchase->load('items.product', 'payable');
+
+            if ($oldPurchase->payable && (float) $oldPurchase->payable->paid_amount > 0) {
+                throw new \Exception('Pembelian kredit yang sudah memiliki pembayaran tidak dapat dikoreksi. Batalkan pembayaran terlebih dahulu.');
+            }
+
+            $newPurchase = $this->create(array_merge($newData, [
+                'company_id' => $oldPurchase->company_id,
+                'corrects_id' => $oldPurchase->id,
+            ]));
+
+            $newPurchase->load('items.product', 'cashBankAccount.account', 'partner');
+            $this->validatePaymentData($newPurchase);
+            $this->ensureStockSufficientForCorrection($oldPurchase, $newPurchase);
+
+            $journalEntry = $oldPurchase->journalEntries()
+                ->where('status', TransactionStatus::Posted)
+                ->first();
+
+            if ($journalEntry) {
+                $this->journalService->voidEntry($journalEntry, 'Koreksi pembelian: ' . $oldPurchase->purchase_number);
+            }
+
+            $this->applyCorrectionStock($oldPurchase, $newPurchase);
+            $this->createPurchaseJournalEntry($newPurchase);
+
+            $newPayable = null;
+
+            if ($newPurchase->payment_type === 'credit') {
+                $newPayable = $this->createLinkedPayable($newPurchase, $oldPurchase->payable?->id);
+                $newPurchase->update(['payable_id' => $newPayable->id]);
+            }
+
+            $newPurchase->update([
+                'status' => TransactionStatus::Posted,
+                'posted_at' => now(),
+            ]);
+
+            if ($oldPurchase->payable) {
+                if ($newPayable) {
+                    $oldPurchase->payable->update([
+                        'status' => TransactionStatus::Corrected,
+                        'payment_status' => PaymentStatus::Unpaid,
+                        'corrected_at' => now(),
+                        'corrected_by_id' => $newPayable->id,
+                    ]);
+                } else {
+                    $oldPurchase->payable->update([
+                        'status' => TransactionStatus::Voided,
+                        'voided_at' => now(),
+                        'void_reason' => 'Dikoreksi oleh pembelian ' . $newPurchase->purchase_number,
+                    ]);
+                }
+            }
+
+            $oldPurchase->update([
+                'status' => TransactionStatus::Corrected,
+                'corrected_at' => now(),
+                'corrected_by_id' => $newPurchase->id,
+            ]);
+
+            return $newPurchase->fresh()->load('items.product', 'payable');
         });
     }
 
@@ -171,7 +207,7 @@ class PurchaseService
         });
     }
 
-    protected function createLinkedPayable(Purchase $purchase): Payable
+    protected function createLinkedPayable(Purchase $purchase, ?int $correctsId = null): Payable
     {
         return Payable::create([
             'company_id' => $purchase->company_id,
@@ -184,10 +220,172 @@ class PurchaseService
             'description' => 'Dari pembelian ' . $purchase->purchase_number,
             'status' => TransactionStatus::Posted,
             'payment_status' => PaymentStatus::Unpaid,
+            'corrects_id' => $correctsId,
             'reference' => $purchase->reference,
             'created_by' => auth()->id(),
             'posted_at' => now(),
         ]);
+    }
+
+    protected function applyPostedStock(Purchase $purchase): void
+    {
+        foreach ($purchase->items as $item) {
+            if (! $item->is_stock_tracked) {
+                continue;
+            }
+
+            $unitCost = round((float) $item->line_total / (float) $item->quantity, 2);
+
+            $this->inventoryService->receive(
+                $item->product,
+                $purchase->date->toDateString(),
+                (float) $item->quantity,
+                $unitCost,
+                'purchase',
+                $purchase,
+                $item,
+                'Pembelian barang'
+            );
+        }
+    }
+
+    protected function createPurchaseJournalEntry(Purchase $purchase): void
+    {
+        $this->journalService->createEntry(
+            $purchase->company_id,
+            $purchase->date->toDateString(),
+            'Pembelian: ' . $purchase->purchase_number,
+            $this->buildJournalLines($purchase),
+            $purchase
+        );
+    }
+
+    protected function buildJournalLines(Purchase $purchase): array
+    {
+        $journalLines = [];
+
+        foreach ($purchase->items as $item) {
+            $amount = (float) $item->line_total;
+
+            if ($item->is_stock_tracked) {
+                $accountId = $item->inventory_account_id ?: $item->product->inventory_account_id;
+            } else {
+                $accountId = $item->expense_account_id ?: $item->product->expense_account_id ?: $this->getDefaultExpenseAccountId($purchase->company_id);
+            }
+
+            $this->pushLine($journalLines, $accountId, $amount, 0);
+        }
+
+        $creditAccountId = $purchase->payment_type === 'cash'
+            ? $purchase->cashBankAccount->account_id
+            : $this->getPayableAccountId($purchase->company_id);
+
+        $this->pushLine($journalLines, $creditAccountId, 0, (float) $purchase->total_amount);
+
+        return array_values($journalLines);
+    }
+
+    protected function ensureStockSufficientForCorrection(Purchase $oldPurchase, Purchase $newPurchase): void
+    {
+        $oldItems = $this->summarizeTrackedItems($oldPurchase);
+        $newItems = $this->summarizeTrackedItems($newPurchase);
+        $productIds = array_unique(array_merge(array_keys($oldItems), array_keys($newItems)));
+
+        foreach ($productIds as $productId) {
+            $oldQuantity = $oldItems[$productId]['quantity'] ?? 0;
+            $newQuantity = $newItems[$productId]['quantity'] ?? 0;
+            $deltaQuantity = round($newQuantity - $oldQuantity, 2);
+
+            if ($deltaQuantity >= 0) {
+                continue;
+            }
+
+            $product = $oldItems[$productId]['product'] ?? $newItems[$productId]['product'];
+            $requiredReverse = abs($deltaQuantity);
+            $availableStock = (float) $product->current_stock;
+
+            if ($requiredReverse - $availableStock > 0.00001) {
+                throw new \Exception("Stok produk {$product->name} tidak cukup untuk reverse selisih koreksi. Tersedia {$availableStock}, membutuhkan {$requiredReverse}.");
+            }
+        }
+    }
+
+    protected function applyCorrectionStock(Purchase $oldPurchase, Purchase $newPurchase): void
+    {
+        $oldItems = $this->summarizeTrackedItems($oldPurchase);
+        $newItems = $this->summarizeTrackedItems($newPurchase);
+        $productIds = array_unique(array_merge(array_keys($oldItems), array_keys($newItems)));
+
+        foreach ($productIds as $productId) {
+            $oldQuantity = $oldItems[$productId]['quantity'] ?? 0;
+            $newQuantity = $newItems[$productId]['quantity'] ?? 0;
+            $deltaQuantity = round($newQuantity - $oldQuantity, 2);
+
+            if (abs($deltaQuantity) < 0.00001) {
+                continue;
+            }
+
+            $product = $newItems[$productId]['product'] ?? $oldItems[$productId]['product'];
+
+            if ($deltaQuantity > 0) {
+                $unitCost = $newItems[$productId]['unit_cost'] ?? 0;
+
+                $this->inventoryService->receive(
+                    $product,
+                    $newPurchase->date->toDateString(),
+                    $deltaQuantity,
+                    $unitCost,
+                    'purchase_correction',
+                    $newPurchase,
+                    null,
+                    'Selisih koreksi pembelian'
+                );
+
+                continue;
+            }
+
+            $this->inventoryService->issue(
+                $product,
+                $newPurchase->date->toDateString(),
+                abs($deltaQuantity),
+                'purchase_correction',
+                $newPurchase,
+                null,
+                'Selisih koreksi pembelian'
+            );
+        }
+    }
+
+    protected function summarizeTrackedItems(Purchase $purchase): array
+    {
+        $summary = [];
+
+        foreach ($purchase->items as $item) {
+            if (! $item->is_stock_tracked || ! $item->product) {
+                continue;
+            }
+
+            $productId = $item->product->id;
+
+            if (! isset($summary[$productId])) {
+                $summary[$productId] = [
+                    'product' => $item->product,
+                    'quantity' => 0,
+                    'amount' => 0,
+                ];
+            }
+
+            $summary[$productId]['quantity'] += (float) $item->quantity;
+            $summary[$productId]['amount'] += (float) $item->line_total;
+        }
+
+        foreach ($summary as $productId => $itemSummary) {
+            $summary[$productId]['unit_cost'] = $itemSummary['quantity'] > 0
+                ? round($itemSummary['amount'] / $itemSummary['quantity'], 2)
+                : 0;
+        }
+
+        return $summary;
     }
 
     protected function validatePaymentData(Purchase $purchase): void
