@@ -176,7 +176,7 @@ export default function Edit({ purchase, partners, cashBankAccounts, products }:
                         <strong>Perhatian:</strong> Koreksi akan membuat jurnal pembalik untuk pembelian lama dan membuat pembelian baru dengan data yang diperbarui.
                     </p>
                     <p className="mt-1">
-                        Untuk pembelian kredit yang sudah ada pembayaran, pembayaran harus dibatalkan terlebih dahulu. Koreksi juga akan ditolak jika stok tidak cukup untuk reverse selisih item.
+                        Jika pembelian kredit sudah memiliki pembayaran hutang, pembayaran tersebut akan dipindahkan ke hutang baru hasil koreksi. Nilai koreksi tidak boleh lebih kecil dari total pembayaran yang sudah ada, dan koreksi tetap akan ditolak jika stok tidak cukup untuk reverse selisih item.
                     </p>
                 </div>
 
@@ -187,7 +187,7 @@ export default function Edit({ purchase, partners, cashBankAccounts, products }:
                             <Link href={`/transaksi/hutang/${purchase.payable.id}`} className="font-mono underline hover:text-blue-900">
                                 {purchase.payable.payable_number}
                             </Link>
-                            . Batalkan pembayaran berikut terlebih dahulu sebelum melakukan koreksi:
+                            . Pembayaran berikut akan dipindahkan ke hutang baru hasil koreksi:
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {purchase.payable.payments.map((payment) => (

@@ -121,6 +121,7 @@ class PurchaseController extends Controller
                     'name' => $purchase->cashBankAccount->name,
                 ] : null,
                 'payable' => $purchase->payable ? [
+                    'id' => $purchase->payable->id,
                     'payable_number' => $purchase->payable->payable_number,
                     'payment_status' => $purchase->payable->payment_status->value,
                     'amount' => (float) $purchase->payable->amount,

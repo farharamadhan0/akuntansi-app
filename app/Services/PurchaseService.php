@@ -104,11 +104,10 @@ class PurchaseService
         }
 
         return DB::transaction(function () use ($oldPurchase, $newData) {
-            $oldPurchase->load('items.product', 'payable');
+            $oldPurchase->load('items.product', 'payable.paymentAllocations');
 
-            if ($oldPurchase->payable && (float) $oldPurchase->payable->paid_amount > 0) {
-                throw new \Exception('Pembelian kredit yang sudah memiliki pembayaran tidak dapat dikoreksi. Batalkan pembayaran terlebih dahulu.');
-            }
+            $existingAllocations = $oldPurchase->payable?->paymentAllocations()->get() ?? collect();
+            $totalPaid = (float) $existingAllocations->sum('amount');
 
             $newPurchase = $this->create(array_merge($newData, [
                 'company_id' => $oldPurchase->company_id,
@@ -117,6 +116,15 @@ class PurchaseService
 
             $newPurchase->load('items.product', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($newPurchase);
+
+            if ($totalPaid > 0 && $newPurchase->payment_type !== 'credit') {
+                throw new \Exception('Pembelian koreksi dengan pembayaran hutang yang sudah ada harus tetap menggunakan pembayaran kredit.');
+            }
+
+            if ($totalPaid > 0 && bccomp((string) $newPurchase->total_amount, (string) $totalPaid, 2) < 0) {
+                throw new \Exception('Nilai koreksi pembelian tidak boleh lebih kecil dari total pembayaran yang sudah ada.');
+            }
+
             $this->ensureStockSufficientForCorrection($oldPurchase, $newPurchase);
 
             $journalEntry = $oldPurchase->journalEntries()
@@ -144,7 +152,19 @@ class PurchaseService
 
             if ($oldPurchase->payable) {
                 if ($newPayable) {
+                    foreach ($existingAllocations as $allocation) {
+                        $allocation->update([
+                            'allocatable_id' => $newPayable->id,
+                        ]);
+                    }
+
+                    if ($totalPaid > 0) {
+                        $newPayable->update(['paid_amount' => $totalPaid]);
+                        $this->updatePayablePaymentStatus($newPayable->fresh());
+                    }
+
                     $oldPurchase->payable->update([
+                        'paid_amount' => 0,
                         'status' => TransactionStatus::Corrected,
                         'payment_status' => PaymentStatus::Unpaid,
                         'corrected_at' => now(),
@@ -386,6 +406,20 @@ class PurchaseService
         }
 
         return $summary;
+    }
+
+    protected function updatePayablePaymentStatus(Payable $payable): void
+    {
+        $paidAmount = (float) $payable->paid_amount;
+        $totalAmount = (float) $payable->amount;
+
+        $status = match (true) {
+            $paidAmount <= 0 => PaymentStatus::Unpaid,
+            bccomp((string) $paidAmount, (string) $totalAmount, 2) >= 0 => PaymentStatus::Paid,
+            default => PaymentStatus::Partial,
+        };
+
+        $payable->update(['payment_status' => $status]);
     }
 
     protected function validatePaymentData(Purchase $purchase): void

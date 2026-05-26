@@ -41,7 +41,7 @@ interface PurchaseData {
     corrects?: CorrectionRef | null;
     partner?: { name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
-    payable?: { payable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
+    payable?: { id: number; payable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
     items: PurchaseItem[];
 }
 
@@ -151,7 +151,17 @@ export default function Show({ purchase, journalEntries }: Props) {
                     <Card>
                         <CardContent className="space-y-4 p-6">
                             <div><div className="text-sm text-muted-foreground">Total</div><div className="text-2xl font-semibold">{formatCurrency(purchase.total_amount)}</div></div>
-                            {purchase.payable && <div><div className="text-sm text-muted-foreground">Hutang Terkait</div><div className="font-medium">{purchase.payable.payable_number}</div></div>}
+                            {purchase.payable && (
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Hutang Terkait</div>
+                                    <Link href={`/transaksi/hutang/${purchase.payable.id}`} className="font-medium underline hover:text-primary">
+                                        {purchase.payable.payable_number}
+                                    </Link>
+                                    <div className="text-xs text-muted-foreground">
+                                        Dibayar {formatCurrency(purchase.payable.paid_amount)} dari {formatCurrency(purchase.payable.amount)}
+                                    </div>
+                                </div>
+                            )}
                             {purchase.reference && <div><div className="text-sm text-muted-foreground">Referensi</div><div className="font-medium">{purchase.reference}</div></div>}
                             {purchase.notes && <div><div className="text-sm text-muted-foreground">Catatan</div><div>{purchase.notes}</div></div>}
                         </CardContent>
