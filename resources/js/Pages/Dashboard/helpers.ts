@@ -1,3 +1,5 @@
+import { formatDateDDMMYYYY } from '@/lib/format';
+
 export function formatCurrency(value: number) {
     return new Intl.NumberFormat("id-ID", {
         style: "currency",
@@ -8,11 +10,7 @@ export function formatCurrency(value: number) {
 }
 
 export function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export function formatCurrencyCompact(value: number) {

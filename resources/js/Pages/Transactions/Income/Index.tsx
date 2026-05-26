@@ -12,6 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { Plus, Eye, TrendingUp, ArrowUpCircle } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
@@ -53,11 +54,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export default function Index({ transactions }: Props) {

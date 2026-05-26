@@ -13,37 +13,56 @@ export function formatRupiah(value: number): string {
     }).format(value);
 }
 
-/** Short date: 15 Apr 2024 */
-export function formatTanggal(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+function parseDateValue(dateStr: string): Date | null {
+    if (!dateStr) {
+        return null;
+    }
+
+    const trimmed = dateStr.trim();
+
+    if (!trimmed) {
+        return null;
+    }
+
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsed = new Date(trimmed);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed;
 }
 
-/** Long date: 15 April 2024 */
-export function formatTanggalPanjang(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+export function formatDateDDMMYYYY(dateStr: string): string {
+    const date = parseDateValue(dateStr);
+
+    if (!date) {
+        return '-';
+    }
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
 }
 
-/** Compact date for dashboard: 15 Apr */
-export function formatTanggalSingkat(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-    });
-}
+export function formatDateTime(input: string): string {
+  const date = new Date(input.replace(" ", "T"));
 
-/** Format date safely for income statement etc (avoids timezone shift) */
-export function formatTanggalISO(dateStr: string): string {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
 }

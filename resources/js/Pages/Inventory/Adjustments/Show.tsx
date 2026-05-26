@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatDateDDMMYYYY } from '@/lib/format';
 
 interface AdjustmentItem {
     id: number;
@@ -102,7 +103,7 @@ export default function Show({ stock_adjustment: adjustment, journalEntries }: P
                                 <div key={entry.entry_number} className="rounded-lg border p-4">
                                     <div className="mb-2 flex items-center justify-between text-sm">
                                         <span className="font-mono">{entry.entry_number}</span>
-                                        <span>{entry.date}</span>
+                                        <span>{formatDateDDMMYYYY(entry.date)}</span>
                                     </div>
                                     <table className="w-full text-sm">
                                         <tbody>

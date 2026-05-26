@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
 import { BadgeDollarSign, CreditCard, FileText, Pencil, ShoppingBag, Truck, UserRound } from 'lucide-react';
 
@@ -112,11 +113,7 @@ function formatCurrency(value: number | null | undefined) {
 
 function formatDate(value?: string | null) {
     if (!value) return '-';
-    return new Date(value).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(value);
 }
 
 function statusClasses(status: string) {

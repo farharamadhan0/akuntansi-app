@@ -13,6 +13,7 @@ import {
     Zap,
     ArrowLeft,
 } from 'lucide-react';
+import { formatDateTime } from '@/lib/format';
 
 interface Line {
     account_id: number;
@@ -194,11 +195,11 @@ export default function Show({ entry: e }: Props) {
                             />
                         )}
                         {e.created_by && (
-                            <DetailRow label="Dibuat oleh" value={`${e.created_by} · ${e.created_at ?? ''}`} />
+                            <DetailRow label="Dibuat oleh" value={`${e.created_by} · ${formatDateTime(e.created_at ?? '')}`} />
                         )}
                         {e.voided_at && (
                             <>
-                                <DetailRow label="Dibatalkan pada" value={e.voided_at} />
+                                <DetailRow label="Dibatalkan pada" value={formatDateTime(e.voided_at)} />
                                 <DetailRow
                                     label="Alasan pembatalan"
                                     value={<span className="text-red-600">{e.void_reason}</span>}

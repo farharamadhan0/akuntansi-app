@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { Banknote, AlertTriangle, Check } from 'lucide-react';
 
 interface Payable {
@@ -50,11 +51,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export default function Create({ payables, cashBankAccounts, preselectedPartnerId }: Props) {

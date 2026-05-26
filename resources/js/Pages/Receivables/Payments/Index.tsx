@@ -12,6 +12,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { Plus, Eye, Banknote } from 'lucide-react';
 
 interface Payment {
@@ -40,11 +41,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export default function Index({ payments }: Props) {

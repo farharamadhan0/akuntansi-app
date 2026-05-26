@@ -14,6 +14,7 @@ import { Plus, Eye, Users, AlertTriangle, Banknote } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 import { useState } from 'react';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
 
 interface Receivable {
@@ -57,11 +58,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export default function Index({ receivables, summary }: Props) {

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import ReportFilters from "@/components/reports/ReportFilters";
+import { formatDateDDMMYYYY } from "@/lib/format";
 import { Droplets, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 
 interface FlowRow {
@@ -38,12 +39,7 @@ const fmt = (v: number) =>
         currency: "IDR",
         minimumFractionDigits: 0,
     }).format(v);
-const fmtDate = (d: string) =>
-    new Date(d + "T00:00:00").toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    });
+const fmtDate = (d: string) => formatDateDDMMYYYY(d);
 
 function FlowTable({ rows, type }: { rows: FlowRow[]; type: "in" | "out" }) {
     const isIn = type === "in";

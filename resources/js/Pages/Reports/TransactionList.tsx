@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import ReportFilters from '@/components/reports/ReportFilters';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle, List } from 'lucide-react';
 
 interface Row {
@@ -32,7 +33,7 @@ interface Filters { from: string; to: string; type: string; }
 interface Props { rows: Row[]; summary: Summary; filters: Filters; }
 
 const fmt = (v: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDate = (d: string) => formatDateDDMMYYYY(d);
 
 export default function TransactionList({ rows, summary, filters }: Props) {
     const [typeFilter, setTypeFilter] = useState(filters.type);

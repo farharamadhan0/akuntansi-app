@@ -5,6 +5,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Edit3 } from 'lucide-react';
+import { formatDateDDMMYYYY } from '@/lib/format';
 
 interface SaleItem {
     id: number;
@@ -112,8 +113,8 @@ export default function Show({ sale, journalEntries }: Props) {
                     <Card className="md:col-span-2">
                         <CardContent className="space-y-4 p-6">
                             <div className="grid gap-4 md:grid-cols-2">
-                                <div><div className="text-sm text-muted-foreground">Tanggal</div><div className="font-medium">{sale.date}</div></div>
-                                <div><div className="text-sm text-muted-foreground">Jatuh Tempo</div><div className="font-medium">{sale.due_date ?? '-'}</div></div>
+                                <div><div className="text-sm text-muted-foreground">Tanggal</div><div className="font-medium">{formatDateDDMMYYYY(sale.date)}</div></div>
+                                <div><div className="text-sm text-muted-foreground">Jatuh Tempo</div><div className="font-medium">{sale.due_date ? formatDateDDMMYYYY(sale.due_date) : '-'}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Pelanggan</div><div className="font-medium">{sale.partner?.name ?? '-'}</div></div>
                                 <div><div className="text-sm text-muted-foreground">Kas/Bank</div><div className="font-medium">{sale.cash_bank_account?.name ?? '-'}</div></div>
                             </div>
@@ -178,7 +179,7 @@ export default function Show({ sale, journalEntries }: Props) {
                                 <div key={entry.entry_number} className="rounded-lg border p-4">
                                     <div className="mb-2 flex items-center justify-between text-sm">
                                         <span className="font-mono">{entry.entry_number}</span>
-                                        <span>{entry.date}</span>
+                                        <span>{formatDateDDMMYYYY(entry.date)}</span>
                                     </div>
                                     <table className="w-full text-sm">
                                         <tbody>

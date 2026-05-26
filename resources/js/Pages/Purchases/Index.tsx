@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/lib/permissions';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { Plus, ShoppingCart, ArrowDownCircle } from 'lucide-react';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 
@@ -38,11 +39,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 function formatPaymentType(purchase: Purchase) {

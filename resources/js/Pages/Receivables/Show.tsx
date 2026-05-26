@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, XCircle, AlertTriangle, Banknote, Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { formatDateDDMMYYYY } from '@/lib/format';
 
 interface JournalLine {
     account_code: string;
@@ -75,11 +76,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 export default function Show({ receivable: r, journalEntries }: Props) {

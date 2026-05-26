@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingDown, BookOpen, XCircle, Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { formatDateDDMMYYYY, formatDateTime } from '@/lib/format';
 
 interface JournalLine {
     account_code: string;
@@ -66,11 +67,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+    return formatDateDDMMYYYY(dateStr);
 }
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -147,7 +144,7 @@ export default function Show({ transaction: t }: Props) {
                             <DetailRow label="No. Referensi" value={t.reference} />
                         )}
                         {t.posted_at && (
-                            <DetailRow label="Diposting pada" value={t.posted_at} />
+                            <DetailRow label="Diposting pada" value={formatDateTime(t.posted_at)} />
                         )}
                     </CardContent>
                 </Card>

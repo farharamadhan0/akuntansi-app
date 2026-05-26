@@ -13,6 +13,7 @@ import {
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDateDDMMYYYY } from "@/lib/format";
 import { BookOpen, Search } from "lucide-react";
 
 interface AccountOption {
@@ -74,12 +75,7 @@ const fmt = (v: number) =>
         minimumFractionDigits: 0,
     }).format(v);
 
-const fmtDate = (d: string) =>
-    new Date(d + "T00:00:00").toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    });
+const fmtDate = (d: string) => formatDateDDMMYYYY(d);
 
 export default function GeneralLedger({ accounts, ledger, filters }: Props) {
     const [accountId, setAccountId] = useState<string>(
