@@ -1,4 +1,4 @@
-﻿import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,12 +10,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye, Users, AlertTriangle, Banknote } from 'lucide-react';
+import { Plus, Users, AlertTriangle, Banknote } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
-import { useState } from 'react';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
+import { Pagination } from '@/components/ui/pagination';
 
 interface Receivable {
     id: number;
@@ -37,16 +37,43 @@ interface Receivable {
 interface Summary {
     totalOutstanding: number;
     totalOverdue: number;
+    count_all: number;
+    count_outstanding: number;
+    count_overdue: number;
+    count_paid: number;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedReceivables {
+    data: Receivable[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
 }
 
 interface Props {
-    receivables: Receivable[];
+    receivables: PaginatedReceivables;
     summary: Summary;
     filters: {
-        status?: string;
-        payment_status?: string;
+        status: string;
+        per_page: number;
     };
 }
+
+type FilterType = 'all' | 'outstanding' | 'overdue' | 'paid';
 
 function formatCurrency(value: number) {
     return new Intl.NumberFormat('id-ID', {
@@ -61,24 +88,24 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ receivables, summary }: Props) {
+export default function Index({ receivables, summary, filters }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue' | 'paid'>('outstanding');
+    const filter = (filters?.status as FilterType) || 'outstanding';
+    const perPage = filters?.per_page ?? 25;
 
-    const visibleReceivables = receivables.filter(r => r.status !== 'corrected');
+    function navigate(overrides: Record<string, string | number>) {
+        router.get(
+            '/transaksi/piutang',
+            { status: filter, per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
-    const filtered = visibleReceivables.filter((r) => {
-        if (filter === 'outstanding') {
-            return r.status === 'posted' && r.payment_status !== 'paid';
-        }
-        if (filter === 'overdue') {
-            return r.is_overdue;
-        }
-        if (filter === 'paid') {
-            return r.payment_status === 'paid';
-        }
-        return true;
-    });
+    function handleFilterChange(value: FilterType) {
+        navigate({ status: value, per_page: perPage });
+    }
+
+    const filtered = receivables.data;
 
     const statusBadge = (r: Receivable) => {
         if (r.status === 'voided') {
@@ -143,7 +170,6 @@ export default function Index({ receivables, summary }: Props) {
                 </div>
             </div>
 
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Card>
                     <CardContent className="p-4">
@@ -177,32 +203,18 @@ export default function Index({ receivables, summary }: Props) {
                 </Card>
             </div>
 
-            {/* Filter Tabs */}
-            <FilterTabs<'all' | 'outstanding' | 'overdue' | 'paid'>
+            <FilterTabs<FilterType>
                 className="mb-4"
                 value={filter}
-                onChange={setFilter}
+                onChange={handleFilterChange}
                 items={[
-                    { value: 'all', label: 'Semua', count: visibleReceivables.length },
-                    {
-                        value: 'outstanding',
-                        label: 'Belum Lunas',
-                        count: visibleReceivables.filter(r => r.status === 'posted' && r.payment_status !== 'paid').length,
-                    },
-                    {
-                        value: 'overdue',
-                        label: 'Jatuh Tempo',
-                        count: visibleReceivables.filter(r => r.is_overdue).length,
-                    },
-                    {
-                        value: 'paid',
-                        label: 'Lunas',
-                        count: visibleReceivables.filter(r => r.payment_status === 'paid').length,
-                    },
+                    { value: 'all', label: 'Semua', count: summary.count_all },
+                    { value: 'outstanding', label: 'Belum Lunas', count: summary.count_outstanding },
+                    { value: 'overdue', label: 'Jatuh Tempo', count: summary.count_overdue },
+                    { value: 'paid', label: 'Lunas', count: summary.count_paid },
                 ]}
             />
 
-            {/* Table */}
             <Card>
                 <CardContent className="p-0">
                     <Table>
@@ -220,7 +232,7 @@ export default function Index({ receivables, summary }: Props) {
                         <TableBody>
                             {filtered.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
                                         Belum ada data piutang. Klik "Buat Piutang" untuk mencatat tagihan.
                                     </TableCell>
                                 </TableRow>
@@ -228,8 +240,8 @@ export default function Index({ receivables, summary }: Props) {
                                 filtered.map((r) => (
                                     <TableRow key={r.id} className={r.is_overdue ? 'bg-red-50' : ''}>
                                         <TableCell className="font-mono text-sm">
-                                            <Link 
-                                                href={`/transaksi/piutang/${r.id}`} 
+                                            <Link
+                                                href={`/transaksi/piutang/${r.id}`}
                                                 className="text-blue-600 hover:underline"
                                             >
                                                 {r.receivable_number}
@@ -254,6 +266,7 @@ export default function Index({ receivables, summary }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={receivables} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>
