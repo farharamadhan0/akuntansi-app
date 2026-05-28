@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use App\Models\TransactionCategory;
 use App\Services\IncomeService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -22,17 +23,36 @@ class IncomeTransactionController extends Controller
 {
     public function __construct(protected IncomeService $incomeService) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
 
-        $transactions = Transaction::where('company_id', $companyId)
-            ->ofType(TransactionType::Income)
+        $baseQuery = Transaction::where('company_id', $companyId)
+            ->ofType(TransactionType::Income);
+
+        $summary = (object) [
+            'total_posted'       => (float) (clone $baseQuery)->posted()->sum('amount'),
+            'count_posted'       => (clone $baseQuery)->posted()->count(),
+            'count_all'          => (clone $baseQuery)->count(),
+            'count_corrected'    => (clone $baseQuery)->where('status', TransactionStatus::Corrected)->count(),
+            'count_voided'       => (clone $baseQuery)->where('status', TransactionStatus::Voided)->count(),
+        ];
+
+        $statusFilter = $request->query('status', 'posted');
+        if ($statusFilter !== 'all') {
+            $baseQuery->where('status', $statusFilter);
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 25;
+
+        $transactions = $baseQuery
             ->with(['partner:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn(Transaction $t) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn(Transaction $t) => [
                 'id'                   => $t->id,
                 'transaction_number'   => $t->transaction_number,
                 'date'                 => $t->date->format('Y-m-d'),
@@ -50,6 +70,8 @@ class IncomeTransactionController extends Controller
 
         return Inertia::render('Transactions/Income/Index', [
             'transactions' => $transactions,
+            'summary'      => $summary,
+            'filters'      => ['status' => $statusFilter, 'per_page' => $perPage],
         ]);
     }
 

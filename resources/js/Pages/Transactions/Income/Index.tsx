@@ -1,5 +1,4 @@
 ﻿import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,9 +12,10 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { formatDateDDMMYYYY } from '@/lib/format';
-import { Plus, Eye, TrendingUp, ArrowUpCircle } from 'lucide-react';
+import { Plus, TrendingUp, ArrowUpCircle } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
+import { Pagination } from '@/components/ui/pagination';
 
 interface Transaction {
     id: number;
@@ -36,8 +36,42 @@ interface Transaction {
     source_label?: string;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedTransactions {
+    data: Transaction[];
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Summary {
+    total_posted: number;
+    count_posted: number;
+    count_all: number;
+    count_corrected: number;
+    count_voided: number;
+}
+
 interface Props {
-    transactions: Transaction[];
+    transactions: PaginatedTransactions;
+    summary: Summary;
+    filters: {
+        status: string;
+        per_page: number;
+    };
 }
 
 const statusBadge: Record<string, string> = {
@@ -60,16 +94,24 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ transactions }: Props) {
+export default function Index({ transactions, summary, filters }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'posted' | 'voided' | 'corrected'>('posted');
+    const filter = (filters?.status as 'all' | 'posted' | 'voided' | 'corrected') || 'posted';
+    const perPage = filters?.per_page ?? 25;
 
-    const filtered =
-        filter === 'all' ? transactions : transactions.filter((t) => t.status === filter);
+    function navigate(overrides: Record<string, string | number>) {
+        router.get(
+            '/transaksi/uang-masuk',
+            { status: filter, per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
-    const totalPosted = transactions
-        .filter((t) => t.status === 'posted')
-        .reduce((sum, t) => sum + t.amount, 0);
+    function handleFilterChange(value: 'all' | 'posted' | 'voided' | 'corrected') {
+        navigate({ status: value, per_page: perPage });
+    }
+
+    const filtered = transactions.data;
 
     return (
         <AuthenticatedLayout>
@@ -110,7 +152,7 @@ export default function Index({ transactions }: Props) {
                         <div>
                             <p className="text-xs text-muted-foreground">Total Uang Masuk</p>
                             <p className="text-lg font-bold text-green-700">
-                                {formatCurrency(totalPosted)}
+                                {formatCurrency(summary.total_posted)}
                             </p>
                         </div>
                     </CardContent>
@@ -123,7 +165,7 @@ export default function Index({ transactions }: Props) {
                         <div>
                             <p className="text-xs text-muted-foreground">Jumlah Transaksi</p>
                             <p className="text-lg font-bold text-blue-700">
-                                {transactions.filter((t) => t.status === 'posted').length} transaksi
+                                {summary.count_posted} transaksi
                             </p>
                         </div>
                     </CardContent>
@@ -133,12 +175,12 @@ export default function Index({ transactions }: Props) {
             <FilterTabs<'all' | 'posted' | 'voided' | 'corrected'>
                 className="mb-4"
                 value={filter}
-                onChange={setFilter}
+                onChange={handleFilterChange}
                 items={[
-                    { value: 'all', label: 'Semua', count: transactions.length },
-                    { value: 'posted', label: 'Diposting', count: transactions.filter(t => t.status === 'posted').length },
-                    { value: 'corrected', label: 'Dikoreksi', count: transactions.filter(t => t.status === 'corrected').length },
-                    { value: 'voided', label: 'Dibatalkan', count: transactions.filter(t => t.status === 'voided').length },
+                    { value: 'all', label: 'Semua', count: summary.count_all },
+                    { value: 'posted', label: 'Diposting', count: summary.count_posted },
+                    { value: 'corrected', label: 'Dikoreksi', count: summary.count_corrected },
+                    { value: 'voided', label: 'Dibatalkan', count: summary.count_voided },
                 ]}
             />
 
@@ -217,6 +259,7 @@ export default function Index({ transactions }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={transactions} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>
