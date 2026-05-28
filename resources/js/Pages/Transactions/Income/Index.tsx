@@ -31,6 +31,9 @@ interface Transaction {
     cash_bank_type: string;
     category_name?: string;
     partner_name?: string;
+    source_type?: string;
+    source_id?: number;
+    source_label?: string;
 }
 
 interface Props {
@@ -147,7 +150,8 @@ export default function Index({ transactions }: Props) {
                                 <TableHead>No. Transaksi</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Keterangan</TableHead>
-                                <TableHead>Pelanggan</TableHead>
+                                <TableHead>Mitra</TableHead>
+                                <TableHead>Sumber</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
@@ -190,6 +194,13 @@ export default function Index({ transactions }: Props) {
                                             <p className="text-xs text-muted-foreground">
                                                 {t.partner_name}
                                             </p>
+                                        </TableCell>
+                                        <TableCell>
+                                            {t.source_label && (
+                                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                                                    {t.source_label}
+                                                </span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <span

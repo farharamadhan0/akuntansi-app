@@ -7,6 +7,8 @@ use App\Enums\TransactionType;
 use App\Http\Requests\IncomeTransactionRequest;
 use App\Models\CashBankAccount;
 use App\Models\Partner;
+use App\Models\Payment;
+use App\Models\Sale;
 use App\Models\Transaction;
 use App\Models\TransactionCategory;
 use App\Services\IncomeService;
@@ -41,6 +43,9 @@ class IncomeTransactionController extends Controller
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
                 'partner_name'         => $t->partner?->name,
+                'source_type'          => $t->source_type,
+                'source_id'            => $t->source_id,
+                'source_label'         => $this->resolveSourceLabel($t),
             ]);
 
         return Inertia::render('Transactions/Income/Index', [
@@ -154,6 +159,10 @@ class IncomeTransactionController extends Controller
                     'id'                 => $income->corrects->id,
                     'transaction_number' => $income->corrects->transaction_number,
                 ] : null,
+                'source_type'        => $income->source_type,
+                'source_id'          => $income->source_id,
+                'source_label'       => $this->resolveSourceLabel($income),
+                'source_url'         => $this->resolveSourceUrl($income),
                 'journal_entries'    => $income->journalEntries->map(fn($entry) => [
                     'entry_number' => $entry->entry_number,
                     'date'         => $entry->date->format('Y-m-d'),
@@ -172,6 +181,10 @@ class IncomeTransactionController extends Controller
     {
         $this->authorizeTransaction($income);
 
+        if ($income->source_type) {
+            return back()->with('error', 'Transaksi ini berasal dari penjualan/penerimaan piutang. Lakukan pembatalan dari halaman sumbernya.');
+        }
+
         $reason = request()->validate([
             'reason' => ['required', 'string', 'max:255'],
         ])['reason'];
@@ -188,6 +201,10 @@ class IncomeTransactionController extends Controller
 
         if ($income->status !== TransactionStatus::Posted) {
             abort(403, 'Hanya transaksi yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        if ($income->source_type) {
+            abort(403, 'Transaksi ini berasal dari penjualan/penerimaan piutang. Lakukan koreksi dari halaman sumbernya.');
         }
 
         $companyId = auth()->user()->current_company_id;
@@ -285,5 +302,41 @@ class IncomeTransactionController extends Controller
         if (!$exists) {
             abort(403, 'Akun kas/bank tidak valid untuk perusahaan ini.');
         }
+    }
+
+    protected function resolveSourceLabel(Transaction $transaction): ?string
+    {
+        if (! $transaction->source_type || ! $transaction->source_id) {
+            return null;
+        }
+
+        if ($transaction->source_type === Sale::class) {
+            $sale = Sale::find($transaction->source_id);
+            return $sale ? 'Penjualan: ' . $sale->sale_number : null;
+        }
+
+        if ($transaction->source_type === Payment::class) {
+            $payment = Payment::find($transaction->source_id);
+            return $payment ? 'Penerimaan Piutang: ' . $payment->payment_number : null;
+        }
+
+        return null;
+    }
+
+    protected function resolveSourceUrl(Transaction $transaction): ?string
+    {
+        if (! $transaction->source_type || ! $transaction->source_id) {
+            return null;
+        }
+
+        if ($transaction->source_type === Sale::class) {
+            return route('sales.show', $transaction->source_id);
+        }
+
+        if ($transaction->source_type === Payment::class) {
+            return route('receivable-payments.show', $transaction->source_id);
+        }
+
+        return null;
     }
 }

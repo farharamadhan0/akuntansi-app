@@ -193,8 +193,12 @@ export default function Index({ transactions }: Props) {
                                         <TableCell className="text-sm">
                                             {t.partner_name}
                                         </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">
-                                            {t.source_label ?? <span className="text-gray-400">—</span>}
+                                        <TableCell>
+                                            {t.source_label && (
+                                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                                                    {t.source_label}
+                                                </span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <span

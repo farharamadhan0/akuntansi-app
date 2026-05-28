@@ -20,7 +20,8 @@ class PaymentService
         protected NumberGeneratorService $numberGenerator,
         protected ReceivableService $receivableService,
         protected PayableService $payableService,
-        protected ExpenseService $expenseService
+        protected ExpenseService $expenseService,
+        protected IncomeService $incomeService
     ) {}
 
     public function createReceivablePayment(array $data): Payment
@@ -90,6 +91,7 @@ class PaymentService
 
             if ($payment->type === PaymentType::Receivable) {
                 $this->postReceivablePayment($payment, $cashBankAccount);
+                $this->createLinkedIncome($payment);
             } else {
                 $this->postPayablePayment($payment, $cashBankAccount);
                 $this->createLinkedExpense($payment);
@@ -130,7 +132,9 @@ class PaymentService
                 }
             }
 
-            if ($payment->type === PaymentType::Payable) {
+            if ($payment->type === PaymentType::Receivable) {
+                $this->voidLinkedIncome($payment, $reason);
+            } else {
                 $this->voidLinkedExpense($payment, $reason);
             }
 
@@ -281,6 +285,37 @@ class PaymentService
 
         if ($expense) {
             $expense->update([
+                'status'      => TransactionStatus::Voided,
+                'voided_at'   => now(),
+                'void_reason' => $reason,
+            ]);
+        }
+    }
+
+    protected function createLinkedIncome(Payment $payment): Transaction
+    {
+        return $this->incomeService->createPosted([
+            'company_id'           => $payment->company_id,
+            'date'                 => $payment->date->toDateString(),
+            'amount'               => $payment->amount,
+            'description'          => 'Penerimaan piutang: ' . $payment->payment_number,
+            'cash_bank_account_id' => $payment->cash_bank_account_id,
+            'partner_id'           => $payment->partner_id,
+            'reference'            => $payment->payment_number,
+            'source_type'          => Payment::class,
+            'source_id'            => $payment->id,
+        ]);
+    }
+
+    protected function voidLinkedIncome(Payment $payment, string $reason): void
+    {
+        $income = Transaction::where('source_type', Payment::class)
+            ->where('source_id', $payment->id)
+            ->where('status', TransactionStatus::Posted)
+            ->first();
+
+        if ($income) {
+            $income->update([
                 'status'      => TransactionStatus::Voided,
                 'voided_at'   => now(),
                 'void_reason' => $reason,

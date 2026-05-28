@@ -35,6 +35,8 @@ class IncomeService
                 'reference' => $data['reference'] ?? null,
                 'attachments' => $data['attachments'] ?? null,
                 'corrects_id' => $data['corrects_id'] ?? null,
+                'source_type' => $data['source_type'] ?? null,
+                'source_id' => $data['source_id'] ?? null,
                 'created_by' => auth()->id(),
             ]);
 
@@ -162,5 +164,17 @@ class IncomeService
             ->where('subtype', 'operating_revenue')
             ->where('is_system', true)
             ->firstOrFail();
+    }
+
+    public function createPosted(array $data): Transaction
+    {
+        return DB::transaction(function () use ($data) {
+            $transaction = $this->create($data);
+            $transaction->update([
+                'status'    => TransactionStatus::Posted,
+                'posted_at' => now(),
+            ]);
+            return $transaction->fresh();
+        });
     }
 }

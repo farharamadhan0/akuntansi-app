@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
 class SaleService
@@ -17,7 +18,8 @@ class SaleService
     public function __construct(
         protected JournalService $journalService,
         protected NumberGeneratorService $numberGenerator,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected IncomeService $incomeService
     ) {}
 
     public function create(array $data): Sale
@@ -86,6 +88,10 @@ class SaleService
             $this->applyPostedStock($sale);
             $this->createSaleJournalEntry($sale);
 
+            if ($sale->payment_type === 'cash') {
+                $this->createLinkedIncome($sale);
+            }
+
             if ($sale->payment_type === 'credit') {
                 $receivable = $this->createLinkedReceivable($sale);
                 $sale->update(['receivable_id' => $receivable->id]);
@@ -138,8 +144,14 @@ class SaleService
                 $this->journalService->voidEntry($journalEntry, 'Koreksi penjualan: ' . $oldSale->sale_number);
             }
 
+            $this->voidLinkedIncome($oldSale, 'Koreksi penjualan: ' . $oldSale->sale_number);
+
             $this->applyCorrectionStock($oldSale, $newSale);
             $this->createSaleJournalEntry($newSale);
+
+            if ($newSale->payment_type === 'cash') {
+                $this->createLinkedIncome($newSale);
+            }
 
             $newReceivable = null;
 
@@ -211,6 +223,8 @@ class SaleService
             if ($journalEntry) {
                 $this->journalService->voidEntry($journalEntry, $reason);
             }
+
+            $this->voidLinkedIncome($sale, $reason);
 
             if ($sale->receivable) {
                 $sale->receivable->update([
@@ -582,5 +596,36 @@ class SaleService
             ->where('is_system', true)
             ->firstOrFail()
             ->id;
+    }
+
+    protected function createLinkedIncome(Sale $sale): Transaction
+    {
+        return $this->incomeService->createPosted([
+            'company_id'           => $sale->company_id,
+            'date'                 => $sale->date->toDateString(),
+            'amount'               => $sale->total_amount,
+            'description'          => 'Penjualan: ' . $sale->sale_number,
+            'cash_bank_account_id' => $sale->cash_bank_account_id,
+            'partner_id'           => $sale->partner_id,
+            'reference'            => $sale->sale_number,
+            'source_type'          => Sale::class,
+            'source_id'            => $sale->id,
+        ]);
+    }
+
+    protected function voidLinkedIncome(Sale $sale, string $reason): void
+    {
+        $income = Transaction::where('source_type', Sale::class)
+            ->where('source_id', $sale->id)
+            ->where('status', TransactionStatus::Posted)
+            ->first();
+
+        if ($income) {
+            $income->update([
+                'status'      => TransactionStatus::Voided,
+                'voided_at'   => now(),
+                'void_reason' => $reason,
+            ]);
+        }
     }
 }

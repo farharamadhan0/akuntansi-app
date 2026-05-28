@@ -3,7 +3,7 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BookOpen, XCircle, Edit3 } from 'lucide-react';
+import { TrendingUp, BookOpen, XCircle, Edit3, ExternalLink } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { formatDateDDMMYYYY, formatDateTime } from '@/lib/format';
 
@@ -43,6 +43,10 @@ interface Transaction {
     corrected_at?: string;
     corrected_by?: CorrectionRef;
     corrects?: CorrectionRef;
+    source_type?: string;
+    source_id?: number;
+    source_label?: string;
+    source_url?: string;
     journal_entries: JournalEntry[];
 }
 
@@ -137,7 +141,7 @@ export default function Show({ transaction: t }: Props) {
                         <DetailRow label="Keterangan" value={t.description} />
                         <DetailRow label="Diterima di" value={t.cash_bank_name} />
                         <DetailRow label="Akun" value={t.category_name ?? 'Tanpa akun'} />
-                        <DetailRow label="Pelanggan" value={t.partner_name ?? 'Tidak ditentukan'} />
+                        <DetailRow label="Mitra" value={t.partner_name ?? 'Tidak ditentukan'} />
                         {t.reference && (
                             <DetailRow label="No. Referensi" value={t.reference} />
                         )}
@@ -159,6 +163,24 @@ export default function Show({ transaction: t }: Props) {
                                 {t.corrected_by.transaction_number}
                             </Link>
                         </p>
+                    </div>
+                )}
+
+                {/* Source info - if this transaction comes from another document */}
+                {t.source_type && t.source_url && (
+                    <div className="mb-5 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 flex items-center justify-between">
+                        <p className="text-sm text-violet-800">
+                            <strong>Sumber transaksi:</strong>{' '}{t.source_label}
+                        </p>
+                        {t.source_url && (
+                            <a
+                                href={t.source_url}
+                                className="inline-flex items-center gap-1 text-xs text-violet-700 font-medium hover:underline whitespace-nowrap ml-3"
+                            >
+                                <ExternalLink size={13} />
+                                Lihat Sumber
+                            </a>
+                        )}
                     </div>
                 )}
 
@@ -230,23 +252,37 @@ export default function Show({ transaction: t }: Props) {
                 {/* Actions for posted transactions */}
                 {t.status === 'posted' && (
                     <div className="flex justify-end gap-3">
-                        <Link href={`/transaksi/uang-masuk/${t.id}/koreksi`}>
-                            <Button
-                                variant="outline"
-                                className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
-                            >
-                                <Edit3 size={16} />
-                                Koreksi Transaksi
-                            </Button>
-                        </Link>
-                        <Button
-                            variant="outline"
-                            className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={() => setShowVoidModal(true)}
-                        >
-                            <XCircle size={16} />
-                            Batalkan Transaksi
-                        </Button>
+                        {t.source_type && t.source_url ? (
+                            <Link href={t.source_url}>
+                                <Button
+                                    variant="outline"
+                                    className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+                                >
+                                    <BookOpen size={16} />
+                                    Kelola di Halaman Sumber
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href={`/transaksi/uang-masuk/${t.id}/koreksi`}>
+                                    <Button
+                                        variant="outline"
+                                        className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+                                    >
+                                        <Edit3 size={16} />
+                                        Koreksi Transaksi
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="outline"
+                                    className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => setShowVoidModal(true)}
+                                >
+                                    <XCircle size={16} />
+                                    Batalkan Transaksi
+                                </Button>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
