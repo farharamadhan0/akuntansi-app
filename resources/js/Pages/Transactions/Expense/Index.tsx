@@ -31,6 +31,9 @@ interface Transaction {
     cash_bank_type: string;
     category_name?: string;
     partner_name?: string;
+    source_type?: string;
+    source_id?: number;
+    source_label?: string;
 }
 
 interface Props {
@@ -147,7 +150,8 @@ export default function Index({ transactions }: Props) {
                                 <TableHead>No. Transaksi</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Keterangan</TableHead>
-                                <TableHead>Supplier</TableHead>
+                                <TableHead>Mitra</TableHead>
+                                <TableHead>Sumber</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
@@ -156,7 +160,7 @@ export default function Index({ transactions }: Props) {
                             {filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={8}
+                                        colSpan={9}
                                         className="py-12 text-center text-muted-foreground"
                                     >
                                         <TrendingDown
@@ -188,6 +192,9 @@ export default function Index({ transactions }: Props) {
                                         </TableCell>
                                         <TableCell className="text-sm">
                                             {t.partner_name}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {t.source_label ?? <span className="text-gray-400">—</span>}
                                         </TableCell>
                                         <TableCell>
                                             <span

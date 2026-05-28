@@ -11,6 +11,7 @@ use App\Traits\PreventsPostedDeletion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -36,6 +37,8 @@ class Transaction extends Model
         'corrected_by_id',
         'corrects_id',
         'corrected_at',
+        'source_type',
+        'source_id',
         'reference',
         'attachments',
         'created_by',
@@ -120,5 +123,10 @@ class Transaction extends Model
     public function corrects(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'corrects_id');
+    }
+
+    public function source(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

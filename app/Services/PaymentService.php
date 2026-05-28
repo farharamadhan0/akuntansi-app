@@ -7,6 +7,7 @@ use App\Models\PaymentAllocation;
 use App\Models\Receivable;
 use App\Models\Payable;
 use App\Models\Account;
+use App\Models\Transaction;
 use App\Enums\PaymentType;
 use App\Enums\TransactionStatus;
 use App\Enums\AccountType;
@@ -18,7 +19,8 @@ class PaymentService
         protected JournalService $journalService,
         protected NumberGeneratorService $numberGenerator,
         protected ReceivableService $receivableService,
-        protected PayableService $payableService
+        protected PayableService $payableService,
+        protected ExpenseService $expenseService
     ) {}
 
     public function createReceivablePayment(array $data): Payment
@@ -90,6 +92,7 @@ class PaymentService
                 $this->postReceivablePayment($payment, $cashBankAccount);
             } else {
                 $this->postPayablePayment($payment, $cashBankAccount);
+                $this->createLinkedExpense($payment);
             }
 
             $payment->update([
@@ -125,6 +128,10 @@ class PaymentService
                 } else {
                     $this->payableService->updatePaymentStatus($allocatable);
                 }
+            }
+
+            if ($payment->type === PaymentType::Payable) {
+                $this->voidLinkedExpense($payment, $reason);
             }
 
             $payment->update([
@@ -247,6 +254,37 @@ class PaymentService
             } else {
                 $this->payableService->updatePaymentStatus($allocatable->fresh());
             }
+        }
+    }
+
+    protected function createLinkedExpense(Payment $payment): Transaction
+    {
+        return $this->expenseService->createPosted([
+            'company_id'           => $payment->company_id,
+            'date'                 => $payment->date->toDateString(),
+            'amount'               => $payment->amount,
+            'description'          => 'Pembayaran hutang: ' . $payment->payment_number,
+            'cash_bank_account_id' => $payment->cash_bank_account_id,
+            'partner_id'           => $payment->partner_id,
+            'reference'            => $payment->payment_number,
+            'source_type'          => Payment::class,
+            'source_id'            => $payment->id,
+        ]);
+    }
+
+    protected function voidLinkedExpense(Payment $payment, string $reason): void
+    {
+        $expense = Transaction::where('source_type', Payment::class)
+            ->where('source_id', $payment->id)
+            ->where('status', TransactionStatus::Posted)
+            ->first();
+
+        if ($expense) {
+            $expense->update([
+                'status'      => TransactionStatus::Voided,
+                'voided_at'   => now(),
+                'void_reason' => $reason,
+            ]);
         }
     }
 }

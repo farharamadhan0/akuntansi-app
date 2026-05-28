@@ -7,6 +7,8 @@ use App\Enums\TransactionType;
 use App\Http\Requests\ExpenseTransactionRequest;
 use App\Models\CashBankAccount;
 use App\Models\Partner;
+use App\Models\Payment;
+use App\Models\Purchase;
 use App\Models\Transaction;
 use App\Models\TransactionCategory;
 use App\Services\ExpenseService;
@@ -41,6 +43,9 @@ class ExpenseTransactionController extends Controller
                 'status_label'         => $t->status->label(),
                 'status_color'         => $t->status->color(),
                 'partner_name'         => $t->partner?->name,
+                'source_type'          => $t->source_type,
+                'source_id'            => $t->source_id,
+                'source_label'         => $this->resolveSourceLabel($t),
             ]);
 
         return Inertia::render('Transactions/Expense/Index', [
@@ -154,6 +159,10 @@ class ExpenseTransactionController extends Controller
                     'id'                 => $expense->corrects->id,
                     'transaction_number' => $expense->corrects->transaction_number,
                 ] : null,
+                'source_type'        => $expense->source_type,
+                'source_id'          => $expense->source_id,
+                'source_label'       => $this->resolveSourceLabel($expense),
+                'source_url'         => $this->resolveSourceUrl($expense),
                 'journal_entries'    => $expense->journalEntries->map(fn($entry) => [
                     'entry_number' => $entry->entry_number,
                     'date'         => $entry->date->format('Y-m-d'),
@@ -172,6 +181,10 @@ class ExpenseTransactionController extends Controller
     {
         $this->authorizeTransaction($expense);
 
+        if ($expense->source_type) {
+            return back()->with('error', 'Transaksi ini berasal dari pembelian/pembayaran hutang. Lakukan pembatalan dari halaman sumbernya.');
+        }
+
         $reason = request()->validate([
             'reason' => ['required', 'string', 'max:255'],
         ])['reason'];
@@ -188,6 +201,10 @@ class ExpenseTransactionController extends Controller
 
         if ($expense->status !== TransactionStatus::Posted) {
             abort(403, 'Hanya transaksi yang sudah diposting yang dapat dikoreksi.');
+        }
+
+        if ($expense->source_type) {
+            abort(403, 'Transaksi ini berasal dari pembelian/pembayaran hutang. Lakukan koreksi dari halaman sumbernya.');
         }
 
         $companyId = auth()->user()->current_company_id;
@@ -263,6 +280,42 @@ class ExpenseTransactionController extends Controller
 
         return redirect()->route('expense.index')
             ->with('success', 'Transaksi berhasil dikoreksi');
+    }
+
+    protected function resolveSourceLabel(Transaction $transaction): ?string
+    {
+        if (! $transaction->source_type || ! $transaction->source_id) {
+            return null;
+        }
+
+        if ($transaction->source_type === Purchase::class) {
+            $purchase = Purchase::find($transaction->source_id);
+            return $purchase ? 'Pembelian: ' . $purchase->purchase_number : null;
+        }
+
+        if ($transaction->source_type === Payment::class) {
+            $payment = Payment::find($transaction->source_id);
+            return $payment ? 'Pembayaran Hutang: ' . $payment->payment_number : null;
+        }
+
+        return null;
+    }
+
+    protected function resolveSourceUrl(Transaction $transaction): ?string
+    {
+        if (! $transaction->source_type || ! $transaction->source_id) {
+            return null;
+        }
+
+        if ($transaction->source_type === Purchase::class) {
+            return route('purchases.show', $transaction->source_id);
+        }
+
+        if ($transaction->source_type === Payment::class) {
+            return route('payable-payments.show', $transaction->source_id);
+        }
+
+        return null;
     }
 
     protected function authorizeTransaction(Transaction $transaction): void

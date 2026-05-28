@@ -10,6 +10,7 @@ use App\Models\Payable;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseService
@@ -17,7 +18,8 @@ class PurchaseService
     public function __construct(
         protected JournalService $journalService,
         protected NumberGeneratorService $numberGenerator,
-        protected InventoryService $inventoryService
+        protected InventoryService $inventoryService,
+        protected ExpenseService $expenseService
     ) {}
 
     public function create(array $data): Purchase
@@ -88,6 +90,10 @@ class PurchaseService
                 $purchase->update(['payable_id' => $payable->id]);
             }
 
+            if ($purchase->payment_type === 'cash') {
+                $this->createLinkedExpense($purchase);
+            }
+
             $purchase->update([
                 'status' => TransactionStatus::Posted,
                 'posted_at' => now(),
@@ -137,6 +143,12 @@ class PurchaseService
 
             $this->applyCorrectionStock($oldPurchase, $newPurchase);
             $this->createPurchaseJournalEntry($newPurchase);
+
+            $this->voidLinkedExpense($oldPurchase, 'Koreksi pembelian: ' . $oldPurchase->purchase_number);
+
+            if ($newPurchase->payment_type === 'cash') {
+                $this->createLinkedExpense($newPurchase);
+            }
 
             $newPayable = null;
 
@@ -209,6 +221,8 @@ class PurchaseService
                 $this->journalService->voidEntry($journalEntry, $reason);
             }
 
+            $this->voidLinkedExpense($purchase, $reason);
+
             if ($purchase->payable) {
                 $purchase->payable->update([
                     'status' => TransactionStatus::Voided,
@@ -225,6 +239,37 @@ class PurchaseService
 
             return $purchase->fresh();
         });
+    }
+
+    protected function createLinkedExpense(Purchase $purchase): Transaction
+    {
+        return $this->expenseService->createPosted([
+            'company_id'           => $purchase->company_id,
+            'date'                 => $purchase->date->toDateString(),
+            'amount'               => $purchase->total_amount,
+            'description'          => 'Pembelian: ' . $purchase->purchase_number,
+            'cash_bank_account_id' => $purchase->cash_bank_account_id,
+            'partner_id'           => $purchase->partner_id,
+            'reference'            => $purchase->purchase_number,
+            'source_type'          => Purchase::class,
+            'source_id'            => $purchase->id,
+        ]);
+    }
+
+    protected function voidLinkedExpense(Purchase $purchase, string $reason): void
+    {
+        $expense = Transaction::where('source_type', Purchase::class)
+            ->where('source_id', $purchase->id)
+            ->where('status', TransactionStatus::Posted)
+            ->first();
+
+        if ($expense) {
+            $expense->update([
+                'status'      => TransactionStatus::Voided,
+                'voided_at'   => now(),
+                'void_reason' => $reason,
+            ]);
+        }
     }
 
     protected function createLinkedPayable(Purchase $purchase, ?int $correctsId = null): Payable
