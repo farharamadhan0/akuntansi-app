@@ -17,15 +17,21 @@ class StockAdjustmentController extends Controller
         protected StockAdjustmentService $stockAdjustmentService
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $adjustments = StockAdjustment::where('company_id', $companyId)
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (StockAdjustment $adjustment) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (StockAdjustment $adjustment) => [
                 'id' => $adjustment->id,
                 'adjustment_number' => $adjustment->adjustment_number,
                 'date' => $adjustment->date->format('Y-m-d'),
@@ -36,6 +42,9 @@ class StockAdjustmentController extends Controller
 
         return Inertia::render('Inventory/Adjustments/Index', [
             'adjustments' => $adjustments,
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 

@@ -1,9 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
 import { Boxes, Plus } from 'lucide-react';
 
@@ -16,18 +18,55 @@ interface Adjustment {
     status_label: string;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedAdjustments {
+    data: Adjustment[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    adjustments: PaginatedAdjustments;
+    filters: {
+        per_page: number;
+    };
+}
+
 const statusBadge: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
     posted: 'bg-green-100 text-green-700',
     voided: 'bg-red-100 text-red-700',
 };
 
-interface Props {
-    adjustments: Adjustment[];
+function formatDate(dateStr: string) {
+    return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ adjustments }: Props) {
+export default function Index({ adjustments, filters }: Props) {
     const { can } = usePermissions();
+    const perPage = filters?.per_page ?? 25;
+
+    function navigate(overrides: Record<string, number>) {
+        router.get(
+            '/transaksi/stok-penyesuaian',
+            { per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
     return (
         <AuthenticatedLayout>
@@ -61,21 +100,33 @@ export default function Index({ adjustments }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {adjustments.length === 0 ? (
-                                <TableRow><TableCell colSpan={4} className="py-8 text-center text-muted-foreground">Belum ada penyesuaian stok.</TableCell></TableRow>
-                            ) : adjustments.map((adjustment) => (
-                                <TableRow key={adjustment.id}>
-                                    <TableCell><Link href={`/transaksi/stok-penyesuaian/${adjustment.id}`} className="font-mono text-sm text-primary hover:underline">{adjustment.adjustment_number}</Link></TableCell>
-                                    <TableCell>{adjustment.date}</TableCell>
-                                    <TableCell>{adjustment.notes || '-'}</TableCell>
-                                    <TableCell>
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                                            {adjustment.status_label}
-                                        </span></TableCell>
+                            {adjustments.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                                        Belum ada penyesuaian stok.
+                                    </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : (
+                                adjustments.data.map((adjustment) => (
+                                    <TableRow key={adjustment.id}>
+                                        <TableCell>
+                                            <Link href={`/transaksi/stok-penyesuaian/${adjustment.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                {adjustment.adjustment_number}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{formatDate(adjustment.date)}</TableCell>
+                                        <TableCell>{adjustment.notes || '-'}</TableCell>
+                                        <TableCell>
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                                {adjustment.status_label}
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={adjustments} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>
