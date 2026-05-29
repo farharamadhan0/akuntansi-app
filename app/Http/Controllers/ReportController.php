@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Services\GeneralLedgerService;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,6 +20,11 @@ class ReportController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
         [$from, $to] = $this->dateRange($request);
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $data = $this->reportService->transactionList(
             $companyId,
@@ -27,8 +33,22 @@ class ReportController extends Controller
             $request->filled('type') ? $request->type : null,
         );
 
+        $rows = $data['rows'];
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $offset = ($currentPage - 1) * $perPage;
+        $paginatedRows = new LengthAwarePaginator(
+            $rows->slice($offset, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
+
         return Inertia::render('Reports/TransactionList', [
-            'rows'          => $data['rows'],
+            'rows'          => $paginatedRows,
             'summary'       => [
                 'total_income'  => $data['total_income'],
                 'total_expense' => $data['total_expense'],
@@ -38,6 +58,7 @@ class ReportController extends Controller
                 'from' => $from,
                 'to'   => $to,
                 'type' => $request->type ?? '',
+                'per_page' => $perPage,
             ],
         ]);
     }

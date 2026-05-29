@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -11,18 +11,28 @@ interface Props {
     asOf?: string;
     mode?: 'range' | 'asOf';
     extra?: React.ReactNode;
+    query?: Record<string, string | number | boolean | null | undefined>;
 }
 
-export default function ReportFilters({ url, from = '', to = '', asOf = '', mode = 'range', extra }: Props) {
+export default function ReportFilters({ url, from = '', to = '', asOf = '', mode = 'range', extra, query = {} }: Props) {
     const [dateFrom, setDateFrom] = useState(from);
     const [dateTo, setDateTo] = useState(to);
     const [dateAsOf, setDateAsOf] = useState(asOf);
 
+    useEffect(() => {
+        setDateFrom(from);
+        setDateTo(to);
+    }, [from, to]);
+
+    useEffect(() => {
+        setDateAsOf(asOf);
+    }, [asOf]);
+
     const apply = () => {
         if (mode === 'asOf') {
-            router.get(url, { as_of: dateAsOf }, { preserveScroll: true });
+            router.get(url, { as_of: dateAsOf, ...query }, { preserveScroll: true });
         } else {
-            router.get(url, { from: dateFrom, to: dateTo }, { preserveScroll: true });
+            router.get(url, { from: dateFrom, to: dateTo, ...query }, { preserveScroll: true });
         }
     };
 
