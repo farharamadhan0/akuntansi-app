@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/lib/permissions';
 import { MoreVertical, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
@@ -24,8 +25,32 @@ interface Product {
     is_active: boolean;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedProducts {
+    data: Product[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface Props {
-    products: Product[];
+    products: PaginatedProducts;
+    filters: {
+        per_page: number;
+    };
 }
 
 function formatCurrency(value: number) {
@@ -37,9 +62,10 @@ function formatCurrency(value: number) {
     }).format(value);
 }
 
-export default function Index({ products }: Props) {
+export default function Index({ products, filters }: Props) {
     const { can } = usePermissions();
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+    const perPage = filters?.per_page ?? 25;
 
     const handleDelete = (product: Product) => {
         router.delete(`/master/produk/${product.id}`, {
@@ -83,11 +109,11 @@ export default function Index({ products }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.length === 0 ? (
+                            {products.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">Belum ada produk.</TableCell>
                                 </TableRow>
-                            ) : products.map((product) => (
+                            ) : products.data.map((product) => (
                                 <TableRow key={product.id} className={!product.is_active ? 'opacity-60' : ''}>
                                     <TableCell className="font-mono text-xs">
                                         <Link href={`/master/produk/${product.id}`} className="text-blue-600 hover:underline">
@@ -139,7 +165,7 @@ export default function Index({ products }: Props) {
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             onClick={() => setDeleteTarget(product)}
-                                                            className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                            className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
                                                         >
                                                             <Trash2 size={15} />
                                                             Hapus
@@ -153,13 +179,14 @@ export default function Index({ products }: Props) {
                             ))}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={products} perPage={perPage} onPerPageChange={(val) => router.get('/master/produk', { per_page: val }, { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-                        <h3 className="text-lg font-semibold mb-2">Hapus Produk</h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                    <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                        <h3 className="mb-2 text-lg font-semibold">Hapus Produk</h3>
+                        <p className="mb-4 text-sm text-gray-600">
                             Hapus produk <strong>{deleteTarget.name}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </p>
                         <div className="flex justify-end gap-2">

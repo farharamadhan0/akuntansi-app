@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,9 +17,14 @@ class ProductController extends Controller
         protected ProductService $productService
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $products = Product::where('company_id', $companyId)
             ->with([
@@ -28,8 +34,9 @@ class ProductController extends Controller
                 'cogsAccount:id,code,name',
             ])
             ->orderBy('name')
-            ->get()
-            ->map(fn (Product $product) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (Product $product) => [
                 'id' => $product->id,
                 'product_code' => $product->product_code,
                 'sku' => $product->sku,
@@ -66,6 +73,9 @@ class ProductController extends Controller
 
         return Inertia::render('MasterData/Products/Index', [
             'products' => $products,
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
