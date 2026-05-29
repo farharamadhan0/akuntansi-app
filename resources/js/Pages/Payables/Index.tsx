@@ -1,5 +1,4 @@
-﻿import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +15,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { Plus, Wallet, AlertTriangle, Banknote } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 
 interface Payable {
     id: number;
@@ -37,12 +37,43 @@ interface Payable {
 interface Summary {
     totalOutstanding: number;
     totalOverdue: number;
+    count_all: number;
+    count_outstanding: number;
+    count_overdue: number;
+    count_paid: number;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedPayables {
+    data: Payable[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
 }
 
 interface Props {
-    payables: Payable[];
+    payables: PaginatedPayables;
     summary: Summary;
+    filters: {
+        status: string;
+        per_page: number;
+    };
 }
+
+type FilterType = 'all' | 'outstanding' | 'overdue' | 'paid';
 
 function formatCurrency(value: number) {
     return new Intl.NumberFormat('id-ID', {
@@ -57,31 +88,32 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ payables, summary }: Props) {
+export default function Index({ payables, summary, filters }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'outstanding' | 'overdue' | 'paid'>('outstanding');
+    const filter = (filters?.status as FilterType) || 'outstanding';
+    const perPage = filters?.per_page ?? 25;
 
-    const visiblePayables = payables.filter((payable) => payable.status !== 'corrected');
+    function navigate(overrides: Record<string, string | number>) {
+        router.get(
+            '/transaksi/hutang',
+            { status: filter, per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
-    const filtered = visiblePayables.filter((payable) => {
-        if (filter === 'outstanding') {
-            return payable.status === 'posted' && payable.payment_status !== 'paid';
-        }
+    function handleFilterChange(value: FilterType) {
+        navigate({ status: value, per_page: perPage });
+    }
 
-        if (filter === 'overdue') {
-            return payable.is_overdue;
-        }
-
-        if (filter === 'paid') {
-            return payable.payment_status === 'paid';
-        }
-
-        return true;
-    });
+    const filtered = payables.data;
 
     const statusBadge = (p: Payable) => {
         if (p.status === 'voided') {
             return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">Dibatalkan</span>;
+        }
+
+        if (p.status === 'corrected') {
+            return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">Dikoreksi</span>;
         }
 
         const colors: Record<string, string> = {
@@ -141,7 +173,6 @@ export default function Index({ payables, summary }: Props) {
                 </div>
             </div>
 
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Card>
                     <CardContent className="p-4">
@@ -175,28 +206,15 @@ export default function Index({ payables, summary }: Props) {
                 </Card>
             </div>
 
-            {/* Filter */}
-            <FilterTabs<'all' | 'outstanding' | 'overdue' | 'paid'>
+            <FilterTabs<FilterType>
                 className="mb-4"
                 value={filter}
-                onChange={setFilter}
+                onChange={handleFilterChange}
                 items={[
-                    { value: 'all', label: 'Semua', count: visiblePayables.length },
-                    {
-                        value: 'outstanding',
-                        label: 'Belum Lunas',
-                        count: visiblePayables.filter((payable) => payable.status === 'posted' && payable.payment_status !== 'paid').length,
-                    },
-                    {
-                        value: 'overdue',
-                        label: 'Jatuh Tempo',
-                        count: visiblePayables.filter((payable) => payable.is_overdue).length,
-                    },
-                    {
-                        value: 'paid',
-                        label: 'Lunas',
-                        count: visiblePayables.filter((payable) => payable.payment_status === 'paid').length,
-                    },
+                    { value: 'all', label: 'Semua', count: summary.count_all },
+                    { value: 'outstanding', label: 'Belum Lunas', count: summary.count_outstanding },
+                    { value: 'overdue', label: 'Jatuh Tempo', count: summary.count_overdue },
+                    { value: 'paid', label: 'Lunas', count: summary.count_paid },
                 ]}
             />
 
@@ -217,7 +235,7 @@ export default function Index({ payables, summary }: Props) {
                         <TableBody>
                             {filtered.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
                                         Belum ada data hutang. Klik "Catat Hutang" untuk memulai.
                                     </TableCell>
                                 </TableRow>
@@ -228,7 +246,7 @@ export default function Index({ payables, summary }: Props) {
                                         className={p.is_overdue ? 'bg-red-50' : ''}
                                     >
                                         <TableCell className="font-mono text-sm text-gray-500">
-                                            <Link 
+                                            <Link
                                                 href={`/transaksi/hutang/${p.id}`}
                                                 className="text-blue-600 hover:underline"
                                             >
@@ -248,7 +266,7 @@ export default function Index({ payables, summary }: Props) {
                                             </span>
                                             {p.is_overdue && (
                                                 <span className="ml-1 text-xs text-red-500">
-                                                    ⚠ Lewat
+                                                    Lewat
                                                 </span>
                                             )}
                                         </TableCell>
@@ -267,6 +285,7 @@ export default function Index({ payables, summary }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={payables} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>

@@ -24,20 +24,67 @@ class PayableController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
-        $query = Payable::where('company_id', $companyId)
+        $baseQuery = Payable::where('company_id', $companyId);
+
+        $summary = (object) [
+            'totalOutstanding'  => (float) (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                ->value('total'),
+            'totalOverdue'      => (float) (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->where('due_date', '<', now()->toDateString())
+                ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                ->value('total'),
+            'count_all'         => (clone $baseQuery)
+                ->where('status', '!=', TransactionStatus::Corrected)
+                ->count(),
+            'count_outstanding' => (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->count(),
+            'count_overdue'     => (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->where('due_date', '<', now()->toDateString())
+                ->count(),
+            'count_paid'        => (clone $baseQuery)
+                ->where('status', '!=', TransactionStatus::Corrected)
+                ->where('payment_status', PaymentStatus::Paid)
+                ->count(),
+        ];
+
+        $statusFilter = $request->query('status', 'outstanding');
+        $statusFilter = in_array($statusFilter, ['all', 'outstanding', 'overdue', 'paid'])
+            ? $statusFilter
+            : 'outstanding';
+
+        match ($statusFilter) {
+            'all' => $baseQuery->where('status', '!=', TransactionStatus::Corrected),
+            'overdue' => $baseQuery
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->where('due_date', '<', now()->toDateString()),
+            'paid' => $baseQuery
+                ->where('status', '!=', TransactionStatus::Corrected)
+                ->where('payment_status', PaymentStatus::Paid),
+            default => $baseQuery
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid),
+        };
+
+        $perPage = (int) $request->query('per_page', 25);
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 25;
+
+        $payables = $baseQuery
             ->with(['partner:id,name', 'category:id,name'])
             ->orderByDesc('date')
-            ->orderByDesc('created_at');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        $payables = $query->get()->map(fn(Payable $p) => [
+            ->orderByDesc('created_at')
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn(Payable $p) => [
             'id' => $p->id,
             'payable_number' => $p->payable_number,
             'partner_name' => $p->partner->name,
@@ -54,26 +101,10 @@ class PayableController extends Controller
             'is_overdue' => $p->isOverdue(),
         ]);
 
-        $totalOutstanding = Payable::where('company_id', $companyId)
-            ->where('status', TransactionStatus::Posted)
-            ->where('payment_status', '!=', PaymentStatus::Paid)
-            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
-            ->value('total');
-
-        $totalOverdue = Payable::where('company_id', $companyId)
-            ->where('status', TransactionStatus::Posted)
-            ->where('payment_status', '!=', PaymentStatus::Paid)
-            ->where('due_date', '<', now()->toDateString())
-            ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
-            ->value('total');
-
         return Inertia::render('Payables/Index', [
             'payables' => $payables,
-            'summary' => [
-                'totalOutstanding' => (float) $totalOutstanding,
-                'totalOverdue' => (float) $totalOverdue,
-            ],
-            'filters' => $request->only(['status', 'payment_status']),
+            'summary' => $summary,
+            'filters' => ['status' => $statusFilter, 'per_page' => $perPage],
         ]);
     }
 
