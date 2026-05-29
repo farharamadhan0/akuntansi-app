@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
 import { ArchiveX, ArrowDownCircle, ArrowUpCircle, FileText, Package, Pencil, ToggleLeft, ToggleRight, TrendingUp, Warehouse } from 'lucide-react';
@@ -48,11 +49,35 @@ interface StockMovementItem {
     source_type?: string | null;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedStockMovements {
+    data: StockMovementItem[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface Props {
     product: ProductDetail;
-    recentMovements: StockMovementItem[];
+    recentMovements: PaginatedStockMovements;
     total_purchases: number;
     total_sales: number;
+    filters: {
+        per_page: number;
+    };
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -100,8 +125,9 @@ function movementTypeLabel(type: string) {
     return labels[type] ?? type;
 }
 
-export default function Show({ product, recentMovements, total_purchases, total_sales }: Props) {
+export default function Show({ product, recentMovements, total_purchases, total_sales, filters }: Props) {
     const { can } = usePermissions();
+    const perPage = filters?.per_page ?? 25;
 
     return (
         <AuthenticatedLayout>
@@ -235,53 +261,66 @@ export default function Show({ product, recentMovements, total_purchases, total_
                                         <h2 className="text-lg font-semibold text-gray-900">Riwayat Pergerakan Stok</h2>
                                     </div>
 
-                                    {recentMovements.length === 0 ? (
+                                    {recentMovements.data.length === 0 ? (
                                         <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
                                             <ArchiveX size={32} className="opacity-40" />
                                             <p className="text-sm">Belum ada pergerakan stok untuk produk ini.</p>
                                         </div>
                                     ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="border-b text-left text-muted-foreground">
-                                                        <th className="pb-3 font-medium">Tanggal</th>
-                                                        <th className="pb-3 font-medium">Tipe</th>
-                                                        <th className="pb-3 text-right font-medium">Masuk</th>
-                                                        <th className="pb-3 text-right font-medium">Keluar</th>
-                                                        <th className="pb-3 text-right font-medium">Saldo</th>
-                                                        <th className="pb-3 text-right font-medium">Avg Cost</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {recentMovements.map((item) => (
-                                                        <tr key={item.id} className="border-b last:border-0">
-                                                            <td className="py-3">{formatDate(item.date)}</td>
-                                                            <td className="py-3">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    {Number(item.quantity_in) > 0
-                                                                        ? <ArrowDownCircle size={14} className="shrink-0 text-green-500" />
-                                                                        : <ArrowUpCircle size={14} className="shrink-0 text-red-500" />
-                                                                    }
-                                                                    {movementTypeLabel(item.movement_type)}
-                                                                </div>
-                                                                {item.notes && (
-                                                                    <div className="mt-0.5 text-xs text-muted-foreground">{item.notes}</div>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-3 text-right font-medium text-green-700">
-                                                                {Number(item.quantity_in) > 0 ? `+${Number(item.quantity_in).toFixed(2)}` : '-'}
-                                                            </td>
-                                                            <td className="py-3 text-right font-medium text-red-700">
-                                                                {Number(item.quantity_out) > 0 ? `-${Number(item.quantity_out).toFixed(2)}` : '-'}
-                                                            </td>
-                                                            <td className="py-3 text-right">{Number(item.balance_quantity).toFixed(2)}</td>
-                                                            <td className="py-3 text-right">{formatCurrency(item.balance_average_cost)}</td>
+                                        <>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="border-b text-left text-muted-foreground">
+                                                            <th className="pb-3 font-medium">Tanggal</th>
+                                                            <th className="pb-3 font-medium">Tipe</th>
+                                                            <th className="pb-3 text-right font-medium">Masuk</th>
+                                                            <th className="pb-3 text-right font-medium">Keluar</th>
+                                                            <th className="pb-3 text-right font-medium">Saldo</th>
+                                                            <th className="pb-3 text-right font-medium">Avg Cost</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                    </thead>
+                                                    <tbody>
+                                                        {recentMovements.data.map((item) => (
+                                                            <tr key={item.id} className="border-b last:border-0">
+                                                                <td className="py-3">{formatDate(item.date)}</td>
+                                                                <td className="py-3">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        {Number(item.quantity_in) > 0
+                                                                            ? <ArrowDownCircle size={14} className="shrink-0 text-green-500" />
+                                                                            : <ArrowUpCircle size={14} className="shrink-0 text-red-500" />
+                                                                        }
+                                                                        {movementTypeLabel(item.movement_type)}
+                                                                    </div>
+                                                                    {item.notes && (
+                                                                        <div className="mt-0.5 text-xs text-muted-foreground">{item.notes}</div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3 text-right font-medium text-green-700">
+                                                                    {Number(item.quantity_in) > 0 ? `+${Number(item.quantity_in).toFixed(2)}` : '-'}
+                                                                </td>
+                                                                <td className="py-3 text-right font-medium text-red-700">
+                                                                    {Number(item.quantity_out) > 0 ? `-${Number(item.quantity_out).toFixed(2)}` : '-'}
+                                                                </td>
+                                                                <td className="py-3 text-right">{Number(item.balance_quantity).toFixed(2)}</td>
+                                                                <td className="py-3 text-right">{formatCurrency(item.balance_average_cost)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <Pagination
+                                                transactions={recentMovements}
+                                                perPage={perPage}
+                                                onPerPageChange={(val) =>
+                                                    router.get(
+                                                        `/master/produk/${product.id}`,
+                                                        { per_page: val },
+                                                        { preserveScroll: true, preserveState: true, replace: true }
+                                                    )
+                                                }
+                                            />
+                                        </>
                                     )}
                                 </CardContent>
                             </Card>

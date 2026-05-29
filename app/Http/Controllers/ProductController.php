@@ -99,9 +99,14 @@ class ProductController extends Controller
             ->with('success', 'Produk berhasil ditambahkan.');
     }
 
-    public function show(Product $product): Response
+    public function show(Request $request, Product $product): Response
     {
         $this->authorizeCompany($product);
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $product->load([
             'inventoryAccount:id,code,name',
@@ -114,9 +119,9 @@ class ProductController extends Controller
         $recentMovements = $product->stockMovements()
             ->orderByDesc('date')
             ->orderByDesc('id')
-            ->limit(20)
-            ->get()
-            ->map(fn ($m) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn ($m) => [
                 'id' => $m->id,
                 'date' => $m->date?->toDateString(),
                 'movement_type' => $m->movement_type,
@@ -170,6 +175,9 @@ class ProductController extends Controller
             'recentMovements' => $recentMovements,
             'total_purchases' => $product->purchaseItems()->count(),
             'total_sales' => $product->saleItems()->count(),
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
