@@ -25,13 +25,17 @@ class PayablePaymentController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
 
+        $perPage = (int) $request->query('per_page', 25);
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 25;
+
         $payments = Payment::where('company_id', $companyId)
             ->where('type', PaymentType::Payable)
             ->with(['partner:id,name', 'cashBankAccount:id,name'])
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn(Payment $p) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn(Payment $p) => [
                 'id' => $p->id,
                 'payment_number' => $p->payment_number,
                 'partner_name' => $p->partner->name,
@@ -45,6 +49,7 @@ class PayablePaymentController extends Controller
 
         return Inertia::render('Payables/Payments/Index', [
             'payments' => $payments,
+            'filters' => ['per_page' => $perPage],
         ]);
     }
 

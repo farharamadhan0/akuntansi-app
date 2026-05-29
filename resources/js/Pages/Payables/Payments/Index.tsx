@@ -1,4 +1,4 @@
-﻿import { Head, Link } from '@inertiajs/react';
+﻿import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { formatDateDDMMYYYY } from '@/lib/format';
-import { Plus, Eye, Banknote } from 'lucide-react';
+import { Plus, Banknote } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 
 interface Payment {
     id: number;
@@ -27,8 +28,32 @@ interface Payment {
     status_label: string;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedPayments {
+    data: Payment[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface Props {
-    payments: Payment[];
+    payments: PaginatedPayments;
+    filters: {
+        per_page: number;
+    };
 }
 
 function formatCurrency(value: number) {
@@ -44,8 +69,18 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ payments }: Props) {
+export default function Index({ payments, filters }: Props) {
     const { can } = usePermissions();
+    const perPage = filters?.per_page ?? 25;
+
+    function navigate(overrides: Record<string, number>) {
+        router.get(
+            '/transaksi/hutang-bayar',
+            { per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
+
     const statusBadge = (status: string, label: string) => {
         const colors: Record<string, string> = {
             draft: 'bg-gray-100 text-gray-600',
@@ -103,14 +138,14 @@ export default function Index({ payments }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {payments.length === 0 ? (
+                            {payments.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
                                         Belum ada pembayaran hutang. Klik "Catat Pembayaran" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                payments.map((p) => (
+                                payments.data.map((p) => (
                                     <TableRow key={p.id}>
                                         <TableCell className="font-mono text-sm">
                                             <Link href={`/transaksi/hutang-bayar/${p.id}`} className="text-blue-600 hover:underline">
@@ -129,6 +164,7 @@ export default function Index({ payments }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={payments} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>
