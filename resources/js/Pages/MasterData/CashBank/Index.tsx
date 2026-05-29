@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Wallet, Building, MoreVertical } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
@@ -18,11 +19,40 @@ interface CashBankAccount {
     current_balance: number;
     is_active: boolean;
     account_code: string;
-    account: { code: string; name: string };
 }
 
-export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedCashBankAccounts {
+    data: CashBankAccount[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    accounts: PaginatedCashBankAccounts;
+    filters: {
+        per_page: number;
+    };
+}
+
+export default function Index({ accounts, filters }: Props) {
     const { can } = usePermissions();
+    const perPage = filters?.per_page ?? 25;
+
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -50,7 +80,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                 { label: 'Kas & Bank' },
             ]} />
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Kas & Bank</h1>
                     <p className="text-gray-600">Kelola akun kas dan rekening bank</p>
@@ -74,22 +104,22 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                 <TableHead>Jenis</TableHead>
                                 <TableHead>Bank / No. Rek</TableHead>
                                 <TableHead className="text-right">Saldo Saat Ini</TableHead>
-                                <TableHead className='w-10'></TableHead>
+                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {accounts.length === 0 ? (
+                            {accounts.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                                         Belum ada akun kas/bank. Klik "Tambah Akun" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                accounts.map((account) => (
+                                accounts.data.map((account) => (
                                     <TableRow key={account.id} className={!account.is_active ? 'opacity-60' : ''}>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${account.type === 'cash' ? 'bg-green-100' : 'bg-blue-100'}`}>
+                                                <div className={`rounded-lg p-2 ${account.type === 'cash' ? 'bg-green-100' : 'bg-blue-100'}`}>
                                                     {account.type === 'cash' ? (
                                                         <Wallet size={18} className="text-green-600" />
                                                     ) : (
@@ -103,7 +133,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                                                 account.type === 'cash'
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-blue-100 text-blue-700'
@@ -141,7 +171,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                                         </DropdownMenuItem>
                                                     )}
                                                     {can('cash_bank.edit') && (
-                                                        <DropdownMenuItem 
+                                                        <DropdownMenuItem
                                                             onClick={() => handleToggle(account.id)}
                                                             className="flex items-center gap-2"
                                                         >
@@ -156,7 +186,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 onClick={() => handleDelete(account.id)}
-                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                                className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
                                                             >
                                                                 <Trash2 size={15} />
                                                                 Hapus
@@ -171,6 +201,7 @@ export default function Index({ accounts }: { accounts: CashBankAccount[] }) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={accounts} perPage={perPage} onPerPageChange={(val) => router.get('/master/kas-bank', { per_page: val }, { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>

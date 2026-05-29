@@ -9,6 +9,7 @@ use App\Http\Requests\CashBankAccountRequest;
 use App\Services\AccountBalanceService;
 use App\Services\CashBankAccountService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,16 +20,22 @@ class CashBankAccountController extends Controller
         protected AccountBalanceService $balanceService,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $accounts = CashBankAccount::where('company_id', $companyId)
             ->with('account:id,code,name')
             ->orderBy('type')
             ->orderBy('name')
-            ->get()
-            ->map(fn($acc) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn ($acc) => [
                 'id' => $acc->id,
                 'name' => $acc->name,
                 'type' => $acc->type->value,
@@ -42,6 +49,9 @@ class CashBankAccountController extends Controller
 
         return Inertia::render('MasterData/CashBank/Index', [
             'accounts' => $accounts,
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
