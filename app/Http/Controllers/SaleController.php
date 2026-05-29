@@ -21,16 +21,44 @@ class SaleController extends Controller
         protected SaleService $saleService
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
 
-        $sales = Sale::where('company_id', $companyId)
+        $baseQuery = Sale::where('company_id', $companyId);
+
+        $summary = [
+            'total_posted' => (float) (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->sum('total_amount'),
+            'count_all' => (clone $baseQuery)->count(),
+            'count_posted' => (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->count(),
+            'count_voided' => (clone $baseQuery)
+                ->where('status', TransactionStatus::Voided)
+                ->count(),
+        ];
+
+        $statusFilter = $request->query('status', TransactionStatus::Posted->value);
+        $allowedStatuses = ['all', TransactionStatus::Posted->value, TransactionStatus::Voided->value];
+        if (! in_array($statusFilter, $allowedStatuses, true)) {
+            $statusFilter = TransactionStatus::Posted->value;
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
+
+        $sales = (clone $baseQuery)
             ->with(['partner:id,name', 'cashBankAccount:id,name', 'receivable:id,payment_status'])
+            ->when($statusFilter !== 'all', fn ($builder) => $builder->where('status', $statusFilter))
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Sale $sale) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (Sale $sale) => [
                 'id' => $sale->id,
                 'sale_number' => $sale->sale_number,
                 'date' => $sale->date->format('Y-m-d'),
@@ -46,6 +74,11 @@ class SaleController extends Controller
 
         return Inertia::render('Sales/Index', [
             'sales' => $sales,
+            'summary' => $summary,
+            'filters' => [
+                'status' => $statusFilter,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
