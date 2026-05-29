@@ -7,6 +7,8 @@ use App\Models\CompanyUser;
 use App\Models\Role;
 use App\Services\CompanyUserService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,9 +17,14 @@ class CompanyUserController extends Controller
 {
     public function __construct(protected CompanyUserService $service) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $companyMembers = CompanyUser::with(['user:id,name,email,email_verified_at', 'role:id,name'])
             ->where('company_id', $companyId)
@@ -51,12 +58,28 @@ class CompanyUserController extends Controller
             ])
             ->values();
 
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $offset = ($currentPage - 1) * $perPage;
+        $paginatedMembers = new LengthAwarePaginator(
+            $members->slice($offset, $perPage)->values(),
+            $members->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
+
         $nonOwnerCount = $members->filter(fn ($m) => !$m['is_owner'])->count();
 
         return Inertia::render('Users/Index', [
-            'members' => $members,
+            'members' => $paginatedMembers,
             'roles' => $this->assignableRoles($companyId),
             'can_add_member' => $nonOwnerCount < 3,
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 

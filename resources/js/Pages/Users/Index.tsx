@@ -3,6 +3,7 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Table,
     TableBody,
@@ -40,14 +41,39 @@ interface Role {
     name: string;
 }
 
-interface Props {
-    members: Member[];
-    roles: Role[];
-    can_add_member: boolean;
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
 }
 
-export default function Index({ members, can_add_member }: Props) {
+interface PaginatedMembers {
+    data: Member[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    members: PaginatedMembers;
+    roles: Role[];
+    can_add_member: boolean;
+    filters: {
+        per_page: number;
+    };
+}
+
+export default function Index({ members, can_add_member, filters }: Props) {
     const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+    const perPage = filters?.per_page ?? 25;
 
     const handleDelete = (member: Member) => {
         router.delete(`/pengaturan/pengguna/${member.id}`, {
@@ -64,13 +90,13 @@ export default function Index({ members, can_add_member }: Props) {
                 { label: 'Pengguna' },
             ]} />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <UsersIcon className="text-blue-500" size={26} />
                         Pengguna
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-sm text-gray-500">
                         Kelola pengguna yang memiliki akses ke perusahaan ini
                     </p>
                 </div>
@@ -104,14 +130,14 @@ export default function Index({ members, can_add_member }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {members.length === 0 ? (
+                            {members.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={7} className="py-8 text-center text-gray-400">
                                         Belum ada pengguna.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                members.map((m) => (
+                                members.data.map((m) => (
                                     <TableRow key={m.id} className={!m.is_active ? 'opacity-60' : ''}>
                                         <TableCell className="font-medium">
                                             <div className="flex items-center gap-2">
@@ -123,7 +149,7 @@ export default function Index({ members, can_add_member }: Props) {
                                         </TableCell>
                                         <TableCell className="text-gray-500">{m.email}</TableCell>
                                         <TableCell>
-                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
+                                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
                                                 m.is_owner
                                                     ? 'bg-amber-100 text-amber-700'
                                                     : 'bg-blue-50 text-blue-700'
@@ -133,22 +159,22 @@ export default function Index({ members, can_add_member }: Props) {
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            <span className={`rounded-full px-2 py-0.5 text-xs ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                                                 {m.is_active ? 'Aktif' : 'Nonaktif'}
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${m.is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-600'}`}>
+                                            <span className={`rounded-full px-2 py-0.5 text-xs ${m.is_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-600'}`}>
                                                 {m.is_verified ? 'Terverifikasi' : 'Belum'}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                                        <TableCell className="whitespace-nowrap text-xs text-gray-500">
                                             {m.last_login
                                                 ? new Date(m.last_login * 1000).toLocaleString('id-ID', {
                                                     day: '2-digit', month: 'short', year: 'numeric',
                                                     hour: '2-digit', minute: '2-digit',
                                                 })
-                                                : <span className="text-gray-300">—</span>
+                                                : <span className="text-gray-300">-</span>
                                             }
                                         </TableCell>
                                         <TableCell>
@@ -173,7 +199,7 @@ export default function Index({ members, can_add_member }: Props) {
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem
                                                                     onClick={() => setDeleteTarget(m)}
-                                                                    className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                                    className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
                                                                 >
                                                                     <Trash2 size={14} />
                                                                     Hapus
@@ -189,14 +215,15 @@ export default function Index({ members, can_add_member }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={members} perPage={perPage} onPerPageChange={(val) => router.get('/pengaturan/pengguna', { per_page: val }, { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
 
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-                        <h3 className="text-lg font-semibold mb-2">Hapus Pengguna</h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                    <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                        <h3 className="mb-2 text-lg font-semibold">Hapus Pengguna</h3>
+                        <p className="mb-4 text-sm text-gray-600">
                             Hapus pengguna <strong>{deleteTarget.name}</strong> dari perusahaan ini? Akun pengguna tidak dihapus, hanya keanggotaannya.
                         </p>
                         <div className="flex justify-end gap-2">
