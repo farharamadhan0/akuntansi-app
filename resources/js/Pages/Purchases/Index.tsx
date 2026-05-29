@@ -1,14 +1,14 @@
-﻿import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { usePermissions } from '@/lib/permissions';
-import { formatDateDDMMYYYY } from '@/lib/format';
-import { Plus, ShoppingCart, ArrowDownCircle } from 'lucide-react';
 import { FilterTabs } from '@/components/ui/filter-tabs';
+import { Pagination } from '@/components/ui/pagination';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatDateDDMMYYYY } from '@/lib/format';
+import { usePermissions } from '@/lib/permissions';
+import { ArrowDownCircle, Plus, ShoppingCart } from 'lucide-react';
 
 interface Purchase {
     id: number;
@@ -24,9 +24,44 @@ interface Purchase {
     status_label: string;
 }
 
-interface Props {
-    purchases: Purchase[];
+interface Summary {
+    total_posted: number;
+    count_all: number;
+    count_posted: number;
+    count_voided: number;
 }
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedPurchases {
+    data: Purchase[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    purchases: PaginatedPurchases;
+    summary: Summary;
+    filters: {
+        status: string;
+        per_page: number;
+    };
+}
+
+type FilterType = 'all' | 'posted' | 'voided';
 
 const statusBadge: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700',
@@ -35,7 +70,12 @@ const statusBadge: Record<string, string> = {
 };
 
 function formatCurrency(value: number) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value);
 }
 
 function formatDate(dateStr: string) {
@@ -54,47 +94,54 @@ function formatPaymentType(purchase: Purchase) {
     };
 
     const statusColor: Record<'unpaid' | 'partial' | 'paid', string> = {
-        'unpaid': 'bg-red-100 text-red-700',
-        'partial': 'bg-yellow-100 text-yellow-700',
-        'paid': 'bg-green-100 text-green-700',
+        unpaid: 'bg-red-100 text-red-700',
+        partial: 'bg-yellow-100 text-yellow-700',
+        paid: 'bg-green-100 text-green-700',
     };
 
     const status = purchase.payable_payment_status ? statusLabel[purchase.payable_payment_status] : 'belum lunas';
     const statusColorClass = purchase.payable_payment_status ? statusColor[purchase.payable_payment_status] : 'bg-gray-100 text-gray-700';
 
-     return (
-        <div className='flex gap-2 items-center'>
+    return (
+        <div className="flex items-center gap-2">
             <span>Kredit</span>
-            <span className={`px-2 py-0.5 text-xs rounded-full ${statusColorClass}`}>
+            <span className={`rounded-full px-2 py-0.5 text-xs ${statusColorClass}`}>
                 {status}
             </span>
         </div>
-    );  
+    );
 }
 
-export default function Index({ purchases }: Props) {
+export default function Index({ purchases, summary, filters }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'posted' | 'voided'>('posted');
+    const filter = (filters?.status as FilterType) || 'posted';
+    const perPage = filters?.per_page ?? 25;
+    const filtered = purchases.data;
 
-    const filtered =
-        filter === 'all' ? purchases : purchases.filter((p) => p.status === filter);
+    function navigate(overrides: Record<string, string | number>) {
+        router.get(
+            '/transaksi/pembelian',
+            { status: filter, per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
-    const totalPosted = purchases
-        .filter((p) => p.status === 'posted')
-        .reduce((sum, p) => sum + p.total_amount, 0);
+    function handleFilterChange(value: FilterType) {
+        navigate({ status: value, per_page: perPage });
+    }
 
     return (
         <AuthenticatedLayout>
             <Head title="Pembelian" />
             <Breadcrumb items={[{ label: 'Transaksi' }, { label: 'Pembelian' }]} />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <ShoppingCart className="text-emerald-600" size={26} />
                         Pembelian
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-sm text-gray-500">
                         Catatan pembelian barang dan jasa.
                     </p>
                 </div>
@@ -108,44 +155,43 @@ export default function Index({ purchases }: Props) {
                 )}
             </div>
 
-            {/* Summary card */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <div className="p-2 bg-emerald-50 rounded-lg">
+                    <CardContent className="flex items-center gap-4 p-4">
+                        <div className="rounded-lg bg-emerald-50 p-2">
                             <ArrowDownCircle className="text-emerald-600" size={22} />
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Total Pembelian</p>
                             <p className="text-lg font-bold text-emerald-700">
-                                {formatCurrency(totalPosted)}
+                                {formatCurrency(summary.total_posted)}
                             </p>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <div className="p-2 bg-blue-50 rounded-lg">
+                    <CardContent className="flex items-center gap-4 p-4">
+                        <div className="rounded-lg bg-blue-50 p-2">
                             <ShoppingCart className="text-blue-600" size={22} />
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Jumlah Transaksi</p>
                             <p className="text-lg font-bold text-blue-700">
-                                {purchases.filter((p) => p.status === 'posted').length} transaksi
+                                {summary.count_posted} transaksi
                             </p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <FilterTabs<'all' | 'posted' | 'voided'>
+            <FilterTabs<FilterType>
                 className="mb-4"
                 value={filter}
-                onChange={setFilter}
+                onChange={handleFilterChange}
                 items={[
-                    { value: 'all', label: 'Semua', count: purchases.length },
-                    { value: 'posted', label: 'Diposting', count: purchases.filter(p => p.status === 'posted').length },
-                    { value: 'voided', label: 'Dibatalkan', count: purchases.filter(p => p.status === 'voided').length },
+                    { value: 'all', label: 'Semua', count: summary.count_all },
+                    { value: 'posted', label: 'Diposting', count: summary.count_posted },
+                    { value: 'voided', label: 'Dibatalkan', count: summary.count_voided },
                 ]}
             />
 
@@ -168,37 +214,40 @@ export default function Index({ purchases }: Props) {
                                     <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
                                         <ShoppingCart size={40} className="mx-auto mb-2 text-gray-300" />
                                         <p>Belum ada pembelian</p>
-                                        <p className="text-sm mt-1">Klik "Buat Pembelian" untuk mencatat pembelian pertama.</p>
+                                        <p className="mt-1 text-sm">Klik "Buat Pembelian" untuk mencatat pembelian pertama.</p>
                                     </TableCell>
                                 </TableRow>
-                            ) : filtered.map((purchase) => (
-                                <TableRow key={purchase.id}>
-                                    <TableCell className="font-mono text-xs text-muted-foreground">
-                                        <Link href={`/transaksi/pembelian/${purchase.id}`} className="font-mono text-sm text-primary hover:underline">
-                                            {purchase.purchase_number}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                                        {formatDate(purchase.date)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <p className="text-xs text-muted-foreground">
-                                            {purchase.partner_name ?? purchase.cash_bank_name ?? '-'}
-                                        </p>
-                                    </TableCell>
-                                    <TableCell>{formatPaymentType(purchase)}</TableCell>
-                                    <TableCell>
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[purchase.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                                            {purchase.status_label}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-right font-semibold whitespace-nowrap">
-                                        {formatCurrency(purchase.total_amount)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            ) : (
+                                filtered.map((purchase) => (
+                                    <TableRow key={purchase.id}>
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            <Link href={`/transaksi/pembelian/${purchase.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                {purchase.purchase_number}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                                            {formatDate(purchase.date)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <p className="text-xs text-muted-foreground">
+                                                {purchase.partner_name ?? purchase.cash_bank_name ?? '-'}
+                                            </p>
+                                        </TableCell>
+                                        <TableCell>{formatPaymentType(purchase)}</TableCell>
+                                        <TableCell>
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[purchase.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                                {purchase.status_label}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap text-right font-semibold">
+                                            {formatCurrency(purchase.total_amount)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={purchases} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>
