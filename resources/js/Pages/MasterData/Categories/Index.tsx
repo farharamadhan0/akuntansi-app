@@ -1,6 +1,7 @@
 import { Head, Link, router } from "@inertiajs/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import {
     Plus,
@@ -15,19 +16,57 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usePermissions } from "@/lib/permissions";
-import { useState } from "react";
 
 interface Category {
     id: number;
     name: string;
-    type: 'income' | 'expense';
+    type: "income" | "expense";
     description?: string;
     is_active: boolean;
 }
 
-export default function Index({ categories }: { categories: Category[] }) {
+interface Summary {
+    count_all: number;
+    count_income: number;
+    count_expense: number;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedCategories {
+    data: Category[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    categories: PaginatedCategories;
+    summary: Summary;
+    filters: {
+        type: "all" | "income" | "expense";
+        per_page: number;
+    };
+}
+
+type FilterType = "all" | "income" | "expense";
+
+export default function Index({ categories, summary, filters }: Props) {
     const { can } = usePermissions();
-    const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
+    const filter = filters?.type ?? "all";
+    const perPage = filters?.per_page ?? 25;
 
     const handleDelete = (id: number) => {
         if (confirm("Yakin ingin menghapus akun ini? Akun yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
@@ -39,21 +78,24 @@ export default function Index({ categories }: { categories: Category[] }) {
         router.post(`/master/kategori/${id}/toggle`);
     };
 
-    const filtered =
-        filter === "all"
-            ? categories
-            : categories.filter((c) => c.type === filter);
+    const navigate = (overrides: Record<string, string | number>) => {
+        router.get(
+            "/master/kategori",
+            { type: filter, per_page: perPage, ...overrides },
+            { preserveState: true, replace: true },
+        );
+    };
 
     return (
         <AuthenticatedLayout>
             <Head title="Daftar Akun" />
 
             <Breadcrumb items={[
-                { label: 'Master Data' },
-                { label: 'Daftar Akun' },
+                { label: "Master Data" },
+                { label: "Daftar Akun" },
             ]} />
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
                         Daftar Akun
@@ -62,7 +104,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                         Kelola akun pemasukan dan pengeluaran
                     </p>
                 </div>
-                {can('accounts.create') && (
+                {can("accounts.create") && (
                     <Link href="/master/kategori/tambah">
                         <Button>
                             <Plus size={18} />
@@ -72,14 +114,14 @@ export default function Index({ categories }: { categories: Category[] }) {
                 )}
             </div>
 
-            <FilterTabs<'all' | 'income' | 'expense'>
+            <FilterTabs<FilterType>
                 className="mb-4"
                 value={filter}
-                onChange={setFilter}
+                onChange={(value) => navigate({ type: value })}
                 items={[
-                    { value: 'all', label: 'Semua', count: categories.length },
-                    { value: 'income', label: 'Pemasukan', count: categories.filter(c => c.type === 'income').length },
-                    { value: 'expense', label: 'Pengeluaran', count: categories.filter(c => c.type === 'expense').length },
+                    { value: "all", label: "Semua", count: summary.count_all },
+                    { value: "income", label: "Pemasukan", count: summary.count_income },
+                    { value: "expense", label: "Pengeluaran", count: summary.count_expense },
                 ]}
             />
 
@@ -90,19 +132,19 @@ export default function Index({ categories }: { categories: Category[] }) {
                             <TableRow>
                                 <TableHead>Nama Akun</TableHead>
                                 <TableHead>Jenis</TableHead>
-                                <TableHead className='w-10'></TableHead>
+                                <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {filtered.length === 0 ? (
+                            {categories.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
                                         Belum ada akun. Klik "Tambah Akun" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filtered.map((cat) => (
-                                    <TableRow key={cat.id} className={!cat.is_active ? 'opacity-60' : ''}>
+                                categories.data.map((cat) => (
+                                    <TableRow key={cat.id} className={!cat.is_active ? "opacity-60" : ""}>
                                         <TableCell>
                                             <p className="font-medium">{cat.name}</p>
                                             {cat.description && (
@@ -110,12 +152,12 @@ export default function Index({ categories }: { categories: Category[] }) {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                                                 cat.type === "income"
                                                     ? "bg-green-100 text-green-700"
                                                     : "bg-red-100 text-red-700"
                                             }`}>
-                                                {cat.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                                                {cat.type === "income" ? "Pemasukan" : "Pengeluaran"}
                                             </span>
                                         </TableCell>
                                         <TableCell>
@@ -126,7 +168,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    {can('accounts.edit') && (
+                                                    {can("accounts.edit") && (
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/master/kategori/${cat.id}/edit`} className="flex items-center gap-2">
                                                                 <Pencil size={15} />
@@ -134,8 +176,8 @@ export default function Index({ categories }: { categories: Category[] }) {
                                                             </Link>
                                                         </DropdownMenuItem>
                                                     )}
-                                                    {can('accounts.edit') && (
-                                                        <DropdownMenuItem 
+                                                    {can("accounts.edit") && (
+                                                        <DropdownMenuItem
                                                             onClick={() => handleToggle(cat.id)}
                                                             className="flex items-center gap-2"
                                                         >
@@ -145,12 +187,12 @@ export default function Index({ categories }: { categories: Category[] }) {
                                                             }
                                                         </DropdownMenuItem>
                                                     )}
-                                                    {can('accounts.delete') && (
+                                                    {can("accounts.delete") && (
                                                         <>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 onClick={() => handleDelete(cat.id)}
-                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                                className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
                                                             >
                                                                 <Trash2 size={15} />
                                                                 Hapus
@@ -165,6 +207,7 @@ export default function Index({ categories }: { categories: Category[] }) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={categories} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>

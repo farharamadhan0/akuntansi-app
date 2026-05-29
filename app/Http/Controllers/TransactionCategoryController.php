@@ -7,20 +7,40 @@ use App\Models\Account;
 use App\Enums\AccountType;
 use App\Http\Requests\TransactionCategoryRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TransactionCategoryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $baseQuery = TransactionCategory::where('company_id', $companyId);
 
-        $categories = TransactionCategory::where('company_id', $companyId)
+        $summary = [
+            'count_all' => (clone $baseQuery)->count(),
+            'count_income' => (clone $baseQuery)->where('type', 'income')->count(),
+            'count_expense' => (clone $baseQuery)->where('type', 'expense')->count(),
+        ];
+
+        $typeFilter = $request->query('type', 'all');
+        if (! in_array($typeFilter, ['all', 'income', 'expense'], true)) {
+            $typeFilter = 'all';
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
+
+        $categories = (clone $baseQuery)
+            ->when($typeFilter !== 'all', fn ($query) => $query->where('type', $typeFilter))
             ->orderBy('type')
             ->orderBy('name')
-            ->get()
-            ->map(fn($cat) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
                 'type' => $cat->type,
@@ -31,6 +51,11 @@ class TransactionCategoryController extends Controller
 
         return Inertia::render('MasterData/Categories/Index', [
             'categories' => $categories,
+            'summary' => $summary,
+            'filters' => [
+                'type' => $typeFilter,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
