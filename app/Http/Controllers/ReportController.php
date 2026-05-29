@@ -180,6 +180,11 @@ class ReportController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
         [$from, $to] = $this->dateRange($request);
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $accounts = Account::where('company_id', $companyId)
             ->where('is_active', true)
@@ -203,6 +208,20 @@ class ReportController extends Controller
                 $to,
                 (bool) $request->boolean('include_voided'),
             );
+
+            $lines = collect($ledger['lines']);
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $offset = ($currentPage - 1) * $perPage;
+            $ledger['lines'] = new LengthAwarePaginator(
+                $lines->slice($offset, $perPage)->values(),
+                $lines->count(),
+                $perPage,
+                $currentPage,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ],
+            );
         }
 
         return Inertia::render('Reports/GeneralLedger', [
@@ -213,6 +232,7 @@ class ReportController extends Controller
                 'to'             => $to,
                 'account_id'     => $request->filled('account_id') ? (int) $request->account_id : null,
                 'include_voided' => (bool) $request->boolean('include_voided'),
+                'per_page'       => $perPage,
             ],
         ]);
     }

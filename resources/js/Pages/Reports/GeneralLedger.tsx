@@ -2,6 +2,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import { useState, type FormEvent } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Card, CardContent } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import {
     Table,
     TableBody,
@@ -39,6 +40,27 @@ interface LedgerLine {
     running_balance: number;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedLedgerLines {
+    data: LedgerLine[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface Ledger {
     account: {
         id: number;
@@ -52,7 +74,7 @@ interface Ledger {
     total_debit: number;
     total_credit: number;
     closing_balance: number;
-    lines: LedgerLine[];
+    lines: PaginatedLedgerLines;
 }
 
 interface Filters {
@@ -60,6 +82,7 @@ interface Filters {
     to: string;
     account_id: number | null;
     include_voided: boolean;
+    per_page: number;
 }
 
 interface Props {
@@ -84,9 +107,9 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
     const [includeVoided, setIncludeVoided] = useState(filters.include_voided);
+    const perPage = filters?.per_page ?? 25;
 
-    const apply = (e?: FormEvent) => {
-        e?.preventDefault();
+    const navigate = (overrides: Record<string, string | number | undefined>) => {
         router.get(
             "/laporan/buku-besar",
             {
@@ -94,33 +117,39 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                 from,
                 to,
                 include_voided: includeVoided ? 1 : undefined,
+                per_page: perPage,
+                ...overrides,
             },
             { preserveScroll: true, preserveState: true }
         );
     };
 
+    const apply = (e?: FormEvent) => {
+        e?.preventDefault();
+        navigate({ account_id: accountId || undefined, from, to, include_voided: includeVoided ? 1 : undefined });
+    };
+
     return (
         <AuthenticatedLayout>
-            <Head title="Laporan – Buku Besar" />
+            <Head title="Laporan - Buku Besar" />
 
             <Breadcrumb
                 items={[{ label: "Laporan" }, { label: "Buku Besar" }]}
             />
 
-            <div className="flex items-center gap-2 mb-5">
+            <div className="mb-5 flex items-center gap-2">
                 <BookOpen className="text-indigo-500" size={22} />
                 <h1 className="text-xl font-bold text-gray-900">
                     Buku Besar
                 </h1>
             </div>
 
-            {/* Filter */}
             <form
                 onSubmit={apply}
-                className="flex flex-wrap items-end gap-3 mb-5 p-4 bg-gray-50 rounded-lg border"
+                className="mb-5 flex flex-wrap items-end gap-3 rounded-lg border bg-gray-50 p-4"
             >
                 <div className="min-w-64">
-                    <label className="block text-xs text-gray-500 mb-1">
+                    <label className="mb-1 block text-xs text-gray-500">
                         Akun
                     </label>
                     <select
@@ -128,7 +157,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                         value={accountId}
                         onChange={(e) => setAccountId(e.target.value)}
                     >
-                        <option value="">— Pilih Akun —</option>
+                        <option value="">- Pilih Akun -</option>
                         {accounts.map((a) => (
                             <option key={a.id} value={a.id}>
                                 {a.label}
@@ -137,7 +166,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs text-gray-500 mb-1">
+                    <label className="mb-1 block text-xs text-gray-500">
                         Dari Tanggal
                     </label>
                     <Input
@@ -148,7 +177,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs text-gray-500 mb-1">
+                    <label className="mb-1 block text-xs text-gray-500">
                         Sampai Tanggal
                     </label>
                     <Input
@@ -158,7 +187,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                         className="w-40"
                     />
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-700 h-9">
+                <label className="flex h-9 items-center gap-2 text-sm text-gray-700">
                     <input
                         type="checkbox"
                         checked={includeVoided}
@@ -175,14 +204,13 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
 
             {!ledger ? (
                 <Card>
-                    <CardContent className="p-10 text-center text-gray-500 text-sm">
+                    <CardContent className="p-10 text-center text-sm text-gray-500">
                         Pilih akun terlebih dahulu untuk menampilkan mutasi
                         buku besar.
                     </CardContent>
                 </Card>
             ) : (
                 <>
-                    {/* Header akun */}
                     <div className="mb-5">
                         <div className="text-sm text-gray-500">
                             {ledger.account.type_label}
@@ -193,21 +221,20 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                             </span>{" "}
                             {ledger.account.name}
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                            Periode: {fmtDate(filters.from)} –{" "}
-                            {fmtDate(filters.to)} · Saldo normal:{" "}
+                        <p className="mt-1 text-xs text-gray-400">
+                            Periode: {fmtDate(filters.from)} -{" "}
+                            {fmtDate(filters.to)} - Saldo normal:{" "}
                             {ledger.account.normal_balance === "debit"
                                 ? "Debit"
                                 : "Kredit"}
                         </p>
                     </div>
 
-                    {/* Ringkasan */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
                         <Card>
                             <CardContent className="p-4">
                                 <div className="text-xs text-gray-500">
-                                    Saldo Awal
+                                    Saldo Awal Periode
                                 </div>
                                 <div className="text-lg font-semibold text-gray-900">
                                     {fmt(ledger.opening_balance)}
@@ -246,7 +273,6 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                         </Card>
                     </div>
 
-                    {/* Tabel mutasi */}
                     <Card>
                         <CardContent className="p-0">
                             <Table>
@@ -262,13 +288,13 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                         <TableHead className="w-36">
                                             Sumber
                                         </TableHead>
-                                        <TableHead className="text-right w-32">
+                                        <TableHead className="w-32 text-right">
                                             Debit
                                         </TableHead>
-                                        <TableHead className="text-right w-32">
+                                        <TableHead className="w-32 text-right">
                                             Kredit
                                         </TableHead>
-                                        <TableHead className="text-right w-36">
+                                        <TableHead className="w-36 text-right">
                                             Saldo
                                         </TableHead>
                                     </TableRow>
@@ -279,24 +305,24 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                             colSpan={6}
                                             className="text-sm font-medium text-gray-600"
                                         >
-                                            Saldo Awal
+                                            Saldo Awal Periode
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
                                             {fmt(ledger.opening_balance)}
                                         </TableCell>
                                     </TableRow>
 
-                                    {ledger.lines.length === 0 ? (
+                                    {ledger.lines.data.length === 0 ? (
                                         <TableRow>
                                             <TableCell
                                                 colSpan={7}
-                                                className="text-center text-sm text-gray-400 py-6"
+                                                className="py-6 text-center text-sm text-gray-400"
                                             >
                                                 Tidak ada mutasi pada periode ini
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        ledger.lines.map((row) => {
+                                        ledger.lines.data.map((row) => {
                                             const isVoided =
                                                 row.status === "voided";
                                             return (
@@ -304,7 +330,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                                     key={row.line_id}
                                                     className={
                                                         isVoided
-                                                            ? "line-through opacity-60"
+                                                            ? "opacity-60 line-through"
                                                             : ""
                                                     }
                                                 >
@@ -314,15 +340,15 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                                     <TableCell>
                                                         <Link
                                                             href={`/jurnal/${row.entry_id}`}
-                                                            className="text-indigo-600 hover:underline text-sm font-mono"
+                                                            className="font-mono text-sm text-indigo-600 hover:underline"
                                                         >
                                                             {row.entry_number}
                                                         </Link>
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        {row.description ?? "—"}
+                                                        {row.description ?? "-"}
                                                         {isVoided && (
-                                                            <span className="ml-2 inline-block text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 no-underline">
+                                                            <span className="ml-2 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700 no-underline">
                                                                 Dibatalkan
                                                             </span>
                                                         )}
@@ -330,17 +356,17 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                                     <TableCell className="text-xs text-gray-500">
                                                         {row.source_label}
                                                     </TableCell>
-                                                    <TableCell className="text-right text-blue-700 tabular-nums">
+                                                    <TableCell className="tabular-nums text-right text-blue-700">
                                                         {row.debit > 0
                                                             ? fmt(row.debit)
-                                                            : "—"}
+                                                            : "-"}
                                                     </TableCell>
-                                                    <TableCell className="text-right text-amber-700 tabular-nums">
+                                                    <TableCell className="tabular-nums text-right text-amber-700">
                                                         {row.credit > 0
                                                             ? fmt(row.credit)
-                                                            : "—"}
+                                                            : "-"}
                                                     </TableCell>
-                                                    <TableCell className="text-right tabular-nums font-medium">
+                                                    <TableCell className="tabular-nums text-right font-medium">
                                                         {fmt(
                                                             row.running_balance
                                                         )}
@@ -350,22 +376,9 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                         })
                                     )}
 
-                                    <TableRow className="bg-gray-50 font-semibold border-t-2">
-                                        <TableCell colSpan={4}>
-                                            Total Mutasi
-                                        </TableCell>
-                                        <TableCell className="text-right text-blue-700 tabular-nums">
-                                            {fmt(ledger.total_debit)}
-                                        </TableCell>
-                                        <TableCell className="text-right text-amber-700 tabular-nums">
-                                            {fmt(ledger.total_credit)}
-                                        </TableCell>
-                                        <TableCell className="text-right tabular-nums">
-                                            {fmt(ledger.closing_balance)}
-                                        </TableCell>
-                                    </TableRow>
                                 </TableBody>
                             </Table>
+                            <Pagination transactions={ledger.lines} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                         </CardContent>
                     </Card>
                 </>
