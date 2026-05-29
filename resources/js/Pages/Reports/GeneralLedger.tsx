@@ -38,6 +38,8 @@ interface LedgerLine {
     debit: number;
     credit: number;
     running_balance: number;
+    is_cancellation: boolean;
+    is_reversal: boolean;
 }
 
 interface PaginationLink {
@@ -325,48 +327,110 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                         ledger.lines.data.map((row) => {
                                             const isVoided =
                                                 row.status === "voided";
+                                            const isReversal = row.is_reversal;
+                                            const isCancellation =
+                                                row.is_cancellation;
                                             return (
                                                 <TableRow
                                                     key={row.line_id}
                                                     className={
                                                         isVoided
-                                                            ? "opacity-60 line-through"
-                                                            : ""
+                                                            ? "border-t bg-red-50/60 text-gray-500"
+                                                            : isReversal
+                                                              ? "border-t-0 bg-red-50/30 text-gray-500"
+                                                              : ""
                                                     }
                                                 >
-                                                    <TableCell className="text-sm">
-                                                        {fmtDate(row.date)}
+                                                    <TableCell
+                                                        className={
+                                                            isReversal
+                                                                ? "pl-8 text-xs text-gray-400"
+                                                                : "text-sm"
+                                                        }
+                                                    >
+                                                        {isReversal
+                                                            ? ""
+                                                            : fmtDate(row.date)}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Link
                                                             href={`/jurnal/${row.entry_id}`}
-                                                            className="font-mono text-sm text-indigo-600 hover:underline"
+                                                            className={
+                                                                isCancellation
+                                                                    ? "font-mono text-xs text-gray-500 hover:underline"
+                                                                    : "font-mono text-sm text-indigo-600 hover:underline"
+                                                            }
                                                         >
                                                             {row.entry_number}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell className="text-sm">
-                                                        {row.description ?? "-"}
+                                                    <TableCell
+                                                        className={
+                                                            isReversal
+                                                                ? "border-l-2 border-red-200 pl-3 text-xs"
+                                                                : "text-sm"
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={
+                                                                isVoided
+                                                                    ? "line-through"
+                                                                    : ""
+                                                            }
+                                                        >
+                                                            {isReversal
+                                                                ? (row.description ?? "-").replace(
+                                                                      /^Pembalikan:\s*/,
+                                                                      ""
+                                                                  )
+                                                                : row.description ??
+                                                                  "-"}
+                                                        </span>
                                                         {isVoided && (
                                                             <span className="ml-2 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700 no-underline">
                                                                 Dibatalkan
                                                             </span>
                                                         )}
+                                                        {isReversal && (
+                                                            <span className="ml-2 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700">
+                                                                Jurnal pembalik
+                                                            </span>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-xs text-gray-500">
-                                                        {row.source_label}
+                                                        {isReversal
+                                                            ? "-"
+                                                            : row.source_label}
                                                     </TableCell>
-                                                    <TableCell className="tabular-nums text-right text-blue-700">
+                                                    <TableCell
+                                                        className={
+                                                            isCancellation
+                                                                ? "tabular-nums text-right text-gray-400"
+                                                                : "tabular-nums text-right text-blue-700"
+                                                        }
+                                                    >
                                                         {row.debit > 0
                                                             ? fmt(row.debit)
                                                             : "-"}
                                                     </TableCell>
-                                                    <TableCell className="tabular-nums text-right text-amber-700">
+                                                    <TableCell
+                                                        className={
+                                                            isCancellation
+                                                                ? "tabular-nums text-right text-gray-400"
+                                                                : "tabular-nums text-right text-amber-700"
+                                                        }
+                                                    >
                                                         {row.credit > 0
                                                             ? fmt(row.credit)
                                                             : "-"}
                                                     </TableCell>
-                                                    <TableCell className="tabular-nums text-right font-medium">
+                                                    <TableCell
+                                                        className={
+                                                            isCancellation
+                                                                ? "tabular-nums text-right text-gray-400"
+                                                                : "tabular-nums text-right font-medium"
+                                                        }
+                                                    >
                                                         {fmt(
                                                             row.running_balance
                                                         )}
