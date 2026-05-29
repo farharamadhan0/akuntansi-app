@@ -1,10 +1,10 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Table,
     TableBody,
@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye, BookOpen, CheckCircle2, FileText, Zap } from 'lucide-react';
+import { Plus, BookOpen, CheckCircle2, FileText, Zap } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Entry {
@@ -32,18 +32,54 @@ interface Entry {
     line_count: number;
 }
 
-interface Props {
-    entries: Entry[];
+interface Summary {
+    count_draft: number;
+    count_posted: number;
+    count_manual: number;
 }
 
-const STATUS_FILTER = [
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedEntries {
+    data: Entry[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Props {
+    entries: PaginatedEntries;
+    summary: Summary;
+    filters: {
+        status: string;
+        source: string;
+        per_page: number;
+    };
+}
+
+type StatusFilterType = 'all' | 'draft' | 'posted' | 'voided';
+type SourceFilterType = 'all' | 'manual' | 'auto';
+
+const STATUS_FILTER: Array<{ value: StatusFilterType; label: string }> = [
     { value: 'all', label: 'Semua' },
     { value: 'draft', label: 'Draft' },
     { value: 'posted', label: 'Diposting' },
     { value: 'voided', label: 'Dibatalkan' },
 ];
 
-const SOURCE_FILTER = [
+const SOURCE_FILTER: Array<{ value: SourceFilterType; label: string }> = [
     { value: 'all', label: 'Semua Jurnal' },
     { value: 'manual', label: 'Manual' },
     { value: 'auto', label: 'Otomatis' },
@@ -68,27 +104,22 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ entries }: Props) {
+export default function Index({ entries, summary, filters }: Props) {
     const { can } = usePermissions();
     const { props } = usePage<{ flash?: { success?: string; error?: string } }>();
     const flashSuccess = props.flash?.success;
     const flashError = props.flash?.error;
+    const status = (filters?.status as StatusFilterType) || 'all';
+    const source = (filters?.source as SourceFilterType) || 'all';
+    const perPage = filters?.per_page ?? 25;
 
-    const [status, setStatus] = useState<'all' | 'draft' | 'posted' | 'voided'>('all');
-    const [source, setSource] = useState<'all' | 'manual' | 'auto'>('all');
-
-    const filtered = useMemo(() => {
-        return entries.filter((e) => {
-            if (status !== 'all' && e.status !== status) return false;
-            if (source === 'manual' && !e.is_manual) return false;
-            if (source === 'auto' && e.is_manual) return false;
-            return true;
-        });
-    }, [entries, status, source]);
-
-    const draftCount = entries.filter((e) => e.status === 'draft').length;
-    const postedCount = entries.filter((e) => e.status === 'posted').length;
-    const manualCount = entries.filter((e) => e.is_manual).length;
+    function navigate(overrides: Record<string, string | number>) {
+        router.get(
+            '/jurnal',
+            { status, source, per_page: perPage, ...overrides },
+            { preserveScroll: true, replace: true },
+        );
+    }
 
     return (
         <AuthenticatedLayout>
@@ -99,13 +130,13 @@ export default function Index({ entries }: Props) {
                 { label: 'Jurnal Umum' },
             ]} />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <BookOpen className="text-indigo-600" size={26} />
                         Jurnal Umum
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-sm text-gray-500">
                         Catat jurnal manual, penyesuaian, dan lihat semua jurnal akuntansi
                     </p>
                 </div>
@@ -130,67 +161,65 @@ export default function Index({ entries }: Props) {
                 </div>
             )}
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <div className="p-2 bg-gray-100 rounded-lg">
+                    <CardContent className="flex items-center gap-4 p-4">
+                        <div className="rounded-lg bg-gray-100 p-2">
                             <FileText className="text-gray-600" size={22} />
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Jurnal Draft</p>
-                            <p className="text-lg font-bold text-gray-700">{draftCount}</p>
+                            <p className="text-lg font-bold text-gray-700">{summary.count_draft}</p>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <div className="p-2 bg-green-50 rounded-lg">
+                    <CardContent className="flex items-center gap-4 p-4">
+                        <div className="rounded-lg bg-green-50 p-2">
                             <CheckCircle2 className="text-green-600" size={22} />
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Sudah Diposting</p>
-                            <p className="text-lg font-bold text-green-700">{postedCount}</p>
+                            <p className="text-lg font-bold text-green-700">{summary.count_posted}</p>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <div className="p-2 bg-indigo-50 rounded-lg">
+                    <CardContent className="flex items-center gap-4 p-4">
+                        <div className="rounded-lg bg-indigo-50 p-2">
                             <BookOpen className="text-indigo-600" size={22} />
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Jurnal Manual</p>
-                            <p className="text-lg font-bold text-indigo-700">{manualCount}</p>
+                            <p className="text-lg font-bold text-indigo-700">{summary.count_manual}</p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
-                {/* Filter bar */}
-                <div className="flex flex-wrap items-center gap-3 px-6 py-4 border-b">
+                <div className="flex flex-wrap items-center gap-3 border-b px-6 py-4">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground mr-1">Status:</span>
+                        <span className="mr-1 text-xs font-medium text-muted-foreground">Status:</span>
                         {STATUS_FILTER.map((f) => (
                             <Button
                                 key={f.value}
                                 variant={status === f.value ? 'default' : 'outline'}
                                 size="sm"
-                                onClick={() => setStatus(f.value as typeof status)}
+                                onClick={() => navigate({ status: f.value })}
                             >
                                 {f.label}
                             </Button>
                         ))}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground mr-1">Sumber:</span>
+                        <span className="mr-1 text-xs font-medium text-muted-foreground">Sumber:</span>
                         {SOURCE_FILTER.map((f) => (
                             <Button
                                 key={f.value}
                                 variant={source === f.value ? 'default' : 'outline'}
                                 size="sm"
-                                onClick={() => setSource(f.value as typeof source)}
+                                onClick={() => navigate({ source: f.value })}
                             >
                                 {f.label}
                             </Button>
@@ -211,7 +240,7 @@ export default function Index({ entries }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filtered.length === 0 ? (
+                            {entries.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
                                         colSpan={7}
@@ -219,13 +248,13 @@ export default function Index({ entries }: Props) {
                                     >
                                         <BookOpen size={40} className="mx-auto mb-2 text-gray-300" />
                                         <p>Belum ada jurnal</p>
-                                        <p className="text-sm mt-1">
+                                        <p className="mt-1 text-sm">
                                             Klik "Buat Jurnal Baru" untuk mulai mencatat jurnal manual.
                                         </p>
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filtered.map((e) => (
+                                entries.data.map((e) => (
                                     <TableRow key={e.id}>
                                         <TableCell className="font-mono text-xs text-muted-foreground">
                                             <Link href={`/jurnal/${e.id}`} className="font-mono text-sm text-primary hover:underline">
@@ -236,20 +265,20 @@ export default function Index({ entries }: Props) {
                                             {formatDate(e.date)}
                                         </TableCell>
                                         <TableCell>
-                                            <p className="font-medium text-sm">{e.description}</p>
+                                            <p className="text-sm font-medium">{e.description}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {e.line_count} baris
-                                                {e.is_adjusting && ' · Penyesuaian'}
+                                                {e.is_adjusting && ' - Penyesuaian'}
                                             </p>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {e.is_manual ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700">
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
                                                     <BookOpen size={11} />
                                                     Manual
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700">
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
                                                     <Zap size={11} />
                                                     Otomatis
                                                 </span>
@@ -257,12 +286,12 @@ export default function Index({ entries }: Props) {
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <span
-                                                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusBadge[e.status]}`}
+                                                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[e.status]}`}
                                             >
                                                 {e.status_label}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold whitespace-nowrap">
+                                        <TableCell className="whitespace-nowrap text-right font-semibold">
                                             {formatCurrency(e.total_debit)}
                                         </TableCell>
                                     </TableRow>
@@ -270,6 +299,7 @@ export default function Index({ entries }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={entries} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
         </AuthenticatedLayout>

@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Services\JournalService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,16 +17,49 @@ class JournalEntryController extends Controller
 {
     public function __construct(protected JournalService $journalService) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
 
-        $entries = JournalEntry::where('company_id', $companyId)
+        $baseQuery = JournalEntry::where('company_id', $companyId);
+
+        $summary = [
+            'count_draft' => (clone $baseQuery)
+                ->where('status', TransactionStatus::Draft)
+                ->count(),
+            'count_posted' => (clone $baseQuery)
+                ->where('status', TransactionStatus::Posted)
+                ->count(),
+            'count_manual' => (clone $baseQuery)
+                ->where('is_manual', true)
+                ->count(),
+        ];
+
+        $statusFilter = $request->query('status', 'all');
+        if (! in_array($statusFilter, ['all', 'draft', 'posted', 'voided'], true)) {
+            $statusFilter = 'all';
+        }
+
+        $sourceFilter = $request->query('source', 'all');
+        if (! in_array($sourceFilter, ['all', 'manual', 'auto'], true)) {
+            $sourceFilter = 'all';
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
+
+        $entries = (clone $baseQuery)
             ->with(['lines:id,journal_entry_id,debit,credit'])
+            ->when($statusFilter !== 'all', fn ($query) => $query->where('status', $statusFilter))
+            ->when($sourceFilter === 'manual', fn ($query) => $query->where('is_manual', true))
+            ->when($sourceFilter === 'auto', fn ($query) => $query->where('is_manual', false))
             ->orderByDesc('date')
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn(JournalEntry $e) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (JournalEntry $e) => [
                 'id'           => $e->id,
                 'entry_number' => $e->entry_number,
                 'date'         => $e->date->format('Y-m-d'),
@@ -43,6 +77,12 @@ class JournalEntryController extends Controller
 
         return Inertia::render('Journals/Index', [
             'entries' => $entries,
+            'summary' => $summary,
+            'filters' => [
+                'status' => $statusFilter,
+                'source' => $sourceFilter,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
