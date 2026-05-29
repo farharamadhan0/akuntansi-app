@@ -6,21 +6,28 @@ use App\Http\Requests\RoleRequest;
 use App\Models\Role;
 use App\Support\Permissions;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RoleController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $roles = Role::where('company_id', $companyId)
             ->withCount('companyUsers')
             ->orderBy('is_system', 'desc')
             ->orderBy('name')
-            ->get(['id', 'name', 'permissions', 'is_system'])
-            ->map(fn (Role $r) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (Role $r) => [
                 'id' => $r->id,
                 'name' => $r->name,
                 'permissions' => $r->permissions ?? [],
@@ -32,6 +39,9 @@ class RoleController extends Controller
         return Inertia::render('Roles/Index', [
             'roles' => $roles,
             'permissionGroups' => Permissions::groups(),
+            'filters' => [
+                'per_page' => $perPage,
+            ],
         ]);
     }
 

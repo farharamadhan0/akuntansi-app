@@ -3,6 +3,7 @@ import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Plus, Pencil, Trash2, ShieldCheck, Crown, Lock, Users } from 'lucide-react';
 
@@ -20,9 +21,33 @@ interface PermissionGroup {
     actions: Record<string, string>;
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedRoles {
+    data: RoleRow[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
 interface Props {
-    roles: RoleRow[];
+    roles: PaginatedRoles;
     permissionGroups: Record<string, PermissionGroup>;
+    filters: {
+        per_page: number;
+    };
 }
 
 interface PageFlash {
@@ -62,7 +87,7 @@ function PermissionBadges({ perms, groups }: { perms: string[]; groups: Record<s
 
     if (summary.isAll) {
         return (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
                 <ShieldCheck size={11} />
                 Semua akses
             </span>
@@ -70,7 +95,7 @@ function PermissionBadges({ perms, groups }: { perms: string[]; groups: Record<s
     }
 
     if (summary.modules.length === 0) {
-        return <span className="text-gray-400 text-xs">Tidak ada akses</span>;
+        return <span className="text-xs text-gray-400">Tidak ada akses</span>;
     }
 
     return (
@@ -79,10 +104,10 @@ function PermissionBadges({ perms, groups }: { perms: string[]; groups: Record<s
                 <span
                     key={m.label}
                     title={`${m.count} dari ${m.total} aksi`}
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border ${
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${
                         m.full
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-gray-50 text-gray-600'
                     }`}
                 >
                     {m.label}
@@ -95,9 +120,10 @@ function PermissionBadges({ perms, groups }: { perms: string[]; groups: Record<s
     );
 }
 
-export default function Index({ roles, permissionGroups }: Props) {
+export default function Index({ roles, permissionGroups, filters }: Props) {
     const { flash } = usePage<PageFlash>().props;
     const [deleteTarget, setDeleteTarget] = useState<RoleRow | null>(null);
+    const perPage = filters?.per_page ?? 25;
 
     const handleDelete = (role: RoleRow) => {
         router.delete(`/pengaturan/role/${role.id}`, {
@@ -111,13 +137,13 @@ export default function Index({ roles, permissionGroups }: Props) {
 
             <Breadcrumb items={[{ label: 'Pengaturan' }, { label: 'Role' }]} />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <ShieldCheck className="text-blue-500" size={26} />
                         Role
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-sm text-gray-500">
                         Kelola role dan permission yang dapat diberikan kepada pengguna
                     </p>
                 </div>
@@ -141,34 +167,34 @@ export default function Index({ roles, permissionGroups }: Props) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50/60">
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500 w-48">Nama</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-500">Permission</th>
-                                    <th className="text-center px-4 py-3 font-medium text-gray-500 w-28">Pengguna</th>
-                                    <th className="px-4 py-3 w-20"></th>
+                                    <th className="w-48 px-4 py-3 text-left font-medium text-gray-500">Nama</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-500">Permission</th>
+                                    <th className="w-28 px-4 py-3 text-center font-medium text-gray-500">Pengguna</th>
+                                    <th className="w-20 px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {roles.length === 0 ? (
+                                {roles.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="text-center text-gray-400 py-12 text-sm">
+                                        <td colSpan={4} className="py-12 text-center text-sm text-gray-400">
                                             Belum ada role.
                                         </td>
                                     </tr>
                                 ) : (
-                                    roles.map((r) => (
-                                        <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
+                                    roles.data.map((r) => (
+                                        <tr key={r.id} className="transition-colors hover:bg-gray-50/50">
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-2">
                                                     {r.is_owner ? (
-                                                        <Crown size={14} className="text-amber-500 shrink-0" />
+                                                        <Crown size={14} className="shrink-0 text-amber-500" />
                                                     ) : r.is_system ? (
-                                                        <Lock size={13} className="text-gray-400 shrink-0" />
+                                                        <Lock size={13} className="shrink-0 text-gray-400" />
                                                     ) : (
-                                                        <ShieldCheck size={13} className="text-blue-400 shrink-0" />
+                                                        <ShieldCheck size={13} className="shrink-0 text-blue-400" />
                                                     )}
                                                     <span className="font-medium text-gray-800">{r.name}</span>
                                                     {r.is_system && (
-                                                        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-400 font-medium">
+                                                        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">
                                                             default
                                                         </span>
                                                     )}
@@ -185,9 +211,9 @@ export default function Index({ roles, permissionGroups }: Props) {
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 {r.is_system ? (
-                                                    <span className="text-xs text-gray-300">—</span>
+                                                    <span className="text-xs text-gray-300">-</span>
                                                 ) : (
-                                                    <div className="flex items-center gap-1 justify-end">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         <Link href={`/pengaturan/role/${r.id}/edit`}>
                                                             <Button variant="ghost" size="sm" title="Edit" className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600">
                                                                 <Pencil size={14} />
@@ -211,19 +237,20 @@ export default function Index({ roles, permissionGroups }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination transactions={roles} perPage={perPage} onPerPageChange={(val) => router.get('/pengaturan/role', { per_page: val }, { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
 
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-                        <h3 className="text-base font-semibold text-gray-900 mb-1">Hapus Role</h3>
-                        <p className="text-sm text-gray-500 mb-5">
+                    <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+                        <h3 className="mb-1 text-base font-semibold text-gray-900">Hapus Role</h3>
+                        <p className="mb-5 text-sm text-gray-500">
                             Hapus role <strong className="text-gray-700">{deleteTarget.name}</strong>?
                             {deleteTarget.users_count > 0 && (
                                 <>
                                     {' '}Role ini masih dipakai oleh{' '}
-                                    <strong className="text-gray-700">{deleteTarget.users_count}</strong> pengguna —
+                                    <strong className="text-gray-700">{deleteTarget.users_count}</strong> pengguna -
                                     pindahkan dulu sebelum menghapus.
                                 </>
                             )}
