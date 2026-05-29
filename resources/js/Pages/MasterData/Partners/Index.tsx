@@ -5,6 +5,7 @@ import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Table,
     TableBody,
@@ -33,9 +34,37 @@ interface Partner {
     types: string[];
 }
 
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedPartners {
+    data: Partner[];
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    per_page: number;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+}
+
+interface Filters {
+    search?: string;
+    status?: string;
+    type?: string;
+    per_page: number;
+}
+
 interface Props {
-    partners: Partner[];
-    filters: { search?: string; status?: string; type?: string };
+    partners: PaginatedPartners;
+    filters: Filters;
 }
 
 const typeLabel: Record<string, string> = {
@@ -52,11 +81,13 @@ export default function Index({ partners, filters }: Props) {
     const { can } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Partner | null>(null);
+    const perPage = filters?.per_page ?? 25;
 
-    const buildQuery = (overrides: Partial<Props['filters']>) => ({
+    const buildQuery = (overrides: Partial<Filters>) => ({
         search,
         status: filters.status,
         type: filters.type,
+        per_page: perPage,
         ...overrides,
     });
 
@@ -95,13 +126,13 @@ export default function Index({ partners, filters }: Props) {
                 { label: 'Mitra' },
             ]} />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                         <Users className="text-blue-500" size={26} />
                         Data Mitra
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-sm text-gray-500">
                         Kelola daftar mitra (pelanggan & supplier) perusahaan
                     </p>
                 </div>
@@ -115,10 +146,9 @@ export default function Index({ partners, filters }: Props) {
                 )}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col gap-3 mb-4">
-                <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-                    <div className="relative flex-1 max-w-sm">
+            <div className="mb-4 flex flex-col gap-3">
+                <form onSubmit={handleSearch} className="flex flex-1 gap-2">
+                    <div className="relative max-w-sm flex-1">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <Input
                             placeholder="Cari nama, kode, telepon, email..."
@@ -176,14 +206,14 @@ export default function Index({ partners, filters }: Props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {partners.length === 0 ? (
+                            {partners.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                                    <TableCell colSpan={6} className="py-8 text-center text-gray-400">
                                         Belum ada data mitra. Klik "Tambah Mitra" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                partners.map((p) => (
+                                partners.data.map((p) => (
                                     <TableRow key={p.id} className={!p.is_active ? 'opacity-60' : ''}>
                                         <TableCell className="font-mono text-sm">
                                             <Link
@@ -241,7 +271,7 @@ export default function Index({ partners, filters }: Props) {
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 onClick={() => setDeleteTarget(p)}
-                                                                className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                                                                className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
                                                             >
                                                                 <Trash2 size={14} />
                                                                 Hapus
@@ -256,15 +286,15 @@ export default function Index({ partners, filters }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                    <Pagination transactions={partners} perPage={perPage} onPerPageChange={(val) => router.get('/master/mitra', buildQuery({ per_page: val }), { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
 
-            {/* Delete Confirm Modal */}
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-                        <h3 className="text-lg font-semibold mb-2">Hapus Mitra</h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                    <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                        <h3 className="mb-2 text-lg font-semibold">Hapus Mitra</h3>
+                        <p className="mb-4 text-sm text-gray-600">
                             Hapus mitra <strong>{deleteTarget.name}</strong>? Mitra yang masih memiliki piutang atau hutang aktif tidak dapat dihapus.
                         </p>
                         <div className="flex justify-end gap-2">

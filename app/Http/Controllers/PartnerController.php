@@ -22,6 +22,11 @@ class PartnerController extends Controller
     public function index(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
+        $perPage = (int) $request->query('per_page', 25);
+
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $query = Partner::where('company_id', $companyId)
             ->with('typeAssignments')
@@ -47,7 +52,10 @@ class PartnerController extends Controller
             $query->ofType($type);
         }
 
-        $partners = $query->get()->map(fn (Partner $p) => [
+        $partners = $query
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (Partner $p) => [
             'id' => $p->id,
             'code' => $p->code,
             'name' => $p->name,
@@ -59,7 +67,10 @@ class PartnerController extends Controller
 
         return Inertia::render('MasterData/Partners/Index', [
             'partners' => $partners,
-            'filters' => $request->only(['search', 'status', 'type']),
+            'filters' => [
+                ...$request->only(['search', 'status', 'type']),
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
