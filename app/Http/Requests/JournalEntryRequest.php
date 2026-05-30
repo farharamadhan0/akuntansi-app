@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Account;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -64,10 +65,24 @@ class JournalEntryRequest extends FormRequest
                 return;
             }
 
+            $accountIds = collect($lines)
+                ->pluck('account_id')
+                ->filter()
+                ->unique()
+                ->values();
+            $parentAccountIds = Account::whereIn('id', $accountIds)
+                ->whereHas('children')
+                ->pluck('id')
+                ->all();
+
             $totalDebit = 0.0;
             $totalCredit = 0.0;
 
             foreach ($lines as $i => $line) {
+                if (in_array((int) ($line['account_id'] ?? 0), $parentAccountIds, true)) {
+                    $v->errors()->add("lines.$i.account_id", 'Akun induk/group tidak dapat dipakai untuk jurnal');
+                }
+
                 $debit = (float) ($line['debit'] ?? 0);
                 $credit = (float) ($line['credit'] ?? 0);
 

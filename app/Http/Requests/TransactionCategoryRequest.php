@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Account;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,12 +21,33 @@ class TransactionCategoryRequest extends FormRequest
         return [
             'account_id' => [
                 'required',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId)
+                    ->where('is_active', true),
             ],
             'name' => ['required', 'string', 'max:100'],
             'type' => ['required', Rule::in(['income', 'expense'])],
             'description' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v) {
+            $accountId = $this->input('account_id');
+
+            if (! $accountId) {
+                return;
+            }
+
+            $isParent = Account::whereKey($accountId)
+                ->whereHas('children')
+                ->exists();
+
+            if ($isParent) {
+                $v->errors()->add('account_id', 'Akun induk/group tidak dapat dipakai untuk kategori');
+            }
+        });
     }
 
     public function messages(): array

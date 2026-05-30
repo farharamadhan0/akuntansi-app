@@ -255,6 +255,7 @@ class JournalEntryController extends Controller
 
         return Account::where('company_id', $companyId)
             ->where('is_active', true)
+            ->whereDoesntHave('children')
             ->orderBy('code')
             ->get(['id', 'code', 'name', 'type'])
             ->map(fn($a) => [

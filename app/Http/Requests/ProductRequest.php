@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Account;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,22 +45,64 @@ class ProductRequest extends FormRequest
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'inventory_account_id' => [
                 'nullable',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId)
+                    ->where('is_active', true),
             ],
             'revenue_account_id' => [
                 'nullable',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId)
+                    ->where('is_active', true),
             ],
             'expense_account_id' => [
                 'nullable',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId)
+                    ->where('is_active', true),
             ],
             'cogs_account_id' => [
                 'nullable',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId)
+                    ->where('is_active', true),
             ],
             'is_active' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v) {
+            $fields = [
+                'inventory_account_id' => 'Akun persediaan',
+                'revenue_account_id' => 'Akun penjualan',
+                'expense_account_id' => 'Akun beban',
+                'cogs_account_id' => 'Akun HPP',
+            ];
+
+            $accountIds = collect($fields)
+                ->keys()
+                ->map(fn (string $field) => $this->input($field))
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($accountIds->isEmpty()) {
+                return;
+            }
+
+            $parentAccountIds = Account::whereIn('id', $accountIds)
+                ->whereHas('children')
+                ->pluck('id')
+                ->all();
+
+            foreach ($fields as $field => $label) {
+                if (in_array((int) $this->input($field), $parentAccountIds, true)) {
+                    $v->errors()->add($field, "{$label} tidak boleh akun induk/group");
+                }
+            }
+        });
     }
 
     public function messages(): array

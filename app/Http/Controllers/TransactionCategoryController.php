@@ -66,12 +66,14 @@ class TransactionCategoryController extends Controller
         $revenueAccounts = Account::where('company_id', $companyId)
             ->ofType(AccountType::Revenue)
             ->active()
+            ->whereDoesntHave('children')
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
 
         $expenseAccounts = Account::where('company_id', $companyId)
             ->ofType(AccountType::Expense)
             ->active()
+            ->whereDoesntHave('children')
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
 
@@ -107,12 +109,14 @@ class TransactionCategoryController extends Controller
         $revenueAccounts = Account::where('company_id', $companyId)
             ->ofType(AccountType::Revenue)
             ->active()
+            ->whereDoesntHave('children')
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
 
         $expenseAccounts = Account::where('company_id', $companyId)
             ->ofType(AccountType::Expense)
             ->active()
+            ->whereDoesntHave('children')
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
 

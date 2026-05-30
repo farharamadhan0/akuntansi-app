@@ -206,12 +206,10 @@ class CompanySetupService
             ['code' => '2000', 'name' => 'Kewajiban', 'type' => AccountType::Liability, 'subtype' => null, 'is_system' => true],
             ['code' => '2100', 'name' => 'Kewajiban Lancar', 'type' => AccountType::Liability, 'subtype' => 'current_liability', 'parent_code' => '2000'],
             ['code' => '2110', 'name' => 'Hutang Usaha', 'type' => AccountType::Liability, 'subtype' => 'payable', 'parent_code' => '2100', 'is_system' => true],
-            ['code' => '2200', 'name' => 'Kewajiban Jangka Panjang', 'type' => AccountType::Liability, 'subtype' => 'long_term_liability', 'parent_code' => '2000'],
 
             // MODAL (3xxx)
             ['code' => '3000', 'name' => 'Modal', 'type' => AccountType::Equity, 'subtype' => null, 'is_system' => true],
             ['code' => '3100', 'name' => 'Modal Pemilik', 'type' => AccountType::Equity, 'subtype' => 'owner_equity', 'parent_code' => '3000', 'is_system' => true],
-            ['code' => '3200', 'name' => 'Laba Ditahan', 'type' => AccountType::Equity, 'subtype' => 'retained_earnings', 'parent_code' => '3000', 'is_system' => true],
 
             // PENDAPATAN (4xxx)
             ['code' => '4000', 'name' => 'Pendapatan', 'type' => AccountType::Revenue, 'subtype' => null, 'is_system' => true],
