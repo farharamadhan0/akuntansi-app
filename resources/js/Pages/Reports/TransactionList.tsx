@@ -153,7 +153,7 @@ export default function TransactionList({ rows, summary, filters }: Props) {
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>Jenis</TableHead>
                                 <TableHead>Keterangan</TableHead>
-                                <TableHead>Akun</TableHead>
+                                <TableHead>Kategori</TableHead>
                                 <TableHead>Kas/Bank</TableHead>
                                 <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>

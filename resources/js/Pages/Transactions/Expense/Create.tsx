@@ -159,10 +159,10 @@ export default function Create({ cashBankAccounts, categories, partners, default
                                 />
                             </FormField>
 
-                            {/* Akun & Supplier */}
+                            {/* Kategori & Supplier */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
-                                    label="Akun Pengeluaran"
+                                    label="Kategori Pengeluaran"
                                     error={errors.category_id}
                                     hint="Opsional"
                                 >
@@ -172,7 +172,7 @@ export default function Create({ cashBankAccounts, categories, partners, default
                                         onChange={(e) => setData('category_id', e.target.value)}
                                         aria-invalid={!!errors.category_id}
                                     >
-                                        <option value="">-- Tanpa Akun --</option>
+                                        <option value="">-- Tanpa Kategori --</option>
                                         {categories.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
                                                 {cat.name}

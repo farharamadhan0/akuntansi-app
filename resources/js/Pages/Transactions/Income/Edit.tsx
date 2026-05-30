@@ -175,10 +175,10 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                 />
                             </FormField>
 
-                            {/* Akun & Mitra */}
+                            {/* Kategori & Mitra */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
-                                    label="Akun"
+                                    label="Kategori Pemasukan"
                                     error={errors.category_id}
                                     hint="Opsional"
                                 >
@@ -188,7 +188,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                         onChange={(e) => setData('category_id', e.target.value)}
                                         aria-invalid={!!errors.category_id}
                                     >
-                                        <option value="">-- Tanpa Akun --</option>
+                                        <option value="">-- Tanpa Kategori --</option>
                                         {categories.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
                                                 {cat.name}

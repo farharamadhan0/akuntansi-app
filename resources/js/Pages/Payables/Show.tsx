@@ -196,8 +196,8 @@ export default function Show({ payable: p, journalEntries }: Props) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-gray-500">Akun</p>
-                                <p className="font-medium text-gray-900">{p.category_name ?? 'Tanpa akun'}</p>
+                                <p className="text-gray-500">Kategori Pengeluaran</p>
+                                <p className="font-medium text-gray-900">{p.category_name ?? 'Tanpa kategori'}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Tanggal</p>

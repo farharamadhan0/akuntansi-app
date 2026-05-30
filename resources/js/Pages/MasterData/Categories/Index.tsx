@@ -69,7 +69,7 @@ export default function Index({ categories, summary, filters }: Props) {
     const perPage = filters?.per_page ?? 25;
 
     const handleDelete = (id: number) => {
-        if (confirm("Yakin ingin menghapus akun ini? Akun yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
+        if (confirm("Yakin ingin menghapus kategori ini? Kategori yang sudah digunakan dalam transaksi tidak dapat dihapus.")) {
             router.delete(`/master/kategori/${id}`);
         }
     };
@@ -88,27 +88,27 @@ export default function Index({ categories, summary, filters }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Daftar Akun" />
+            <Head title="Kategori Transaksi" />
 
             <Breadcrumb items={[
                 { label: "Master Data" },
-                { label: "Daftar Akun" },
+                { label: "Kategori Transaksi" },
             ]} />
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        Daftar Akun
+                        Kategori Transaksi
                     </h1>
                     <p className="text-gray-600">
-                        Kelola akun pemasukan dan pengeluaran
+                        Kelola kategori pemasukan dan pengeluaran
                     </p>
                 </div>
                 {can("accounts.create") && (
                     <Link href="/master/kategori/tambah">
                         <Button>
                             <Plus size={18} />
-                            Tambah Akun
+                            Tambah Kategori
                         </Button>
                     </Link>
                 )}
@@ -130,7 +130,7 @@ export default function Index({ categories, summary, filters }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nama Akun</TableHead>
+                                <TableHead>Nama Kategori</TableHead>
                                 <TableHead>Jenis</TableHead>
                                 <TableHead className="w-10"></TableHead>
                             </TableRow>
@@ -139,7 +139,7 @@ export default function Index({ categories, summary, filters }: Props) {
                             {categories.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
-                                        Belum ada akun. Klik "Tambah Akun" untuk memulai.
+                                        Belum ada kategori. Klik "Tambah Kategori" untuk memulai.
                                     </TableCell>
                                 </TableRow>
                             ) : (

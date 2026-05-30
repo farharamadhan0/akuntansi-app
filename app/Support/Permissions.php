@@ -56,7 +56,7 @@ class Permissions
                 'actions' => $crud,
             ],
             'accounts' => [
-                'label' => 'Daftar Akun',
+                'label' => 'Kategori Transaksi',
                 'actions' => $crud,
             ],
             'products' => [

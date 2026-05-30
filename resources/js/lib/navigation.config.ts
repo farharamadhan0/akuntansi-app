@@ -124,7 +124,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
         { key: "mitra", label: "Mitra", href: "/master/mitra", icon: UserCheck, permission: "partners.view" },
         { key: "produk", label: "Produk", href: "/master/produk", icon: Package, permission: "products.view" },
         { key: "kas-bank", label: "Kas & Bank", href: "/master/kas-bank", icon: Wallet, permission: "cash_bank.view" },
-        { key: "kategori", label: "Daftar Akun", href: "/master/kategori", icon: Tags, permission: "accounts.view" },
+        { key: "kategori", label: "Kategori Transaksi", href: "/master/kategori", icon: Tags, permission: "accounts.view" },
     ],
     laporan: [
         { key: "transaksi", label: "Daftar Transaksi", href: "/laporan/transaksi", icon: List, permission: "reports.transactions" },

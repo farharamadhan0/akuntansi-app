@@ -140,7 +140,7 @@ export default function Show({ transaction: t }: Props) {
                         />
                         <DetailRow label="Keterangan" value={t.description} />
                         <DetailRow label="Diterima di" value={t.cash_bank_name} />
-                        <DetailRow label="Akun" value={t.category_name ?? 'Tanpa akun'} />
+                        <DetailRow label="Kategori Pemasukan" value={t.category_name ?? 'Tanpa kategori'} />
                         <DetailRow label="Mitra" value={t.partner_name ?? 'Tidak ditentukan'} />
                         {t.reference && (
                             <DetailRow label="No. Referensi" value={t.reference} />

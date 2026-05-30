@@ -163,13 +163,13 @@ export default function Edit({ payable, partners, categories }: Props) {
                                 />
                             </FormField>
 
-                            <FormField label="Akun Pengeluaran" error={errors.category_id} hint="Opsional">
+                            <FormField label="Kategori Pengeluaran" error={errors.category_id} hint="Opsional">
                                 <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.category_id}
                                     onChange={(e) => setData('category_id', e.target.value)}
                                 >
-                                    <option value="">-- Tanpa Akun --</option>
+                                    <option value="">-- Tanpa Kategori --</option>
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>
                                             {category.name}
