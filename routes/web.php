@@ -242,8 +242,6 @@ Route::middleware('auth')->group(function () {
         // Laporan
         Route::prefix('laporan')->group(function () {
             Route::get('transaksi', [ReportController::class, 'transactionList'])->middleware('permission:reports.transactions')->name('reports.transactions');
-            Route::get('piutang', [ReportController::class, 'receivableList'])->middleware('permission:reports.receivables')->name('reports.receivables');
-            Route::get('hutang', [ReportController::class, 'payableList'])->middleware('permission:reports.payables')->name('reports.payables');
             Route::get('laba-rugi', [ReportController::class, 'incomeStatement'])->middleware('permission:reports.income_statement')->name('reports.income-statement');
             Route::get('neraca', [ReportController::class, 'balanceSheet'])->middleware('permission:reports.balance_sheet')->name('reports.balance-sheet');
             Route::get('arus-kas', [ReportController::class, 'cashFlow'])->middleware('permission:reports.cash_flow')->name('reports.cash-flow');

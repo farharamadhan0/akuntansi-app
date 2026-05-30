@@ -68,7 +68,7 @@ class CompanySetupService
                 'purchases.view', 'purchases.create', 'purchases.edit', 'purchases.delete',
                 'sales.view', 'sales.create', 'sales.edit', 'sales.delete',
                 'inventory_adjustments.view', 'inventory_adjustments.create', 'inventory_adjustments.edit', 'inventory_adjustments.delete',
-                'reports.transactions', 'reports.receivables', 'reports.payables',
+                'reports.transactions',
                 'reports.general_ledger', 'reports.income_statement',
                 'reports.balance_sheet', 'reports.cash_flow',
             ],

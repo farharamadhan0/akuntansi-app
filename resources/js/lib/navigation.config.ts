@@ -132,8 +132,6 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
         { key: "laba-rugi", label: "Laba Rugi", href: "/laporan/laba-rugi", icon: BarChart2, permission: "reports.income_statement" },
         { key: "neraca", label: "Neraca", href: "/laporan/neraca", icon: Scale, permission: "reports.balance_sheet" },
         { key: "arus-kas", label: "Arus Kas", href: "/laporan/arus-kas", icon: TrendingUp, permission: "reports.cash_flow" },
-        { key: "piutang", label: "Laporan Piutang", href: "/laporan/piutang", icon: Users, permission: "reports.receivables" },
-        { key: "hutang", label: "Laporan Hutang", href: "/laporan/hutang", icon: CreditCard, permission: "reports.payables" },
     ],
     pengaturan: [
         { key: "pengguna", label: "Pengguna", href: "/pengaturan/pengguna", icon: UserCog, ownerOnly: true },

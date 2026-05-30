@@ -79,8 +79,6 @@ class Permissions
                 'label' => 'Laporan',
                 'actions' => [
                     'transactions' => 'Daftar Transaksi',
-                    'receivables' => 'Daftar Piutang',
-                    'payables' => 'Daftar Hutang',
                     'general_ledger' => 'Buku Besar',
                     'income_statement' => 'Laba Rugi',
                     'balance_sheet' => 'Neraca',

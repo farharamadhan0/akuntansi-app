@@ -7,8 +7,6 @@ use App\Enums\TransactionStatus;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
-use App\Models\Payable;
-use App\Models\Receivable;
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -52,90 +50,6 @@ class ReportService
             'total_expense' => $rows->where('type', 'expense')->sum('amount'),
             'net'           => $rows->where('type', 'income')->sum('amount')
                              - $rows->where('type', 'expense')->sum('amount'),
-        ];
-    }
-
-    // -----------------------------------------------------------------------
-    // Daftar Piutang
-    // -----------------------------------------------------------------------
-
-    public function receivableList(int $companyId, string $from, string $to, ?string $paymentStatus = null): array
-    {
-        $query = Receivable::where('company_id', $companyId)
-            ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $to)
-            ->where('status', TransactionStatus::Posted)
-            ->with(['customer:id,name'])
-            ->orderBy('due_date')
-            ->orderBy('date');
-
-        if ($paymentStatus) {
-            $query->where('payment_status', $paymentStatus);
-        }
-
-        $rows = $query->get()->map(fn($r) => [
-            'id'              => $r->id,
-            'number'          => $r->receivable_number,
-            'customer'        => $r->partner->name,
-            'date'            => $r->date->format('Y-m-d'),
-            'due_date'        => $r->due_date->format('Y-m-d'),
-            'amount'          => (float) $r->amount,
-            'paid_amount'     => (float) $r->paid_amount,
-            'remaining'       => (float) $r->remaining_amount,
-            'payment_status'  => $r->payment_status->value,
-            'payment_status_label' => $r->payment_status->label(),
-            'is_overdue'      => $r->isOverdue(),
-            'description'     => $r->description,
-        ]);
-
-        return [
-            'rows'               => $rows,
-            'total_amount'       => $rows->sum('amount'),
-            'total_paid'         => $rows->sum('paid_amount'),
-            'total_remaining'    => $rows->sum('remaining'),
-            'total_overdue'      => $rows->where('is_overdue', true)->sum('remaining'),
-        ];
-    }
-
-    // -----------------------------------------------------------------------
-    // Daftar Hutang
-    // -----------------------------------------------------------------------
-
-    public function payableList(int $companyId, string $from, string $to, ?string $paymentStatus = null): array
-    {
-        $query = Payable::where('company_id', $companyId)
-            ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $to)
-            ->where('status', TransactionStatus::Posted)
-            ->with(['supplier:id,name'])
-            ->orderBy('due_date')
-            ->orderBy('date');
-
-        if ($paymentStatus) {
-            $query->where('payment_status', $paymentStatus);
-        }
-
-        $rows = $query->get()->map(fn($p) => [
-            'id'              => $p->id,
-            'number'          => $p->payable_number,
-            'supplier'        => $p->partner->name,
-            'date'            => $p->date->format('Y-m-d'),
-            'due_date'        => $p->due_date->format('Y-m-d'),
-            'amount'          => (float) $p->amount,
-            'paid_amount'     => (float) $p->paid_amount,
-            'remaining'       => (float) $p->remaining_amount,
-            'payment_status'  => $p->payment_status->value,
-            'payment_status_label' => $p->payment_status->label(),
-            'is_overdue'      => $p->isOverdue(),
-            'description'     => $p->description,
-        ]);
-
-        return [
-            'rows'            => $rows,
-            'total_amount'    => $rows->sum('amount'),
-            'total_paid'      => $rows->sum('paid_amount'),
-            'total_remaining' => $rows->sum('remaining'),
-            'total_overdue'   => $rows->where('is_overdue', true)->sum('remaining'),
         ];
     }
 

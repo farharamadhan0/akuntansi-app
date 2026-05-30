@@ -63,62 +63,6 @@ class ReportController extends Controller
         ]);
     }
 
-    public function receivableList(Request $request): Response
-    {
-        $companyId = auth()->user()->current_company_id;
-        [$from, $to] = $this->dateRange($request);
-
-        $data = $this->reportService->receivableList(
-            $companyId,
-            $from,
-            $to,
-            $request->filled('payment_status') ? $request->payment_status : null,
-        );
-
-        return Inertia::render('Reports/ReceivableList', [
-            'rows'    => $data['rows'],
-            'summary' => [
-                'total_amount'    => $data['total_amount'],
-                'total_paid'      => $data['total_paid'],
-                'total_remaining' => $data['total_remaining'],
-                'total_overdue'   => $data['total_overdue'],
-            ],
-            'filters' => [
-                'from'           => $from,
-                'to'             => $to,
-                'payment_status' => $request->payment_status ?? '',
-            ],
-        ]);
-    }
-
-    public function payableList(Request $request): Response
-    {
-        $companyId = auth()->user()->current_company_id;
-        [$from, $to] = $this->dateRange($request);
-
-        $data = $this->reportService->payableList(
-            $companyId,
-            $from,
-            $to,
-            $request->filled('payment_status') ? $request->payment_status : null,
-        );
-
-        return Inertia::render('Reports/PayableList', [
-            'rows'    => $data['rows'],
-            'summary' => [
-                'total_amount'    => $data['total_amount'],
-                'total_paid'      => $data['total_paid'],
-                'total_remaining' => $data['total_remaining'],
-                'total_overdue'   => $data['total_overdue'],
-            ],
-            'filters' => [
-                'from'           => $from,
-                'to'             => $to,
-                'payment_status' => $request->payment_status ?? '',
-            ],
-        ]);
-    }
-
     public function incomeStatement(Request $request): Response
     {
         $companyId = auth()->user()->current_company_id;
