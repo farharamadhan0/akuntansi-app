@@ -35,7 +35,7 @@ class ProductService
                 'average_cost' => 0,
                 'inventory_account_id' => $data['inventory_account_id'] ?? $this->getDefaultInventoryAccountId($companyId),
                 'revenue_account_id' => $data['revenue_account_id'] ?? $this->getDefaultRevenueAccountId($companyId),
-                'expense_account_id' => $data['expense_account_id'] ?? $this->getDefaultExpenseAccountId($companyId),
+                'expense_account_id' => $data['expense_account_id'] ?? null,
                 'cogs_account_id' => $data['cogs_account_id'] ?? $this->getDefaultCogsAccountId($companyId),
                 'is_active' => $data['is_active'] ?? true,
                 'created_by' => auth()->id(),
