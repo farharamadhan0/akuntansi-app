@@ -61,6 +61,7 @@ class HandleInertiaRequests extends Middleware
             'company' => $request->user()?->currentCompany ? [
                 'id' => $request->user()->currentCompany->id,
                 'name' => $request->user()->currentCompany->name,
+                'enabled_menus' => $request->user()->currentCompany->enabledMenus(),
             ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

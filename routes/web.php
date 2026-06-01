@@ -10,6 +10,7 @@ use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\MenuSettingController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
@@ -237,6 +238,10 @@ Route::middleware('auth')->group(function () {
             Route::get('role/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
             Route::put('role/{role}', [RoleController::class, 'update'])->name('roles.update');
             Route::delete('role/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+
+            // Tampilan Menu (atur menu yang muncul untuk perusahaan)
+            Route::get('menu', [MenuSettingController::class, 'edit'])->name('settings.menu.edit');
+            Route::put('menu', [MenuSettingController::class, 'update'])->name('settings.menu.update');
         });
 
         // Laporan

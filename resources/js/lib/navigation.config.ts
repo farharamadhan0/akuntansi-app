@@ -18,6 +18,7 @@ import {
     Scale,
     UserCog,
     ShieldCheck,
+    SlidersHorizontal,
     Building2,
     Activity,
     Lightbulb,
@@ -136,6 +137,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
     pengaturan: [
         { key: "pengguna", label: "Pengguna", href: "/pengaturan/pengguna", icon: UserCog, ownerOnly: true },
         { key: "role", label: "Role", href: "/pengaturan/role", icon: ShieldCheck, ownerOnly: true },
+        { key: "menu", label: "Tampilan Menu", href: "/pengaturan/menu", icon: SlidersHorizontal, ownerOnly: true },
     ],
 };
 
@@ -189,4 +191,164 @@ export function isSidebarItemActive(itemHref: string, pathname: string): boolean
 export function getCategoryDefaultHref(categoryKey: string): string {
     const category = topNavCategories.find((c) => c.key === categoryKey);
     return category?.href ?? "/";
+}
+
+// ============================================================================
+// Konfigurasi Tampilan Menu (per perusahaan)
+// ============================================================================
+
+/**
+ * Identitas unik sebuah item menu = "<categoryKey>.<itemKey>".
+ * Menghindari tabrakan key antar kategori (mis. "transaksi" di laporan).
+ */
+export function menuId(categoryKey: string, itemKey: string): string {
+    return `${categoryKey}.${itemKey}`;
+}
+
+/**
+ * Menu default yang SELALU tampil dan tidak dapat dimatikan owner.
+ */
+export const DEFAULT_MENU_KEYS: string[] = [
+    "transaksi.uang-masuk",
+    "transaksi.uang-keluar",
+    "master-data.mitra",
+    "master-data.kas-bank",
+    "master-data.kategori",
+    "laporan.transaksi",
+    "laporan.laba-rugi",
+    "pengaturan.pengguna",
+    "pengaturan.role",
+    "pengaturan.menu",
+];
+
+export function isDefaultMenu(id: string): boolean {
+    return DEFAULT_MENU_KEYS.includes(id);
+}
+
+/**
+ * Tentukan apakah sebuah menu tampil berdasarkan preferensi perusahaan.
+ * - Menu default selalu tampil.
+ * - enabledMenus null/undefined (belum diatur) => hanya menu default.
+ * - enabledMenus array => default + key yang dipilih owner.
+ */
+export function isMenuEnabled(
+    id: string,
+    enabledMenus: string[] | null | undefined,
+): boolean {
+    if (isDefaultMenu(id)) return true;
+    if (enabledMenus == null) return false;
+    return enabledMenus.includes(id);
+}
+
+/**
+ * Definisi grup fungsional untuk halaman "Tampilan Menu".
+ * Mengelompokkan menu yang berkaitan secara fungsi, lintas kategori nav.
+ * `category`/`item` merujuk ke entry pada contextualSidebarItems.
+ */
+interface MenuSettingGroupDef {
+    key: string;
+    label: string;
+    members: { category: string; item: string }[];
+}
+
+export const menuSettingGroups: MenuSettingGroupDef[] = [
+    {
+        key: "kas-harian",
+        label: "Kas & Transaksi Harian",
+        members: [
+            { category: "transaksi", item: "uang-masuk" },
+            { category: "transaksi", item: "uang-keluar" },
+            { category: "master-data", item: "kas-bank" },
+            { category: "master-data", item: "kategori" },
+        ],
+    },
+    {
+        key: "produk-jual-beli",
+        label: "Produk, Penjualan & Pembelian",
+        members: [
+            { category: "master-data", item: "produk" },
+            { category: "transaksi", item: "penjualan" },
+            { category: "transaksi", item: "pembelian" },
+            { category: "transaksi", item: "stok-penyesuaian" },
+            { category: "master-data", item: "mitra" },
+        ],
+    },
+    {
+        key: "piutang-hutang",
+        label: "Piutang & Hutang",
+        members: [
+            { category: "transaksi", item: "piutang" },
+            { category: "transaksi", item: "hutang" },
+        ],
+    },
+    {
+        key: "akuntansi",
+        label: "Akuntansi",
+        members: [
+            { category: "transaksi", item: "jurnal" },
+            { category: "laporan", item: "buku-besar" },
+        ],
+    },
+    {
+        key: "laporan-keuangan",
+        label: "Laporan Keuangan",
+        members: [
+            { category: "laporan", item: "transaksi" },
+            { category: "laporan", item: "laba-rugi" },
+            { category: "laporan", item: "neraca" },
+            { category: "laporan", item: "arus-kas" },
+        ],
+    },
+    {
+        key: "pengaturan",
+        label: "Pengaturan",
+        members: [
+            { category: "pengaturan", item: "pengguna" },
+            { category: "pengaturan", item: "role" },
+            { category: "pengaturan", item: "menu" },
+        ],
+    },
+];
+
+/**
+ * Daftar item menu yang dapat dikonfigurasi, dikelompokkan secara fungsional
+ * (berdasarkan menuSettingGroups), untuk dirender di halaman pengaturan.
+ */
+export function getConfigurableMenuGroups(): {
+    key: string;
+    label: string;
+    items: { id: string; key: string; label: string; isDefault: boolean }[];
+}[] {
+    const findItem = (category: string, itemKey: string): NavItem | undefined =>
+        (contextualSidebarItems[category] ?? []).find((i) => i.key === itemKey);
+
+    return menuSettingGroups
+        .map((group) => ({
+            key: group.key,
+            label: group.label,
+            items: group.members
+                .map((m) => {
+                    const item = findItem(m.category, m.item);
+                    if (!item) return null;
+                    const id = menuId(m.category, m.item);
+                    return {
+                        id,
+                        key: item.key,
+                        label: item.label,
+                        isDefault: isDefaultMenu(id),
+                    };
+                })
+                .filter(
+                    (x): x is { id: string; key: string; label: string; isDefault: boolean } =>
+                        x !== null,
+                ),
+        }))
+        .filter((group) => group.items.length > 0);
+}
+
+/**
+ * Seluruh id menu yang valid (whitelist untuk validasi backend bila perlu).
+ */
+export function allMenuIds(): string[] {
+    return getConfigurableMenuGroups().flatMap((g) => g.items.map((i) => i.id));
 }

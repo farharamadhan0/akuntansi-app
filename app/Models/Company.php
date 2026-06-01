@@ -31,6 +31,19 @@ class Company extends Model
         'fiscal_year_start' => 'integer',
     ];
 
+    /**
+     * Daftar key menu tambahan yang diaktifkan owner.
+     * Mengembalikan null jika belum pernah dikonfigurasi (→ hanya menu default yang tampil).
+     *
+     * @return array<int, string>|null
+     */
+    public function enabledMenus(): ?array
+    {
+        $menus = $this->settings['enabled_menus'] ?? null;
+
+        return is_array($menus) ? array_values($menus) : null;
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'company_users')

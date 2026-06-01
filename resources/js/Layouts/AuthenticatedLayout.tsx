@@ -9,6 +9,8 @@ import {
     quickActions,
     getActiveCategoryKey,
     isSidebarItemActive,
+    isMenuEnabled,
+    menuId,
     type NavItem,
     type TopNavCategory,
 } from "@/lib/navigation.config";
@@ -26,8 +28,31 @@ import { Button } from "@/components/ui/button";
 
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
-    company?: { name: string };
+    company?: { name: string; enabled_menus?: string[] | null };
     [key: string]: unknown;
+}
+
+// ============================================================================
+// Helpers: visibilitas kategori berdasarkan permission + preferensi menu
+// ============================================================================
+
+function categoryHasVisibleItems(
+    categoryKey: string,
+    enabledMenus: string[] | null | undefined,
+    can: (p: string) => boolean,
+    isOwner: boolean,
+    isCompanyOwner: boolean,
+): boolean {
+    const items = contextualSidebarItems[categoryKey] ?? [];
+    // Kategori tanpa sidebar (mis. dashboard) selalu dianggap tampil.
+    if (items.length === 0) return true;
+
+    return items.some((item) => {
+        if (item.ownerOnly && !isCompanyOwner) return false;
+        if (item.permission && !isOwner && !can(item.permission)) return false;
+        if (!isMenuEnabled(menuId(categoryKey, item.key), enabledMenus)) return false;
+        return true;
+    });
 }
 
 // ============================================================================
@@ -43,12 +68,14 @@ function TopNavigation({
     onMobileMenuToggle: () => void;
     isMobileMenuOpen: boolean;
 }) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, company } = usePage<PageProps>().props;
     const { can, isOwner } = usePermissions();
+    const enabledMenus = company?.enabled_menus ?? null;
 
     const visibleCategories = topNavCategories.filter((cat) => {
         if (cat.ownerOnly && !auth.user.is_owner) return false;
         if (cat.permission && !isOwner && !can(cat.permission)) return false;
+        if (!categoryHasVisibleItems(cat.key, enabledMenus, can, isOwner, !!auth.user.is_owner)) return false;
         return true;
     });
 
@@ -81,8 +108,11 @@ function QuickActionButton() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { can, isOwner } = usePermissions();
+    const { company } = usePage<PageProps>().props;
+    const enabledMenus = company?.enabled_menus ?? null;
 
     const visibleActions = quickActions.filter((action) => {
+        if (!isMenuEnabled(menuId("transaksi", action.key), enabledMenus)) return false;
         if (!action.permission) return true;
         return isOwner || can(action.permission);
     });
@@ -136,8 +166,9 @@ function ContextualSidebar({
     activeCategoryKey: string;
     onItemClick?: () => void;
 }) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, company } = usePage<PageProps>().props;
     const { can, isOwner } = usePermissions();
+    const enabledMenus = company?.enabled_menus ?? null;
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
 
     const sidebarItems = contextualSidebarItems[activeCategoryKey] ?? [];
@@ -145,6 +176,7 @@ function ContextualSidebar({
     const visibleItems = sidebarItems.filter((item) => {
         if (item.ownerOnly && !auth.user.is_owner) return false;
         if (item.permission && !isOwner && !can(item.permission)) return false;
+        if (!isMenuEnabled(menuId(activeCategoryKey, item.key), enabledMenus)) return false;
         return true;
     });
 
@@ -209,13 +241,15 @@ function MobileNavDrawer({
     onClose: () => void;
     activeCategoryKey: string;
 }) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, company } = usePage<PageProps>().props;
     const { can, isOwner } = usePermissions();
+    const enabledMenus = company?.enabled_menus ?? null;
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
 
     const visibleCategories = topNavCategories.filter((cat) => {
         if (cat.ownerOnly && !auth.user.is_owner) return false;
         if (cat.permission && !isOwner && !can(cat.permission)) return false;
+        if (!categoryHasVisibleItems(cat.key, enabledMenus, can, isOwner, !!auth.user.is_owner)) return false;
         return true;
     });
 
@@ -223,6 +257,7 @@ function MobileNavDrawer({
     const visibleSidebarItems = sidebarItems.filter((item) => {
         if (item.ownerOnly && !auth.user.is_owner) return false;
         if (item.permission && !isOwner && !can(item.permission)) return false;
+        if (!isMenuEnabled(menuId(activeCategoryKey, item.key), enabledMenus)) return false;
         return true;
     });
 
