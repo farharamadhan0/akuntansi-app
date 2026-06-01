@@ -16,11 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \Illuminate\Session\Middleware\AuthenticateSession::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\TrackPageView::class,
         ]);
 
         $middleware->alias([
             'has.company' => \App\Http\Middleware\EnsureHasCompany::class,
             'is.owner' => \App\Http\Middleware\EnsureIsOwner::class,
+            'is.dev' => \App\Http\Middleware\EnsureDeveloper::class,
             'permission' => \App\Http\Middleware\EnsurePermission::class,
         ]);
     })

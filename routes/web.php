@@ -22,6 +22,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\DevDashboardController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -252,5 +253,10 @@ Route::middleware('auth')->group(function () {
             Route::get('arus-kas', [ReportController::class, 'cashFlow'])->middleware('permission:reports.cash_flow')->name('reports.cash-flow');
             Route::get('buku-besar', [ReportController::class, 'generalLedger'])->middleware('permission:reports.general_ledger')->name('reports.general-ledger');
         });
+    });
+
+    // Developer Dashboard (akses via DEV_EMAILS)
+    Route::middleware(['verified', 'is.dev'])->prefix('dev')->group(function () {
+        Route::get('dashboard', [DevDashboardController::class, 'index'])->name('dev.dashboard');
     });
 });
