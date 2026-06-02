@@ -21,7 +21,7 @@ import {
     Activity,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import DevLayout from "@/Layouts/DevLayout";
 
 interface TopItem {
     menu_key?: string;
@@ -102,7 +102,7 @@ export default function DevDashboard({
     period,
 }: Props) {
     return (
-        <AuthenticatedLayout>
+        <DevLayout>
             <Head title="Dev Dashboard" />
 
             <div className="space-y-6">
@@ -378,6 +378,6 @@ export default function DevDashboard({
                     </CardContent>
                 </Card>
             </div>
-        </AuthenticatedLayout>
+        </DevLayout>
     );
 }

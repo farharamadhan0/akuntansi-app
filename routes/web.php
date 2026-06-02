@@ -23,6 +23,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\DevDashboardController;
+use App\Http\Controllers\DevCompanyController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -257,6 +258,9 @@ Route::middleware('auth')->group(function () {
 
     // Developer Dashboard (akses via DEV_EMAILS)
     Route::middleware(['verified', 'is.dev'])->prefix('dev')->group(function () {
+        Route::redirect('/', '/dev/dashboard');
         Route::get('dashboard', [DevDashboardController::class, 'index'])->name('dev.dashboard');
+        Route::get('companies', [DevCompanyController::class, 'index'])->name('dev.companies.index');
+        Route::get('companies/{company}', [DevCompanyController::class, 'show'])->name('dev.companies.show');
     });
 });
