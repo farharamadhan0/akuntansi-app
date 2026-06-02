@@ -2,7 +2,7 @@ import { Link, usePage, router } from "@inertiajs/react";
 import { Toaster } from "sonner";
 import { useFlashToast } from "@/hooks/useFlashToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Activity, Building2, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Activity, Building2, ChevronDown, LogOut, LayoutDashboard, MessageSquare } from "lucide-react";
 import { type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ interface PageProps {
 const devNavItems = [
     { key: "dashboard", label: "Dashboard", href: "/dev/dashboard", icon: LayoutDashboard },
     { key: "companies", label: "Companies", href: "/dev/companies", icon: Building2 },
+    { key: "feedback", label: "Feedback", href: "/dev/feedback", icon: MessageSquare },
 ];
 
 function FlashToastHandler() {

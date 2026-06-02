@@ -24,6 +24,8 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\DevDashboardController;
 use App\Http\Controllers\DevCompanyController;
+use App\Http\Controllers\DevFeedbackController;
+use App\Http\Controllers\FeedbackController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -92,6 +94,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['verified', 'has.company'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
+        Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
         
         // Master Data - Mitra (gabungan pelanggan & supplier)
         Route::prefix('master')->group(function () {
@@ -262,5 +265,6 @@ Route::middleware('auth')->group(function () {
         Route::get('dashboard', [DevDashboardController::class, 'index'])->name('dev.dashboard');
         Route::get('companies', [DevCompanyController::class, 'index'])->name('dev.companies.index');
         Route::get('companies/{company}', [DevCompanyController::class, 'show'])->name('dev.companies.show');
+        Route::get('feedback', [DevFeedbackController::class, 'index'])->name('dev.feedback.index');
     });
 });

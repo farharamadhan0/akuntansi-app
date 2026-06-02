@@ -1,4 +1,4 @@
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, useForm, usePage, router } from "@inertiajs/react";
 import { Toaster } from "sonner";
 import { useFlashToast } from "@/hooks/useFlashToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,10 +21,13 @@ import {
     Plus,
     Menu,
     X,
+    MessageSquare,
+    Send,
 } from "lucide-react";
-import { type ReactNode, useState, useRef, useEffect } from "react";
+import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
@@ -152,6 +155,107 @@ function QuickActionButton() {
                 </div>
             )}
         </div>
+    );
+}
+
+function FeedbackButton() {
+    const [isOpen, setIsOpen] = useState(false);
+    const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm({
+        message: "",
+        page_url: "",
+    });
+
+    const close = () => {
+        setIsOpen(false);
+        reset();
+        clearErrors();
+    };
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+
+        transform((currentData) => ({
+            ...currentData,
+            page_url:
+                typeof window !== "undefined"
+                    ? `${window.location.pathname}${window.location.search}`
+                    : currentData.page_url,
+        }));
+
+        post("/feedback", {
+            preserveScroll: true,
+            onSuccess: close,
+        });
+    };
+
+    return (
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="h-9 gap-2"
+                onClick={() => setIsOpen(true)}
+            >
+                <MessageSquare size={16} />
+                <span className="hidden sm:inline">Feedback</span>
+            </Button>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md border border-gray-200 bg-white shadow-xl">
+                        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                            <div>
+                                <h2 className="text-sm font-semibold text-gray-900">
+                                    Beri Feedback
+                                </h2>
+                                <p className="text-xs text-gray-500">
+                                    Ceritakan kendala, ide, atau hal yang perlu diperbaiki.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={close}
+                                className="p-1.5 text-gray-500 hover:bg-gray-100"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={submit} className="space-y-4 p-4">
+                            <div className="space-y-1.5">
+                                <Textarea
+                                    value={data.message}
+                                    onChange={(event) => setData("message", event.target.value)}
+                                    className="min-h-32 resize-y text-sm"
+                                    placeholder="Tulis feedback kamu..."
+                                    autoFocus
+                                />
+                                {errors.message && (
+                                    <p className="text-xs text-red-600">{errors.message}</p>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={close}
+                                    disabled={processing}
+                                >
+                                    Batal
+                                </Button>
+                                <Button type="submit" size="lg" disabled={processing}>
+                                    <Send size={16} />
+                                    Kirim
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 
@@ -416,6 +520,8 @@ function Header({
 
             {/* Quick Action Button */}
             <QuickActionButton />
+
+            <FeedbackButton />
 
             {/* Tenant Selector */}
             {company && (
