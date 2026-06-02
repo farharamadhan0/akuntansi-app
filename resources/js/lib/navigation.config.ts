@@ -137,7 +137,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
     pengaturan: [
         { key: "pengguna", label: "Pengguna", href: "/pengaturan/pengguna", icon: UserCog, ownerOnly: true },
         { key: "role", label: "Role", href: "/pengaturan/role", icon: ShieldCheck, ownerOnly: true },
-        { key: "menu", label: "Tampilan Menu", href: "/pengaturan/menu", icon: SlidersHorizontal, ownerOnly: true },
+        { key: "fitur", label: "Fitur Aplikasi", href: "/pengaturan/fitur", icon: SlidersHorizontal, ownerOnly: true },
     ],
 };
 
@@ -218,7 +218,7 @@ export const DEFAULT_MENU_KEYS: string[] = [
     "laporan.laba-rugi",
     "pengaturan.pengguna",
     "pengaturan.role",
-    "pengaturan.menu",
+    "pengaturan.fitur",
 ];
 
 export function isDefaultMenu(id: string): boolean {

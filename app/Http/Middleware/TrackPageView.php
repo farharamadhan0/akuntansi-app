@@ -36,7 +36,7 @@ class TrackPageView
         'reports.cash-flow'         => 'laporan.arus-kas',
         'users.'                    => 'pengaturan.pengguna',
         'roles.'                    => 'pengaturan.role',
-        'settings.menu.'            => 'pengaturan.menu',
+        'settings.fitur.'           => 'pengaturan.fitur',
     ];
 
     public function handle(Request $request, Closure $next): Response

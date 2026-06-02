@@ -198,7 +198,7 @@ class DevDashboardController extends Controller
             'laporan.arus-kas'           => 'Arus Kas',
             'pengaturan.pengguna'        => 'Pengguna',
             'pengaturan.role'            => 'Role',
-            'pengaturan.menu'            => 'Tampilan Menu',
+            'pengaturan.fitur'           => 'Fitur Aplikasi',
             default                      => $menuKey,
         };
     }

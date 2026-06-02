@@ -241,8 +241,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('role/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
             // Tampilan Menu (atur menu yang muncul untuk perusahaan)
-            Route::get('menu', [MenuSettingController::class, 'edit'])->name('settings.menu.edit');
-            Route::put('menu', [MenuSettingController::class, 'update'])->name('settings.menu.update');
+            Route::get('fitur', [MenuSettingController::class, 'edit'])->name('settings.fitur.edit');
+            Route::put('fitur', [MenuSettingController::class, 'update'])->name('settings.fitur.update');
         });
 
         // Laporan

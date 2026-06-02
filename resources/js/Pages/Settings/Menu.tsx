@@ -54,7 +54,7 @@ export default function Menu({ enabledMenus }: Props) {
 
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        put('/pengaturan/menu', { preserveScroll: true });
+        put('/pengaturan/fitur', { preserveScroll: true });
     };
 
     const totalOptional = groups.reduce(
@@ -64,13 +64,13 @@ export default function Menu({ enabledMenus }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Tampilan Menu" />
+            <Head title="Fitur Aplikasi" />
 
             <div className="max-w-3xl mx-auto">
                 <Breadcrumb
                     items={[
                         { label: 'Pengaturan' },
-                        { label: 'Tampilan Menu' },
+                        { label: 'Fitur Aplikasi' },
                     ]}
                 />
 
@@ -80,11 +80,10 @@ export default function Menu({ enabledMenus }: Props) {
                     </div>
                     <div>
                         <h1 className="text-xl font-semibold text-gray-900">
-                            Tampilan Menu
+                            Fitur Aplikasi
                         </h1>
                         <p className="text-sm text-gray-500">
-                            Pilih menu yang ingin ditampilkan untuk seluruh pengguna perusahaan.
-                            Menu wajib selalu aktif dan tidak dapat dimatikan.
+                            Atur fitur dan menu yang ingin ditampilkan sesuai kebutuhan bisnis Anda.
                         </p>
                     </div>
                 </div>
@@ -94,12 +93,6 @@ export default function Menu({ enabledMenus }: Props) {
                         <CardContent className="p-5">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
-                                    <h2 className="text-sm font-semibold text-gray-800">
-                                        Menu Tambahan
-                                    </h2>
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                        Aktifkan menu sesuai kebutuhan usaha
-                                    </p>
                                 </div>
                                 <span className="text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2.5 py-1">
                                     {data.enabled_menus.length} / {totalOptional} aktif
@@ -158,7 +151,7 @@ export default function Menu({ enabledMenus }: Props) {
                                                             }`}
                                                             title={
                                                                 item.isDefault
-                                                                    ? 'Menu wajib, selalu aktif'
+                                                                    ? 'Fitur wajib, selalu aktif'
                                                                     : undefined
                                                             }
                                                         >
