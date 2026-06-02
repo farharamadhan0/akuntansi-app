@@ -20,6 +20,8 @@ class CompanySetupRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:500'],
             'phone' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
+            'enabled_menus' => ['nullable', 'array'],
+            'enabled_menus.*' => ['string'],
         ];
     }
 

@@ -27,7 +27,10 @@ class CompanySetupService
                 'currency' => $data['currency'] ?? 'IDR',
                 'timezone' => $data['timezone'] ?? 'Asia/Jakarta',
                 'fiscal_year_start' => $data['fiscal_year_start'] ?? 1,
-                'settings' => $data['settings'] ?? [],
+                'settings' => array_merge(
+                    $data['settings'] ?? [],
+                    isset($data['enabled_menus']) ? ['enabled_menus' => $data['enabled_menus']] : [],
+                ),
             ]);
 
             $this->createDefaultRoles($company);
