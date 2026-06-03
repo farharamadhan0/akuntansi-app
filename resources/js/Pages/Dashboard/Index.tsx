@@ -57,18 +57,6 @@ export default function Dashboard({
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {stats.draftCount > 0 && (
-                        <Link
-                            href="/laporan/transaksi?status=draft"
-                            className="flex items-center gap-2 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-md px-3 py-2 hover:bg-amber-100 transition-colors"
-                        >
-                            <FileClock size={14} />
-                            <span>
-                                {stats.draftCount} transaksi draft menunggu review
-                            </span>
-                            <ArrowRight size={12} />
-                        </Link>
-                    )}
                     <Button
                         variant="outline"
                         size="sm"

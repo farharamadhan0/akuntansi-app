@@ -525,13 +525,6 @@ function Header({
             <FeedbackButton />
 
             {/* Tenant Selector */}
-            {company && (
-                <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-md bg-gray-50">
-                    <Building2 size={14} className="text-gray-500" />
-                    <span className="truncate max-w-[200px] font-medium">{company.name}</span>
-                </div>
-            )}
-
             {/* User Menu */}
             <div className="relative" ref={userMenuRef}>
                 <button
@@ -549,10 +542,13 @@ function Header({
 
                 {showUserMenu && (
                     <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                        <div className="px-3 py-2 border-b border-gray-200 sm:hidden">
+                        <div className="px-3 py-2 border-b border-gray-200">
                             <div className="text-sm font-medium text-gray-800 truncate">{auth.user.name}</div>
                             {company && (
-                                <div className="text-xs text-gray-500 truncate">{company.name}</div>
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500 truncate">
+                                    <Building2 size={12} />
+                                    <span>{company.name}</span>
+                                </div>
                             )}
                         </div>
                         <button

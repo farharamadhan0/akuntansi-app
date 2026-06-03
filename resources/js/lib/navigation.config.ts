@@ -82,7 +82,7 @@ export const topNavCategories: TopNavCategory[] = [
     },
     {
         key: "master-data",
-        label: "Master Data",
+        label: "Master",
         href: "/master/mitra",
         icon: Package,
         matchPaths: ["/master"],
