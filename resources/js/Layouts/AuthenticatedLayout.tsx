@@ -28,6 +28,7 @@ import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "rea
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import logo from "@/assets/logo.png";
 
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
@@ -379,8 +380,8 @@ function MobileNavDrawer({
             <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl md:hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-                    <Link href="/" className="text-lg font-bold text-primary" onClick={onClose}>
-                        Emwal
+                    <Link href="/" onClick={onClose}>
+                        <img src={logo} alt="Emwal" className="h-8" />
                     </Link>
                     <button
                         onClick={onClose}
@@ -505,8 +506,8 @@ function Header({
             </button>
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 me-4">
-                <span className="text-lg font-bold text-primary">Emwal</span>
+            <Link href="/" className="me-3">
+                <img src={logo} alt="Emwal" className="h-8" />
             </Link>
 
             {/* Top Navigation (Desktop) */}

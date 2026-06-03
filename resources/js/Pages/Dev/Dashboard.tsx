@@ -1,4 +1,4 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
     BarChart,
     Bar,
@@ -348,8 +348,13 @@ export default function DevDashboard({
                                                 key={t.id}
                                                 className="border-b border-gray-50 last:border-0"
                                             >
-                                                <td className="py-2 pr-4 font-medium text-gray-800">
-                                                    {t.name}
+                                                <td className="py-2 pr-4 font-medium">
+                                                    <Link
+                                                        href={`/dev/companies/${t.id}`}
+                                                        className="text-violet-600 hover:text-violet-800 hover:underline"
+                                                    >
+                                                        {t.name}
+                                                    </Link>
                                                 </td>
                                                 <td className="py-2 pr-4 text-gray-500">
                                                     {t.email ?? "-"}
