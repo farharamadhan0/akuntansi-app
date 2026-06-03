@@ -61,8 +61,8 @@ export function Pagination({ transactions: t, perPage, onPerPageChange }: Pagina
         numberLinks.indexOf(visiblePages[visiblePages.length - 1]) < numberLinks.length - 1;
 
     return (
-        <div className="flex items-center justify-between px-4 py-3 border-t bg-white gap-4">
-            <div className="flex items-center gap-3">
+        <div className="flex flex-col items-stretch gap-3 border-t bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex flex-wrap items-center gap-3">
                 {showPerPage && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground whitespace-nowrap">Tampilkan</span>
@@ -75,7 +75,7 @@ export function Pagination({ transactions: t, perPage, onPerPageChange }: Pagina
                                 <option key={n} value={n}>{n}</option>
                             ))}
                         </select>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">per halaman</span>
+                        <span className="hidden text-sm text-muted-foreground whitespace-nowrap sm:inline">per halaman</span>
                     </div>
                 )}
                 <p className="text-sm text-muted-foreground">
@@ -91,7 +91,7 @@ export function Pagination({ transactions: t, perPage, onPerPageChange }: Pagina
                 </p>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between gap-1 sm:justify-start">
                 {t.prev_page_url ? (
                     <Link href={t.prev_page_url} preserveScroll>
                         <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">

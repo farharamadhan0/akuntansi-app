@@ -195,7 +195,7 @@ function FeedbackButton() {
                 type="button"
                 variant="outline"
                 size="lg"
-                className="h-9 gap-2"
+                className="hidden h-9 gap-2 sm:inline-flex"
                 onClick={() => setIsOpen(true)}
             >
                 <MessageSquare size={16} />
@@ -496,18 +496,18 @@ function Header({
     }, []);
 
     return (
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-gray-200 bg-white px-4 md:px-6 py-3">
+        <header className="sticky top-0 z-30 flex min-w-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-3 sm:gap-3 sm:px-4 md:px-6">
             {/* Mobile menu button */}
             <button
                 onClick={onMobileMenuToggle}
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-md md:hidden"
+                className="shrink-0 p-2 text-gray-500 hover:bg-gray-100 rounded-md md:hidden"
             >
                 <Menu size={20} />
             </button>
 
             {/* Logo */}
-            <Link href="/" className="me-3">
-                <img src={logo} alt="Emwal" className="h-8" />
+            <Link href="/" className="me-auto min-w-0 shrink md:me-3">
+                <img src={logo} alt="Emwal" className="h-8 max-w-[132px] object-contain sm:max-w-none" />
             </Link>
 
             {/* Top Navigation (Desktop) */}
@@ -517,7 +517,7 @@ function Header({
                 isMobileMenuOpen={isMobileMenuOpen}
             />
 
-            <div className="flex-1" />
+            <div className="hidden flex-1 md:block" />
 
             {/* Quick Action Button */}
             <QuickActionButton />
@@ -529,7 +529,7 @@ function Header({
             <div className="relative" ref={userMenuRef}>
                 <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-1 rounded-md px-1 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors sm:gap-2 sm:px-2"
                 >
                     <Avatar className="w-7 h-7">
                         <AvatarFallback className="text-xs">
@@ -537,7 +537,7 @@ function Header({
                         </AvatarFallback>
                     </Avatar>
                     <span className="hidden sm:inline truncate max-w-[140px]">{auth.user.name}</span>
-                    <ChevronDown size={14} />
+                    <ChevronDown size={14} className="hidden sm:block" />
                 </button>
 
                 {showUserMenu && (
@@ -598,7 +598,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
             />
 
             {/* Main Content Area with Contextual Sidebar */}
-            <div className="flex">
+            <div className="flex min-w-0">
                 {/* Contextual Sidebar (Desktop) */}
                 <div className="hidden md:block">
                     <div className="sticky top-[61px] h-[calc(100vh-61px)]">
@@ -607,7 +607,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
                 </div>
 
                 {/* Main Content */}
-                <main className="flex-1 px-4 md:px-8 py-6 min-h-[calc(100vh-61px)]">
+                <main className="min-w-0 flex-1 px-4 md:px-8 py-6 min-h-[calc(100vh-61px)]">
                     {children}
                 </main>
             </div>
