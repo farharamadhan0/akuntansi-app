@@ -123,7 +123,7 @@ function SortableItem({
         <div
             ref={setNodeRef}
             style={style}
-            className={`flex items-center gap-3 py-2.5 px-3 rounded-md border transition-colors select-none ${
+            className={`flex flex-wrap items-center gap-3 py-2.5 px-3 rounded-md border transition-colors select-none sm:flex-nowrap ${
                 isDragging
                     ? "bg-blue-50 border-blue-300 shadow-md z-10 relative"
                     : item.visible
@@ -157,10 +157,12 @@ function SortableItem({
 
             {/* Size selector - only shown when visible */}
             {item.visible && (
-                <SizeSelector
-                    value={item.size}
-                    onChange={(size) => onSizeChange(item.widgetId, size)}
-                />
+                <div className="ml-10 sm:ml-0">
+                    <SizeSelector
+                        value={item.size}
+                        onChange={(size) => onSizeChange(item.widgetId, size)}
+                    />
+                </div>
             )}
         </div>
     );
@@ -321,9 +323,9 @@ export default function CustomizeModal({
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-3 max-h-[90vh] flex flex-col sm:mx-4">
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b">
+                <div className="flex items-start justify-between gap-3 px-4 py-4 border-b sm:px-5">
                     <div>
                         <h2 className="text-sm font-semibold text-gray-800">
                             Sesuaikan Dashboard
@@ -342,7 +344,7 @@ export default function CustomizeModal({
                 </div>
 
                 {/* Live Preview */}
-                <div className="px-5 pt-3 pb-2 border-b bg-gray-50/50">
+                <div className="px-4 pt-3 pb-2 border-b bg-gray-50/50 sm:px-5">
                     <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">
                         Preview Layout
                     </p>
@@ -350,7 +352,7 @@ export default function CustomizeModal({
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto px-5 py-3">
+                <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5">
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -375,7 +377,7 @@ export default function CustomizeModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between px-5 py-3 border-t bg-gray-50">
+                <div className="flex flex-col gap-2 px-4 py-3 border-t bg-gray-50 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -384,15 +386,16 @@ export default function CustomizeModal({
                         <RotateCcw size={12} />
                         Reset Default
                     </Button>
-                    <div className="flex gap-2">
+                    <div className="flex w-full gap-2 sm:w-auto">
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={onClose}
+                            className="flex-1 sm:flex-none"
                         >
                             Batal
                         </Button>
-                        <Button size="sm" onClick={handleSave}>
+                        <Button size="sm" onClick={handleSave} className="flex-1 sm:flex-none">
                             Simpan
                         </Button>
                     </div>

@@ -45,9 +45,9 @@ export default function RecentTransactions({ recentTransactions }: RecentTransac
                             <Link
                                 key={t.id}
                                 href={`/transaksi/${t.type === "income" ? "uang-masuk" : "uang-keluar"}/${t.id}`}
-                                className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded transition-colors"
+                                className="flex flex-col gap-1 py-2 border-b last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded transition-colors sm:flex-row sm:items-center sm:justify-between"
                             >
-                                <div className="flex items-center gap-2 min-w-0">
+                                <div className="flex min-w-0 items-center gap-2 self-stretch sm:self-auto">
                                     <div
                                         className={`p-1.5 rounded ${t.type === "income" ? "bg-green-50" : "bg-red-50"}`}
                                     >
@@ -82,7 +82,7 @@ export default function RecentTransactions({ recentTransactions }: RecentTransac
                                     </div>
                                 </div>
                                 <span
-                                    className={`text-sm font-semibold whitespace-nowrap ml-2 ${t.type === "income" ? "text-green-600" : "text-red-600"}`}
+                                    className={`ml-8 text-sm font-semibold sm:ml-2 sm:whitespace-nowrap ${t.type === "income" ? "text-green-600" : "text-red-600"}`}
                                 >
                                     {t.type === "income" ? "+" : "-"}
                                     {formatCurrency(t.amount)}

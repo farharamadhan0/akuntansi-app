@@ -74,7 +74,7 @@ function StatCard({
                         </Link>
                     )}
                 </div>
-                <p className={`text-lg font-bold ${valueColor}`}>{value}</p>
+                <p className={`break-words text-base font-bold sm:text-lg ${valueColor}`}>{value}</p>
                 <div className="flex items-center gap-2 mt-0.5 min-h-4">
                     {renderDelta()}
                     {subtitle && (
@@ -123,7 +123,7 @@ export default function SummaryCards({ stats, cashBankAccountCount }: SummaryCar
             : null;
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
                 title="Uang Masuk"
                 value={formatCurrency(stats.incomeThisMonth)}

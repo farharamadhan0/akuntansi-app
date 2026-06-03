@@ -26,7 +26,7 @@ export default function TrendChart({ trend }: TrendChartProps) {
     return (
         <Card className="h-full">
             <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col gap-1 mb-3 sm:flex-row sm:items-center sm:justify-between">
                     <h2 className="text-sm font-semibold text-gray-700">
                         Tren 6 Bulan Terakhir
                     </h2>

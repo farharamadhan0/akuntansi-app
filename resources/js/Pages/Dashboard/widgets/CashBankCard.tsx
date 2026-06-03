@@ -46,9 +46,9 @@ export default function CashBankCard({ cashBankAccounts }: CashBankCardProps) {
                         {cashBankAccounts.map((acc) => (
                             <div
                                 key={acc.id}
-                                className="flex items-center justify-between py-2 border-b last:border-0"
+                                className="flex flex-col gap-1 py-2 border-b last:border-0 sm:flex-row sm:items-center sm:justify-between"
                             >
-                                <div className="flex items-center gap-2 min-w-0">
+                                <div className="flex min-w-0 items-center gap-2 self-stretch sm:self-auto">
                                     <div
                                         className={`p-1.5 rounded ${acc.type === "cash" ? "bg-green-50" : "bg-blue-50"}`}
                                     >
@@ -71,7 +71,7 @@ export default function CashBankCard({ cashBankAccounts }: CashBankCardProps) {
                                     </div>
                                 </div>
                                 <span
-                                    className={`text-sm font-semibold whitespace-nowrap ml-2 ${acc.balance >= 0 ? "text-gray-900" : "text-red-600"}`}
+                                    className={`ml-8 text-sm font-semibold sm:ml-2 sm:whitespace-nowrap ${acc.balance >= 0 ? "text-gray-900" : "text-red-600"}`}
                                 >
                                     {formatCurrency(acc.balance)}
                                 </span>
