@@ -112,6 +112,42 @@ function formatPaymentType(purchase: Purchase) {
     );
 }
 
+function paymentTypeBadge(purchase: Purchase) {
+    if (purchase.payment_type === 'cash') {
+        return (
+            <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                Tunai
+            </span>
+        );
+    }
+
+    const statusLabel: Record<'unpaid' | 'partial' | 'paid', string> = {
+        unpaid: 'belum lunas',
+        partial: 'lunas sebagian',
+        paid: 'lunas',
+    };
+
+    const statusColor: Record<'unpaid' | 'partial' | 'paid', string> = {
+        unpaid: 'bg-red-100 text-red-700',
+        partial: 'bg-yellow-100 text-yellow-700',
+        paid: 'bg-green-100 text-green-700',
+    };
+
+    const status = purchase.payable_payment_status ? statusLabel[purchase.payable_payment_status] : 'belum lunas';
+    const statusColorClass = purchase.payable_payment_status ? statusColor[purchase.payable_payment_status] : 'bg-gray-100 text-gray-700';
+
+    return (
+        <>
+            <span className="inline-flex rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700">
+                Kredit
+            </span>
+            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColorClass}`}>
+                {status}
+            </span>
+        </>
+    );
+}
+
 export default function Index({ purchases, summary, filters }: Props) {
     const { can } = usePermissions();
     const filter = (filters?.status as FilterType) || 'posted';
@@ -135,21 +171,21 @@ export default function Index({ purchases, summary, filters }: Props) {
             <Head title="Pembelian" />
             <Breadcrumb items={[{ label: 'Transaksi' }, { label: 'Pembelian' }]} />
 
-            <div className="mb-6 flex items-center justify-between">
-                <div>
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                        <ShoppingCart className="text-emerald-600" size={26} />
+                        <ShoppingCart className="shrink-0 text-emerald-600" size={26} />
                         Pembelian
                     </h1>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="mt-0.5 max-w-full text-sm text-gray-500">
                         Catatan pembelian barang dan jasa.
                     </p>
                 </div>
                 {can('purchases.create') && (
-                    <Link href="/transaksi/pembelian/buat">
-                        <Button className="gap-2">
-                            <Plus size={16} />
-                            Buat Pembelian
+                    <Link href="/transaksi/pembelian/buat" className="w-full sm:w-auto">
+                        <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
+                            <Plus size={16} className="shrink-0" />
+                            <span className="truncate">Buat Pembelian</span>
                         </Button>
                     </Link>
                 )}
@@ -157,26 +193,26 @@ export default function Index({ purchases, summary, filters }: Props) {
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Card>
-                    <CardContent className="flex items-center gap-4 p-4">
-                        <div className="rounded-lg bg-emerald-50 p-2">
+                    <CardContent className="flex items-start gap-3 p-4 sm:items-center sm:gap-4">
+                        <div className="shrink-0 rounded-lg bg-emerald-50 p-2">
                             <ArrowDownCircle className="text-emerald-600" size={22} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-xs text-muted-foreground">Total Pembelian</p>
-                            <p className="text-lg font-bold text-emerald-700">
+                            <p className="text-base font-bold text-emerald-700 [overflow-wrap:anywhere] sm:text-lg">
                                 {formatCurrency(summary.total_posted)}
                             </p>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="flex items-center gap-4 p-4">
-                        <div className="rounded-lg bg-blue-50 p-2">
+                    <CardContent className="flex items-start gap-3 p-4 sm:items-center sm:gap-4">
+                        <div className="shrink-0 rounded-lg bg-blue-50 p-2">
                             <ShoppingCart className="text-blue-600" size={22} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-xs text-muted-foreground">Jumlah Transaksi</p>
-                            <p className="text-lg font-bold text-blue-700">
+                            <p className="text-base font-bold text-blue-700 [overflow-wrap:anywhere] sm:text-lg">
                                 {summary.count_posted} transaksi
                             </p>
                         </div>
@@ -197,56 +233,99 @@ export default function Index({ purchases, summary, filters }: Props) {
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nomor</TableHead>
-                                <TableHead>Tanggal</TableHead>
-                                <TableHead>Mitra</TableHead>
-                                <TableHead>Pembayaran</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filtered.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                                        <ShoppingCart size={40} className="mx-auto mb-2 text-gray-300" />
-                                        <p>Belum ada pembelian</p>
-                                        <p className="mt-1 text-sm">Klik "Buat Pembelian" untuk mencatat pembelian pertama.</p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filtered.map((purchase) => (
-                                    <TableRow key={purchase.id}>
-                                        <TableCell className="font-mono text-xs text-muted-foreground">
-                                            <Link href={`/transaksi/pembelian/${purchase.id}`} className="font-mono text-sm text-primary hover:underline">
-                                                {purchase.purchase_number}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                                            {formatDate(purchase.date)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <p className="text-xs text-muted-foreground">
-                                                {purchase.partner_name ?? purchase.cash_bank_name ?? '-'}
+                    {filtered.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-muted-foreground">
+                            <ShoppingCart size={40} className="mx-auto mb-2 text-gray-300" />
+                            <p>Belum ada pembelian</p>
+                            <p className="mt-1 text-sm">Klik "Buat Pembelian" untuk mencatat pembelian pertama.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="divide-y md:hidden">
+                                {filtered.map((purchase) => (
+                                    <Link
+                                        key={purchase.id}
+                                        href={`/transaksi/pembelian/${purchase.id}`}
+                                        className="block p-4 transition-colors hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate font-mono text-sm text-primary">
+                                                    {purchase.purchase_number}
+                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {formatDate(purchase.date)}
+                                                </p>
+                                            </div>
+                                            <p className="min-w-0 text-right text-sm font-semibold text-emerald-700 [overflow-wrap:anywhere]">
+                                                {formatCurrency(purchase.total_amount)}
                                             </p>
-                                        </TableCell>
-                                        <TableCell>{formatPaymentType(purchase)}</TableCell>
-                                        <TableCell>
+                                        </div>
+
+                                        <p className="mt-3 text-sm font-medium text-gray-900 [overflow-wrap:anywhere]">
+                                            {purchase.partner_name ?? purchase.cash_bank_name ?? '-'}
+                                        </p>
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            {paymentTypeBadge(purchase)}
                                             <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[purchase.status] ?? 'bg-gray-100 text-gray-700'}`}>
                                                 {purchase.status_label}
                                             </span>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap text-right font-semibold">
-                                            {formatCurrency(purchase.total_amount)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                        </div>
+
+                                        {purchase.due_date && (
+                                            <div className="mt-3 text-xs text-muted-foreground">
+                                                <p>Jatuh tempo: {formatDate(purchase.due_date)}</p>
+                                            </div>
+                                        )}
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="hidden overflow-x-auto md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Nomor</TableHead>
+                                            <TableHead>Tanggal</TableHead>
+                                            <TableHead>Mitra</TableHead>
+                                            <TableHead>Pembayaran</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Total</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filtered.map((purchase) => (
+                                            <TableRow key={purchase.id}>
+                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                                    <Link href={`/transaksi/pembelian/${purchase.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                        {purchase.purchase_number}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                                                    {formatDate(purchase.date)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {purchase.partner_name ?? purchase.cash_bank_name ?? '-'}
+                                                    </p>
+                                                </TableCell>
+                                                <TableCell>{formatPaymentType(purchase)}</TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[purchase.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                                        {purchase.status_label}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap text-right font-semibold">
+                                                    {formatCurrency(purchase.total_amount)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
+                    )}
                     <Pagination transactions={purchases} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>

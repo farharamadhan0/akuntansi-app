@@ -10,6 +10,7 @@ import {
     ToggleLeft,
     ToggleRight,
     MoreVertical,
+    Tags,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -95,20 +96,21 @@ export default function Index({ categories, summary, filters }: Props) {
                 { label: "Kategori Transaksi" },
             ]} />
 
-            <div className="mb-6 flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                    <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                        <Tags className="shrink-0 text-purple-600" size={26} />
                         Kategori Transaksi
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="mt-0.5 max-w-full text-sm text-gray-600">
                         Kelola kategori pemasukan dan pengeluaran
                     </p>
                 </div>
                 {can("accounts.create") && (
-                    <Link href="/master/kategori/tambah">
-                        <Button>
-                            <Plus size={18} />
-                            Tambah Kategori
+                    <Link href="/master/kategori/tambah" className="w-full sm:w-auto">
+                        <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
+                            <Plus size={18} className="shrink-0" />
+                            <span className="truncate">Tambah Kategori</span>
                         </Button>
                     </Link>
                 )}
@@ -127,43 +129,31 @@ export default function Index({ categories, summary, filters }: Props) {
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nama Kategori</TableHead>
-                                <TableHead>Jenis</TableHead>
-                                <TableHead className="w-10"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {categories.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
-                                        Belum ada kategori. Klik "Tambah Kategori" untuk memulai.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                categories.data.map((cat) => (
-                                    <TableRow key={cat.id} className={!cat.is_active ? "opacity-60" : ""}>
-                                        <TableCell>
-                                            <p className="font-medium">{cat.name}</p>
-                                            {cat.description && (
-                                                <p className="text-xs text-muted-foreground">{cat.description}</p>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                                                cat.type === "income"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-red-100 text-red-700"
-                                            }`}>
-                                                {cat.type === "income" ? "Pemasukan" : "Pengeluaran"}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
+                    {categories.data.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-muted-foreground">
+                            <Tags size={40} className="mx-auto mb-2 text-gray-300" />
+                            <p>Belum ada kategori</p>
+                            <p className="mt-1 text-sm">Klik "Tambah Kategori" untuk menambahkan kategori pertama.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="divide-y md:hidden">
+                                {categories.data.map((cat) => (
+                                    <div key={cat.id} className={`p-4 ${!cat.is_active ? "opacity-60" : ""}`}>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-gray-900 [overflow-wrap:anywhere]">
+                                                    {cat.name}
+                                                </p>
+                                                {cat.description && (
+                                                    <p className="mt-1 text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                                                        {cat.description}
+                                                    </p>
+                                                )}
+                                            </div>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" className="shrink-0">
                                                         <MoreVertical size={16} />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -201,12 +191,100 @@ export default function Index({ categories, summary, filters }: Props) {
                                                     )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                        </div>
+
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                                                cat.type === "income"
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-red-100 text-red-700"
+                                            }`}>
+                                                {cat.type === "income" ? "Pemasukan" : "Pengeluaran"}
+                                            </span>
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${cat.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                                                {cat.is_active ? "Aktif" : "Nonaktif"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="hidden overflow-x-auto md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Nama Kategori</TableHead>
+                                            <TableHead>Jenis</TableHead>
+                                            <TableHead className="w-10"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {categories.data.map((cat) => (
+                                            <TableRow key={cat.id} className={!cat.is_active ? "opacity-60" : ""}>
+                                                <TableCell>
+                                                    <p className="font-medium">{cat.name}</p>
+                                                    {cat.description && (
+                                                        <p className="text-xs text-muted-foreground">{cat.description}</p>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                                                        cat.type === "income"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                    }`}>
+                                                        {cat.type === "income" ? "Pemasukan" : "Pengeluaran"}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm">
+                                                                <MoreVertical size={16} />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {can("accounts.edit") && (
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={`/master/kategori/${cat.id}/edit`} className="flex items-center gap-2">
+                                                                        <Pencil size={15} />
+                                                                        Edit
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {can("accounts.edit") && (
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleToggle(cat.id)}
+                                                                    className="flex items-center gap-2"
+                                                                >
+                                                                    {cat.is_active
+                                                                        ? <><ToggleRight size={15} className="text-green-600" />Nonaktifkan</>
+                                                                        : <><ToggleLeft size={15} className="text-gray-400" />Aktifkan</>
+                                                                    }
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {can("accounts.delete") && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDelete(cat.id)}
+                                                                        className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
+                                                                    >
+                                                                        <Trash2 size={15} />
+                                                                        Hapus
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
+                    )}
                     <Pagination transactions={categories} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>

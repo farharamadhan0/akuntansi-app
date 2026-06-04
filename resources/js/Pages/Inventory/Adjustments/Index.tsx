@@ -73,59 +73,94 @@ export default function Index({ adjustments, filters }: Props) {
             <Head title="Penyesuaian Stok" />
             <Breadcrumb items={[{ label: 'Transaksi' }, { label: 'Penyesuaian Stok' }]} />
 
-            <div className="mb-6 flex items-center justify-between">
-                <div>
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                        <Boxes className="text-rose-600" size={24} />
+                        <Boxes className="shrink-0 text-rose-600" size={24} />
                         Penyesuaian Stok
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Koreksi stok fisik terhadap saldo sistem.</p>
+                    <p className="mt-1 max-w-full text-sm text-muted-foreground">Koreksi stok fisik terhadap saldo sistem.</p>
                 </div>
                 {can('inventory_adjustments.create') && (
-                    <Link href="/transaksi/stok-penyesuaian/buat">
-                        <Button className="gap-2"><Plus size={16} />Buat Penyesuaian</Button>
+                    <Link href="/transaksi/stok-penyesuaian/buat" className="w-full sm:w-auto">
+                        <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
+                            <Plus size={16} className="shrink-0" />
+                            <span className="truncate">Buat Penyesuaian</span>
+                        </Button>
                     </Link>
                 )}
             </div>
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nomor</TableHead>
-                                <TableHead>Tanggal</TableHead>
-                                <TableHead>Catatan</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {adjustments.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                                        Belum ada penyesuaian stok.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                adjustments.data.map((adjustment) => (
-                                    <TableRow key={adjustment.id}>
-                                        <TableCell>
-                                            <Link href={`/transaksi/stok-penyesuaian/${adjustment.id}`} className="font-mono text-sm text-primary hover:underline">
-                                                {adjustment.adjustment_number}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>{formatDate(adjustment.date)}</TableCell>
-                                        <TableCell>{adjustment.notes || '-'}</TableCell>
-                                        <TableCell>
-                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                    {adjustments.data.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-muted-foreground">
+                            <Boxes size={40} className="mx-auto mb-2 text-gray-300" />
+                            <p>Belum ada penyesuaian stok</p>
+                            <p className="mt-1 text-sm">Klik "Buat Penyesuaian" untuk mencatat koreksi stok pertama.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="divide-y md:hidden">
+                                {adjustments.data.map((adjustment) => (
+                                    <Link
+                                        key={adjustment.id}
+                                        href={`/transaksi/stok-penyesuaian/${adjustment.id}`}
+                                        className="block p-4 transition-colors hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate font-mono text-sm text-primary">
+                                                    {adjustment.adjustment_number}
+                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {formatDate(adjustment.date)}
+                                                </p>
+                                            </div>
+                                            <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
                                                 {adjustment.status_label}
                                             </span>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                        </div>
+
+                                        <p className="mt-3 text-sm font-medium text-gray-900 [overflow-wrap:anywhere]">
+                                            {adjustment.notes || '-'}
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="hidden overflow-x-auto md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Nomor</TableHead>
+                                            <TableHead>Tanggal</TableHead>
+                                            <TableHead>Catatan</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {adjustments.data.map((adjustment) => (
+                                            <TableRow key={adjustment.id}>
+                                                <TableCell>
+                                                    <Link href={`/transaksi/stok-penyesuaian/${adjustment.id}`} className="font-mono text-sm text-primary hover:underline">
+                                                        {adjustment.adjustment_number}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>{formatDate(adjustment.date)}</TableCell>
+                                                <TableCell>{adjustment.notes || '-'}</TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusBadge[adjustment.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                                        {adjustment.status_label}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
+                    )}
                     <Pagination transactions={adjustments} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>

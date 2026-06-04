@@ -126,29 +126,29 @@ export default function Index({ partners, filters }: Props) {
                 { label: 'Mitra' },
             ]} />
 
-            <div className="mb-6 flex items-center justify-between">
-                <div>
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                        <Users className="text-blue-500" size={26} />
+                        <Users className="shrink-0 text-blue-500" size={26} />
                         Data Mitra
                     </h1>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="mt-0.5 max-w-full text-sm text-gray-500">
                         Kelola daftar mitra (pelanggan & supplier) perusahaan
                     </p>
                 </div>
                 {can('partners.create') && (
-                    <Link href="/master/mitra/tambah">
-                        <Button className="gap-1.5">
-                            <Plus size={18} />
-                            Tambah Mitra
+                    <Link href="/master/mitra/tambah" className="w-full sm:w-auto">
+                        <Button className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto">
+                            <Plus size={18} className="shrink-0" />
+                            <span className="truncate">Tambah Mitra</span>
                         </Button>
                     </Link>
                 )}
             </div>
 
             <div className="mb-4 flex flex-col gap-3">
-                <form onSubmit={handleSearch} className="flex flex-1 gap-2">
-                    <div className="relative max-w-sm flex-1">
+                <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row">
+                    <div className="relative flex-1 sm:max-w-sm">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <Input
                             placeholder="Cari nama, kode, telepon, email..."
@@ -157,30 +157,32 @@ export default function Index({ partners, filters }: Props) {
                             className="pl-9"
                         />
                     </div>
-                    <Button type="submit" variant="outline">Cari</Button>
+                    <Button type="submit" variant="outline" className="w-full sm:w-auto">Cari</Button>
                 </form>
 
-                <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500">Tipe:</span>
+                <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="w-full text-xs font-medium text-gray-500 sm:w-auto">Tipe:</span>
                         {(['all', 'customer', 'supplier'] as const).map((t) => (
                             <Button
                                 key={t}
                                 variant={activeType === t ? 'default' : 'outline'}
                                 size="sm"
+                                className="min-w-0"
                                 onClick={() => handleTypeFilter(t)}
                             >
                                 {t === 'all' ? 'Semua' : typeLabel[t]}
                             </Button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500">Status:</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="w-full text-xs font-medium text-gray-500 sm:w-auto">Status:</span>
                         {(['all', 'active', 'inactive'] as const).map((s) => (
                             <Button
                                 key={s}
                                 variant={activeStatus === s ? 'default' : 'outline'}
                                 size="sm"
+                                className="min-w-0"
                                 onClick={() => handleStatusFilter(s)}
                             >
                                 {s === 'all' && 'Semua'}
@@ -194,58 +196,29 @@ export default function Index({ partners, filters }: Props) {
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Kode</TableHead>
-                                <TableHead>Nama</TableHead>
-                                <TableHead>Tipe</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Telepon</TableHead>
-                                <TableHead className="w-10"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {partners.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="py-8 text-center text-gray-400">
-                                        Belum ada data mitra. Klik "Tambah Mitra" untuk memulai.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                partners.data.map((p) => (
-                                    <TableRow key={p.id} className={!p.is_active ? 'opacity-60' : ''}>
-                                        <TableCell className="font-mono text-sm">
-                                            <Link
-                                                href={`/master/mitra/${p.id}`}
-                                                className="text-blue-600 hover:underline"
-                                            >
-                                                {p.code || 'Tanpa kode'}
+                    {partners.data.length === 0 ? (
+                        <div className="px-4 py-12 text-center text-muted-foreground">
+                            <Users size={40} className="mx-auto mb-2 text-gray-300" />
+                            <p>Belum ada data mitra</p>
+                            <p className="mt-1 text-sm">Klik "Tambah Mitra" untuk menambahkan mitra pertama.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="divide-y md:hidden">
+                                {partners.data.map((p) => (
+                                    <div key={p.id} className={`p-4 ${!p.is_active ? 'opacity-60' : ''}`}>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <Link href={`/master/mitra/${p.id}`} className="min-w-0 flex-1">
+                                                <p className="truncate font-mono text-sm text-primary">
+                                                    {p.code || 'Tanpa kode'}
+                                                </p>
+                                                <p className="mt-1 text-sm font-medium text-gray-900 [overflow-wrap:anywhere]">
+                                                    {p.name}
+                                                </p>
                                             </Link>
-                                        </TableCell>
-                                        <TableCell className="font-medium">{p.name}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {p.types.length === 0 ? (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                ) : (
-                                                    p.types.map((t) => (
-                                                        <span
-                                                            key={t}
-                                                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass[t] ?? 'bg-slate-100 text-slate-700'}`}
-                                                        >
-                                                            {typeLabel[t] ?? t}
-                                                        </span>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-gray-500">{p.email || '-'}</TableCell>
-                                        <TableCell className="text-gray-500">{p.phone || '-'}</TableCell>
-                                        <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" className="shrink-0">
                                                         <MoreVertical size={16} />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -280,28 +253,140 @@ export default function Index({ partners, filters }: Props) {
                                                     )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                        </div>
+
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {p.types.length === 0 ? (
+                                                <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">Tanpa tipe</span>
+                                            ) : (
+                                                p.types.map((t) => (
+                                                    <span
+                                                        key={t}
+                                                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${typeBadgeClass[t] ?? 'bg-slate-100 text-slate-700'}`}
+                                                    >
+                                                        {typeLabel[t] ?? t}
+                                                    </span>
+                                                ))
+                                            )}
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                {p.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </div>
+
+                                        {(p.email || p.phone) && (
+                                            <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                                                {p.email && <p className="[overflow-wrap:anywhere]">Email: {p.email}</p>}
+                                                {p.phone && <p className="[overflow-wrap:anywhere]">Telepon: {p.phone}</p>}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="hidden overflow-x-auto md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Kode</TableHead>
+                                            <TableHead>Nama</TableHead>
+                                            <TableHead>Tipe</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Telepon</TableHead>
+                                            <TableHead className="w-10"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {partners.data.map((p) => (
+                                            <TableRow key={p.id} className={!p.is_active ? 'opacity-60' : ''}>
+                                                <TableCell className="font-mono text-sm">
+                                                    <Link
+                                                        href={`/master/mitra/${p.id}`}
+                                                        className="text-blue-600 hover:underline"
+                                                    >
+                                                        {p.code || 'Tanpa kode'}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell className="font-medium">{p.name}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {p.types.length === 0 ? (
+                                                            <span className="text-xs text-gray-400">-</span>
+                                                        ) : (
+                                                            p.types.map((t) => (
+                                                                <span
+                                                                    key={t}
+                                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass[t] ?? 'bg-slate-100 text-slate-700'}`}
+                                                                >
+                                                                    {typeLabel[t] ?? t}
+                                                                </span>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-gray-500">{p.email || '-'}</TableCell>
+                                                <TableCell className="text-gray-500">{p.phone || '-'}</TableCell>
+                                                <TableCell>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm">
+                                                                <MoreVertical size={16} />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {can('partners.edit') && (
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={`/master/mitra/${p.id}/edit`} className="flex items-center gap-2">
+                                                                        <Pencil size={14} />
+                                                                        Edit
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {can('partners.edit') && (
+                                                                <DropdownMenuItem onClick={() => handleToggle(p)} className="flex items-center gap-2">
+                                                                    {p.is_active
+                                                                        ? <><ToggleRight size={14} className="text-green-600" /> Nonaktifkan</>
+                                                                        : <><ToggleLeft size={14} className="text-gray-400" /> Aktifkan</>
+                                                                    }
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {can('partners.delete') && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => setDeleteTarget(p)}
+                                                                        className="flex items-center gap-2 text-red-500 focus:bg-red-50 focus:text-red-500"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                        Hapus
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
+                    )}
                     <Pagination transactions={partners} perPage={perPage} onPerPageChange={(val) => router.get('/master/mitra', buildQuery({ per_page: val }), { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
 
             {deleteTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg sm:p-6">
                         <h3 className="mb-2 text-lg font-semibold">Hapus Mitra</h3>
                         <p className="mb-4 text-sm text-gray-600">
                             Hapus mitra <strong>{deleteTarget.name}</strong>? Mitra yang masih memiliki piutang atau hutang aktif tidak dapat dihapus.
                         </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setDeleteTarget(null)}>
                                 Batal
                             </Button>
-                            <Button variant="destructive" onClick={() => handleDelete(deleteTarget)}>
+                            <Button variant="destructive" className="w-full sm:w-auto" onClick={() => handleDelete(deleteTarget)}>
                                 Hapus
                             </Button>
                         </div>
