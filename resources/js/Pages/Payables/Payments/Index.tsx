@@ -104,21 +104,21 @@ export default function Index({ payments, filters }: Props) {
                 { label: 'Pembayaran' },
             ]} />
 
-            <div className="flex items-center justify-between mb-6">
-                <div>
+            <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Banknote className="text-orange-500" size={26} />
+                        <Banknote className="shrink-0 text-orange-500" size={26} />
                         Pembayaran Hutang
                     </h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="max-w-full text-sm text-gray-500 mt-0.5">
                         Riwayat pembayaran hutang ke supplier
                     </p>
                 </div>
                 {can('payables.edit') && (
-                    <Link href="/transaksi/hutang-bayar/catat">
-                        <Button className="gap-1.5">
-                            <Plus size={18} />
-                            Catat Pembayaran
+                    <Link href="/transaksi/hutang-bayar/catat" className="w-full sm:w-auto">
+                        <Button className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto">
+                            <Plus size={18} className="shrink-0" />
+                            <span className="truncate">Catat Pembayaran</span>
                         </Button>
                     </Link>
                 )}
@@ -126,44 +126,94 @@ export default function Index({ payments, filters }: Props) {
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>No. Pembayaran</TableHead>
-                                <TableHead>Supplier</TableHead>
-                                <TableHead>Tanggal</TableHead>
-                                <TableHead>Dibayar dari</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Jumlah</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {payments.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
-                                        Belum ada pembayaran hutang. Klik "Catat Pembayaran" untuk memulai.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                payments.data.map((p) => (
-                                    <TableRow key={p.id}>
-                                        <TableCell className="font-mono text-sm">
-                                            <Link href={`/transaksi/hutang-bayar/${p.id}`} className="text-blue-600 hover:underline">
-                                                {p.payment_number}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell className="font-medium">{p.partner_name}</TableCell>
-                                        <TableCell>{formatDate(p.date)}</TableCell>
-                                        <TableCell>{p.cash_bank_name}</TableCell>
-                                        <TableCell>{statusBadge(p.status, p.status_label)}</TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            {formatCurrency(p.amount)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                    {payments.data.length === 0 ? (
+                        <div className="py-12 px-4 text-center text-muted-foreground">
+                            <Banknote
+                                size={40}
+                                className="mx-auto mb-2 text-gray-300"
+                            />
+                            <p>Belum ada pembayaran hutang</p>
+                            <p className="text-sm mt-1">Klik "Catat Pembayaran" untuk mencatat pembayaran pertama.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="divide-y md:hidden">
+                                {payments.data.map((p) => (
+                                    <Link
+                                        key={p.id}
+                                        href={`/transaksi/hutang-bayar/${p.id}`}
+                                        className="block p-4 transition-colors hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate font-mono text-sm text-primary">
+                                                    {p.payment_number}
+                                                </p>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {formatDate(p.date)}
+                                                </p>
+                                            </div>
+                                            <p className="min-w-0 text-right text-sm font-semibold text-orange-600 [overflow-wrap:anywhere]">
+                                                {formatCurrency(p.amount)}
+                                            </p>
+                                        </div>
+
+                                        <p className="mt-3 text-sm font-medium text-gray-900 [overflow-wrap:anywhere]">
+                                            {p.partner_name}
+                                        </p>
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            {statusBadge(p.status, p.status_label)}
+                                        </div>
+
+                                        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                                            <p className="[overflow-wrap:anywhere]">
+                                                Dibayar dari: {p.cash_bank_name}
+                                            </p>
+                                            {p.description && (
+                                                <p className="[overflow-wrap:anywhere]">
+                                                    Keterangan: {p.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="hidden overflow-x-auto md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>No. Pembayaran</TableHead>
+                                            <TableHead>Supplier</TableHead>
+                                            <TableHead>Tanggal</TableHead>
+                                            <TableHead>Dibayar dari</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Jumlah</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {payments.data.map((p) => (
+                                            <TableRow key={p.id}>
+                                                <TableCell className="font-mono text-sm">
+                                                    <Link href={`/transaksi/hutang-bayar/${p.id}`} className="text-blue-600 hover:underline">
+                                                        {p.payment_number}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell className="font-medium">{p.partner_name}</TableCell>
+                                                <TableCell>{formatDate(p.date)}</TableCell>
+                                                <TableCell>{p.cash_bank_name}</TableCell>
+                                                <TableCell>{statusBadge(p.status, p.status_label)}</TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    {formatCurrency(p.amount)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </>
+                    )}
                     <Pagination transactions={payments} perPage={perPage} onPerPageChange={(val) => navigate({ per_page: val })} />
                 </CardContent>
             </Card>
