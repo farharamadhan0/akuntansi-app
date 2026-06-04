@@ -28,6 +28,12 @@ import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "rea
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logo from "@/assets/logo.png";
 
 interface PageProps {
@@ -358,13 +364,13 @@ function MobileNavDrawer({
         return true;
     });
 
-    const sidebarItems = contextualSidebarItems[activeCategoryKey] ?? [];
-    const visibleSidebarItems = sidebarItems.filter((item) => {
-        if (item.ownerOnly && !auth.user.is_owner) return false;
-        if (item.permission && !isOwner && !can(item.permission)) return false;
-        if (!isMenuEnabled(menuId(activeCategoryKey, item.key), enabledMenus)) return false;
-        return true;
-    });
+    const getVisibleSidebarItems = (categoryKey: string) =>
+        (contextualSidebarItems[categoryKey] ?? []).filter((item) => {
+            if (item.ownerOnly && !auth.user.is_owner) return false;
+            if (item.permission && !isOwner && !can(item.permission)) return false;
+            if (!isMenuEnabled(menuId(categoryKey, item.key), enabledMenus)) return false;
+            return true;
+        });
 
     if (!isOpen) return null;
 
@@ -391,74 +397,109 @@ function MobileNavDrawer({
                     </button>
                 </div>
 
-                {/* Categories */}
-                <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                        Menu Utama
-                    </p>
-                    <div className="space-y-1">
-                        {visibleCategories.map((category) => (
-                            <Link
-                                key={category.key}
-                                href={category.href}
-                                onClick={onClose}
-                                className={cn(
-                                    "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                                    activeCategoryKey === category.key
-                                        ? "bg-primary/10 text-primary"
-                                        : "text-gray-600 hover:bg-gray-100"
-                                )}
-                            >
-                                <category.icon size={18} />
-                                {category.label}
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Contextual Items */}
-                {visibleSidebarItems.length > 0 && (
-                    <div className="flex-1 overflow-y-auto px-4 py-3">
+                <div className="flex-1 overflow-y-auto">
+                    {/* Categories */}
+                    <div className="px-4 py-3">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                            {topNavCategories.find((c) => c.key === activeCategoryKey)?.label ?? "Menu"}
+                            Menu Utama
                         </p>
                         <div className="space-y-1">
-                            {visibleSidebarItems.map((item) => {
-                                const isActive = isSidebarItemActive(item.href, pathname);
-                                const Icon = item.icon;
+                            {visibleCategories.map((category) => {
+                                const CategoryIcon = category.icon;
+                                const categorySidebarItems = getVisibleSidebarItems(category.key);
+                                const hasSidebarItems = categorySidebarItems.length > 0;
+                                const isCategoryActive = activeCategoryKey === category.key;
 
-                                if (item.disabled) {
+                                if (!hasSidebarItems) {
                                     return (
-                                        <span
-                                            key={item.key}
-                                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-400 cursor-not-allowed rounded-md"
+                                        <Link
+                                            key={category.key}
+                                            href={category.href}
+                                            onClick={onClose}
+                                            className={cn(
+                                                "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                                                isCategoryActive
+                                                    ? "bg-primary/10 text-primary"
+                                                    : "text-gray-600 hover:bg-gray-100"
+                                            )}
                                         >
-                                            <Icon size={18} />
-                                            {item.label}
-                                        </span>
+                                            <CategoryIcon size={18} />
+                                            {category.label}
+                                        </Link>
                                     );
                                 }
 
                                 return (
-                                    <Link
-                                        key={item.key}
-                                        href={item.href}
-                                        onClick={onClose}
-                                        className={cn(
-                                            "flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                                            isActive
-                                                ? "bg-primary/10 text-primary"
-                                                : "text-gray-600 hover:bg-gray-100"
-                                        )}
-                                    >
-                                        <Icon size={18} />
-                                        {item.label}
-                                    </Link>
+                                    <DropdownMenu key={category.key}>
+                                        <DropdownMenuTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-medium rounded-md transition-colors",
+                                                    isCategoryActive
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "text-gray-600 hover:bg-gray-100"
+                                                )}
+                                            >
+                                                <CategoryIcon size={18} className="shrink-0" />
+                                                <span className="min-w-0 flex-1 truncate">
+                                                    {category.label}
+                                                </span>
+                                                <ChevronDown size={14} className="shrink-0" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            align="start"
+                                            side="bottom"
+                                            className="z-[60] w-[var(--radix-dropdown-menu-trigger-width)]"
+                                        >
+                                            {categorySidebarItems.map((item) => {
+                                                const isActive = isSidebarItemActive(item.href, pathname);
+                                                const Icon = item.icon;
+
+                                                if (item.disabled) {
+                                                    return (
+                                                        <DropdownMenuItem
+                                                            key={item.key}
+                                                            disabled
+                                                            className="gap-2.5 py-2"
+                                                        >
+                                                            <Icon size={16} className="text-gray-400" />
+                                                            {item.label}
+                                                        </DropdownMenuItem>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <DropdownMenuItem key={item.key} asChild>
+                                                        <Link
+                                                            href={item.href}
+                                                            onClick={onClose}
+                                                            className={cn(
+                                                                "flex items-center gap-2.5 py-2",
+                                                                isActive ? "text-primary" : "text-gray-700"
+                                                            )}
+                                                        >
+                                                            <Icon
+                                                                size={16}
+                                                                className={
+                                                                    isActive ? "text-primary" : "text-gray-500"
+                                                                }
+                                                            />
+                                                            <span className="min-w-0 truncate">
+                                                                {item.label}
+                                                            </span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                );
+                                            })}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 );
                             })}
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </>
     );
