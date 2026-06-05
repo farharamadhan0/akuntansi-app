@@ -12,9 +12,19 @@ class Feedback extends Model
     protected $fillable = [
         'user_id',
         'company_id',
+        'category',
         'message',
+        'status',
         'page_url',
+        'image_path',
         'user_agent',
+        'developer_response',
+        'responded_by',
+        'responded_at',
+    ];
+
+    protected $casts = [
+        'responded_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -25,5 +35,10 @@ class Feedback extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function responder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responded_by');
     }
 }

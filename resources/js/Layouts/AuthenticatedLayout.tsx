@@ -21,8 +21,10 @@ import {
     Plus,
     Menu,
     X,
-    MessageSquare,
     Send,
+    ImageUp,
+    LifeBuoy,
+    RefreshCw,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -165,33 +167,105 @@ function QuickActionButton() {
     );
 }
 
+const ticketCategoryLabels: Record<string, string> = {
+    error: "Terjadi error",
+    data_mismatch: "Data tidak sesuai",
+    feature_request: "Permintaan fitur",
+    question: "Pertanyaan",
+};
+
+const ticketStatusLabels: Record<string, string> = {
+    open: "Open",
+    in_progress: "Diproses",
+    resolved: "Selesai",
+    closed: "Ditutup",
+};
+
+const ticketStatusStyles: Record<string, string> = {
+    open: "border-red-200 bg-red-50 text-red-700",
+    in_progress: "border-amber-200 bg-amber-50 text-amber-700",
+    resolved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    closed: "border-gray-200 bg-gray-50 text-gray-600",
+};
+
+interface UserTicket {
+    id: number;
+    category: string;
+    status: string;
+    message: string;
+    image_url: string | null;
+    developer_response: string | null;
+    created_at: string | null;
+    responded_at: string | null;
+}
+
 function FeedbackButton() {
     const [isOpen, setIsOpen] = useState(false);
-    const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm({
+    const [activeTab, setActiveTab] = useState<"create" | "tickets">("create");
+    const [tickets, setTickets] = useState<UserTicket[]>([]);
+    const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+    const [ticketLoadError, setTicketLoadError] = useState("");
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
+        category: string;
+        message: string;
+        image: File | null;
+    }>({
+        category: "error",
         message: "",
-        page_url: "",
+        image: null,
     });
 
     const close = () => {
         setIsOpen(false);
+        setActiveTab("create");
         reset();
         clearErrors();
     };
 
+    const loadTickets = async () => {
+        setIsLoadingTickets(true);
+        setTicketLoadError("");
+
+        try {
+            const response = await fetch("/feedback/tickets", {
+                headers: {
+                    Accept: "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Tidak bisa memuat ticket.");
+            }
+
+            const payload = (await response.json()) as { tickets: UserTicket[] };
+            setTickets(payload.tickets);
+        } catch (error) {
+            setTicketLoadError(
+                error instanceof Error ? error.message : "Tidak bisa memuat ticket."
+            );
+        } finally {
+            setIsLoadingTickets(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen && activeTab === "tickets") {
+            void loadTickets();
+        }
+    }, [isOpen, activeTab]);
+
     const submit = (event: FormEvent) => {
         event.preventDefault();
 
-        transform((currentData) => ({
-            ...currentData,
-            page_url:
-                typeof window !== "undefined"
-                    ? `${window.location.pathname}${window.location.search}`
-                    : currentData.page_url,
-        }));
-
         post("/feedback", {
+            forceFormData: true,
             preserveScroll: true,
-            onSuccess: close,
+            onSuccess: () => {
+                reset();
+                clearErrors();
+                setActiveTab("tickets");
+                void loadTickets();
+            },
         });
     };
 
@@ -201,23 +275,23 @@ function FeedbackButton() {
                 type="button"
                 variant="outline"
                 size="lg"
-                className="hidden h-9 gap-2 sm:inline-flex"
+                className="h-9 gap-2"
                 onClick={() => setIsOpen(true)}
             >
-                <MessageSquare size={16} />
-                <span className="hidden sm:inline">Feedback</span>
+                <LifeBuoy size={16} />
+                <span className="hidden sm:inline">Bantuan</span>
             </Button>
 
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-                    <div className="w-full max-w-md border border-gray-200 bg-white shadow-xl">
+                    <div className="flex w-full max-w-2xl flex-col border border-gray-200 bg-white shadow-xl">
                         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                             <div>
                                 <h2 className="text-sm font-semibold text-gray-900">
-                                    Beri Feedback
+                                    Bantuan
                                 </h2>
                                 <p className="text-xs text-gray-500">
-                                    Ceritakan kendala, ide, atau hal yang perlu diperbaiki.
+                                    Buat ticket baru atau pantau status ticket yang sudah dikirim.
                                 </p>
                             </div>
                             <button
@@ -229,36 +303,216 @@ function FeedbackButton() {
                             </button>
                         </div>
 
-                        <form onSubmit={submit} className="space-y-4 p-4">
-                            <div className="space-y-1.5">
-                                <Textarea
-                                    value={data.message}
-                                    onChange={(event) => setData("message", event.target.value)}
-                                    className="min-h-32 resize-y text-sm"
-                                    placeholder="Tulis feedback kamu..."
-                                    autoFocus
-                                />
-                                {errors.message && (
-                                    <p className="text-xs text-red-600">{errors.message}</p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2">
-                                <Button
+                        <div className="border-b border-gray-200 px-4 pt-3">
+                            <div className="flex gap-1">
+                                <button
                                     type="button"
-                                    variant="outline"
-                                    size="lg"
-                                    onClick={close}
-                                    disabled={processing}
+                                    onClick={() => setActiveTab("create")}
+                                    className={cn(
+                                        "border-b-2 px-3 py-2 text-xs font-medium transition-colors",
+                                        activeTab === "create"
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-gray-500 hover:text-gray-800"
+                                    )}
                                 >
-                                    Batal
-                                </Button>
-                                <Button type="submit" size="lg" disabled={processing}>
-                                    <Send size={16} />
-                                    Kirim
-                                </Button>
+                                    Buat Ticket
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab("tickets")}
+                                    className={cn(
+                                        "border-b-2 px-3 py-2 text-xs font-medium transition-colors",
+                                        activeTab === "tickets"
+                                            ? "border-primary text-primary"
+                                            : "border-transparent text-gray-500 hover:text-gray-800"
+                                    )}
+                                >
+                                    Ticket Saya
+                                </button>
                             </div>
-                        </form>
+                        </div>
+
+                        <div className="h-[clamp(460px,70vh,640px)] overflow-hidden">
+                            {activeTab === "create" ? (
+                                <form onSubmit={submit} className="flex h-full flex-col">
+                                    <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-gray-700">
+                                                Kategori
+                                            </label>
+                                            <select
+                                                value={data.category}
+                                                onChange={(event) => setData("category", event.target.value)}
+                                                className="h-9 w-full border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+                                            >
+                                                <option value="error">Terjadi error</option>
+                                                <option value="data_mismatch">Data tidak sesuai</option>
+                                                <option value="feature_request">Permintaan fitur</option>
+                                                <option value="question">Pertanyaan</option>
+                                            </select>
+                                            {errors.category && (
+                                                <p className="text-xs text-red-600">{errors.category}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-gray-700">
+                                                Detail ticket
+                                            </label>
+                                            <Textarea
+                                                value={data.message}
+                                                onChange={(event) => setData("message", event.target.value)}
+                                                className="min-h-32 resize-y text-sm"
+                                                placeholder="Tulis kronologi, data yang terkait, atau hasil yang kamu harapkan..."
+                                                autoFocus
+                                            />
+                                            {errors.message && (
+                                                <p className="text-xs text-red-600">{errors.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-gray-700">
+                                                Lampiran gambar
+                                            </label>
+                                            <label className="flex min-h-16 cursor-pointer items-center gap-3 border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-600 hover:border-primary hover:bg-primary/5">
+                                                <ImageUp size={18} className="shrink-0 text-gray-500" />
+                                                <span className="min-w-0 flex-1 truncate">
+                                                    {data.image?.name ?? "Pilih gambar JPG, PNG, atau WebP"}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/png,image/jpeg,image/webp"
+                                                    className="sr-only"
+                                                    onChange={(event) =>
+                                                        setData("image", event.target.files?.[0] ?? null)
+                                                    }
+                                                />
+                                            </label>
+                                            {errors.image && (
+                                                <p className="text-xs text-red-600">{errors.image}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2 border-t border-gray-200 p-4">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="lg"
+                                            onClick={close}
+                                            disabled={processing}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            disabled={processing}
+                                        >
+                                            <Send size={16} />
+                                            Kirim
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="h-full overflow-y-auto p-4">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <p className="text-xs text-gray-500">
+                                            Menampilkan 20 ticket terbaru kamu.
+                                        </p>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => void loadTickets()}
+                                            disabled={isLoadingTickets}
+                                        >
+                                            <RefreshCw size={14} />
+                                            Refresh
+                                        </Button>
+                                    </div>
+
+                                    {ticketLoadError && (
+                                        <p className="border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                                            {ticketLoadError}
+                                        </p>
+                                    )}
+
+                                    {isLoadingTickets ? (
+                                        <p className="py-8 text-center text-sm text-gray-400">
+                                            Memuat ticket...
+                                        </p>
+                                    ) : tickets.length === 0 ? (
+                                        <p className="py-8 text-center text-sm text-gray-400">
+                                            Belum ada ticket.
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {tickets.map((ticket) => (
+                                                <div
+                                                    key={ticket.id}
+                                                    className="border border-gray-200 bg-white p-3"
+                                                >
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                                                            #{ticket.id}
+                                                        </span>
+                                                        <span className="border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
+                                                            {ticketCategoryLabels[ticket.category] ?? ticket.category}
+                                                        </span>
+                                                        <span
+                                                            className={cn(
+                                                                "border px-2 py-1 text-xs font-medium",
+                                                                ticketStatusStyles[ticket.status] ?? ticketStatusStyles.open
+                                                            )}
+                                                        >
+                                                            {ticketStatusLabels[ticket.status] ?? ticket.status}
+                                                        </span>
+                                                        <span className="text-xs text-gray-400">
+                                                            {ticket.created_at ?? "-"}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-gray-800">
+                                                        {ticket.message}
+                                                    </p>
+
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                    {ticket.image_url && (
+                                                        <a
+                                                            href={ticket.image_url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                                                        >
+                                                            Lampiran
+                                                        </a>
+                                                    )}
+                                                    </div>
+
+                                                    {ticket.developer_response ? (
+                                                        <div className="mt-3 border border-emerald-200 bg-emerald-50 px-3 py-2">
+                                                            <p className="text-xs font-medium text-emerald-800">
+                                                                Tanggapan dev
+                                                                {ticket.responded_at ? ` - ${ticket.responded_at}` : ""}
+                                                            </p>
+                                                            <p className="mt-1 whitespace-pre-wrap text-sm text-emerald-900">
+                                                                {ticket.developer_response}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="mt-3 text-xs text-gray-400">
+                                                            Belum ada tanggapan dev.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

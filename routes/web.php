@@ -94,6 +94,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['verified', 'has.company'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
+        Route::get('/feedback/tickets', [FeedbackController::class, 'index'])->name('feedback.index');
         Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
         
         // Master Data - Mitra (gabungan pelanggan & supplier)
@@ -266,5 +267,6 @@ Route::middleware('auth')->group(function () {
         Route::get('companies', [DevCompanyController::class, 'index'])->name('dev.companies.index');
         Route::get('companies/{company}', [DevCompanyController::class, 'show'])->name('dev.companies.show');
         Route::get('feedback', [DevFeedbackController::class, 'index'])->name('dev.feedback.index');
+        Route::put('feedback/{feedback}', [DevFeedbackController::class, 'update'])->name('dev.feedback.update');
     });
 });
