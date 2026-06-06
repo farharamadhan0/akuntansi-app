@@ -1,12 +1,13 @@
 import { FormEvent, useState } from "react";
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import {
-    CheckCircle2,
     Clock,
     ImageIcon,
     MessageSquare,
     Search,
+    Send,
     User,
+    X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -43,9 +44,8 @@ interface FeedbackItem {
     message: string;
     image_url: string | null;
     user_agent: string | null;
-    developer_response: string | null;
     created_at: string | null;
-    responded_at: string | null;
+    messages: FeedbackMessage[];
     user: {
         name: string;
         email: string;
@@ -55,6 +55,17 @@ interface FeedbackItem {
         email: string | null;
     } | null;
     responder: {
+        name: string;
+        email: string;
+    } | null;
+}
+
+interface FeedbackMessage {
+    id: number;
+    sender_type: "user" | "developer";
+    message: string;
+    created_at: string | null;
+    user: {
         name: string;
         email: string;
     } | null;
@@ -81,12 +92,29 @@ interface Props {
 }
 
 function TicketItem({ item }: { item: FeedbackItem }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const [isAttachmentOpen, setIsAttachmentOpen] = useState(false);
+    const {
+        data: statusData,
+        setData: setStatusData,
+        put,
+        processing: updatingStatus,
+        errors: statusErrors,
+    } = useForm({
         status: item.status,
-        developer_response: item.developer_response ?? "",
+    });
+    const {
+        data: replyData,
+        setData: setReplyData,
+        post,
+        processing: sendingReply,
+        errors: replyErrors,
+        reset: resetReply,
+        clearErrors: clearReplyErrors,
+    } = useForm({
+        message: "",
     });
 
-    const submit = (event: FormEvent) => {
+    const submitStatus = (event: FormEvent) => {
         event.preventDefault();
 
         put(`/dev/feedback/${item.id}`, {
@@ -94,9 +122,21 @@ function TicketItem({ item }: { item: FeedbackItem }) {
         });
     };
 
+    const submitReply = (event: FormEvent) => {
+        event.preventDefault();
+
+        post(`/dev/feedback/${item.id}/messages`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                resetReply();
+                clearReplyErrors();
+            },
+        });
+    };
+
     return (
         <div className="border-b border-gray-100 py-4 last:border-0">
-            <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+            <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
                 <div className="min-w-0 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700">
@@ -119,20 +159,15 @@ function TicketItem({ item }: { item: FeedbackItem }) {
                         </span>
                     </div>
 
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-gray-800">
-                        {item.message}
-                    </p>
-
                     {item.image_url && (
-                        <a
-                            href={item.image_url}
-                            target="_blank"
-                            rel="noreferrer"
+                        <button
+                            type="button"
+                            onClick={() => setIsAttachmentOpen(true)}
                             className="inline-flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
                             <ImageIcon size={15} />
                             Lihat lampiran
-                        </a>
+                        </button>
                     )}
 
                     <div className="grid gap-3 text-xs text-gray-500 md:grid-cols-3">
@@ -153,67 +188,148 @@ function TicketItem({ item }: { item: FeedbackItem }) {
                             {item.user_agent}
                         </p>
                     )}
+
+                    <div className="border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-xs font-medium text-gray-700">Detail ticket</p>
+                        <p className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap text-sm leading-5 text-gray-800">
+                            {item.message}
+                        </p>
+                    </div>
+
+                    <div className="space-y-2 border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-xs font-medium text-gray-700">Percakapan</p>
+                        {item.messages.length === 0 ? (
+                            <p className="border border-gray-200 bg-white px-3 py-2 text-xs text-gray-400">
+                                Belum ada percakapan.
+                            </p>
+                        ) : (
+                            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                                {item.messages.map((message) => {
+                                    const isDeveloper = message.sender_type === "developer";
+
+                                    return (
+                                        <div
+                                            key={`${message.sender_type}-${message.id}-${message.created_at}`}
+                                            className={cn("flex", isDeveloper ? "justify-end" : "justify-start")}
+                                        >
+                                            <div
+                                                className={cn(
+                                                    "max-w-[85%] border px-3 py-2",
+                                                    isDeveloper
+                                                        ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                                                        : "border-gray-200 bg-white text-gray-900"
+                                                )}
+                                            >
+                                                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
+                                                    <span className="font-medium">
+                                                        {isDeveloper ? "Dev" : message.user?.name ?? "User"}
+                                                    </span>
+                                                    <span className={isDeveloper ? "text-emerald-700" : "text-gray-400"}>
+                                                        {message.created_at ?? "-"}
+                                                    </span>
+                                                </div>
+                                                <p className="whitespace-pre-wrap text-sm leading-5">
+                                                    {message.message}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <form onSubmit={submit} className="space-y-3 border border-gray-200 bg-gray-50 p-3">
-                    <div className="flex items-center justify-between gap-2">
+                <div className="space-y-3">
+                    <form onSubmit={submitStatus} className="space-y-3 border border-gray-200 bg-gray-50 p-3">
                         <label className="text-xs font-medium text-gray-700">
                             Status
                         </label>
-                        {item.responder && (
-                            <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                                <CheckCircle2 size={13} />
-                                {item.responded_at ?? "-"}
-                            </span>
+                        <select
+                            value={statusData.status}
+                            onChange={(event) => setStatusData("status", event.target.value)}
+                            className="h-9 w-full border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+                        >
+                            <option value="open">Open</option>
+                            <option value="in_progress">Diproses</option>
+                            <option value="resolved">Selesai</option>
+                            <option value="closed">Ditutup</option>
+                        </select>
+                        {statusErrors.status && (
+                            <p className="text-xs text-red-600">{statusErrors.status}</p>
                         )}
-                    </div>
-                    <select
-                        value={data.status}
-                        onChange={(event) => setData("status", event.target.value)}
-                        className="h-9 w-full border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
-                    >
-                        <option value="open">Open</option>
-                        <option value="in_progress">Diproses</option>
-                        <option value="resolved">Selesai</option>
-                        <option value="closed">Ditutup</option>
-                    </select>
-                    {errors.status && (
-                        <p className="text-xs text-red-600">{errors.status}</p>
-                    )}
+                        <Button type="submit" size="lg" className="w-full" disabled={updatingStatus}>
+                            Simpan Status
+                        </Button>
+                    </form>
 
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-700">
-                            Tanggapan dev
-                        </label>
-                        <Textarea
-                            value={data.developer_response}
-                            onChange={(event) =>
-                                setData("developer_response", event.target.value)
-                            }
-                            className="min-h-28 resize-y bg-white text-sm"
-                            placeholder="Tulis tindak lanjut atau jawaban untuk ticket ini..."
-                        />
-                        {errors.developer_response && (
-                            <p className="text-xs text-red-600">
-                                {errors.developer_response}
+                    <form onSubmit={submitReply} className="space-y-3 border border-gray-200 bg-gray-50 p-3">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-gray-700">
+                                Balasan dev
+                            </label>
+                            <Textarea
+                                value={replyData.message}
+                                onChange={(event) =>
+                                    setReplyData("message", event.target.value)
+                                }
+                                className="min-h-28 resize-y bg-white text-sm"
+                                placeholder="Tulis balasan untuk user..."
+                            />
+                            {replyErrors.message && (
+                                <p className="text-xs text-red-600">
+                                    {replyErrors.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {item.responder && (
+                            <p className="text-xs text-gray-500">
+                                Terakhir ditanggapi oleh{" "}
+                                <span className="font-medium text-gray-700">
+                                    {item.responder.name}
+                                </span>
                             </p>
                         )}
-                    </div>
 
-                    {item.responder && (
-                        <p className="text-xs text-gray-500">
-                            Ditanggapi oleh{" "}
-                            <span className="font-medium text-gray-700">
-                                {item.responder.name}
-                            </span>
-                        </p>
-                    )}
-
-                    <Button type="submit" size="lg" className="w-full" disabled={processing}>
-                        Simpan Ticket
-                    </Button>
-                </form>
+                        <Button type="submit" size="lg" className="w-full" disabled={sendingReply}>
+                            <Send size={16} />
+                            Kirim Balasan
+                        </Button>
+                    </form>
+                </div>
             </div>
+
+            {isAttachmentOpen && item.image_url && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                    <div className="flex max-h-[90vh] w-full max-w-4xl flex-col border border-gray-200 bg-white shadow-xl">
+                        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                            <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                    Lampiran Ticket #{item.id}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Gambar yang dikirim user saat ticket dibuat
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsAttachmentOpen(false)}
+                                className="p-1.5 text-gray-500 hover:bg-gray-100"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-950 p-4">
+                            <img
+                                src={item.image_url}
+                                alt={`Lampiran ticket #${item.id}`}
+                                className="max-h-[78vh] max-w-full object-contain"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

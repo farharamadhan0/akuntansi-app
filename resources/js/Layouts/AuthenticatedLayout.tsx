@@ -194,15 +194,206 @@ interface UserTicket {
     status: string;
     message: string;
     image_url: string | null;
-    developer_response: string | null;
     created_at: string | null;
-    responded_at: string | null;
+    can_reply: boolean;
+    messages: UserTicketMessage[];
+}
+
+interface UserTicketMessage {
+    id: number;
+    sender_type: "user" | "developer";
+    message: string;
+    created_at: string | null;
+    user: {
+        name: string;
+        email: string;
+    } | null;
+}
+
+function UserTicketCard({
+    ticket,
+    isExpanded,
+    onToggle,
+    onReplySent,
+}: {
+    ticket: UserTicket;
+    isExpanded: boolean;
+    onToggle: () => void;
+    onReplySent: () => void;
+}) {
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+    } = useForm({
+        message: "",
+    });
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+
+        post(`/feedback/${ticket.id}/messages`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                clearErrors();
+                onReplySent();
+            },
+        });
+    };
+
+    return (
+        <div className="border border-gray-200 bg-white p-3">
+            <button
+                type="button"
+                onClick={onToggle}
+                className="block w-full text-left"
+            >
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                        #{ticket.id}
+                    </span>
+                    <span className="border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
+                        {ticketCategoryLabels[ticket.category] ?? ticket.category}
+                    </span>
+                    <span
+                        className={cn(
+                            "border px-2 py-1 text-xs font-medium",
+                            ticketStatusStyles[ticket.status] ?? ticketStatusStyles.open
+                        )}
+                    >
+                        {ticketStatusLabels[ticket.status] ?? ticket.status}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                        {ticket.created_at ?? "-"}
+                    </span>
+                </div>
+                <p className="mt-3 line-clamp-2 whitespace-pre-wrap text-sm leading-5 text-gray-800">
+                    {ticket.message}
+                </p>
+                <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+                    <span className="text-gray-400">
+                        {ticket.messages.length} pesan percakapan
+                    </span>
+                    <span className="font-medium text-primary">
+                        {isExpanded ? "Tutup detail" : "Lihat detail"}
+                    </span>
+                </div>
+            </button>
+
+            {!isExpanded && null}
+
+            {isExpanded && (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+
+            {ticket.image_url && (
+                <div className="mt-3">
+                    <a
+                        href={ticket.image_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                    >
+                        Lampiran awal
+                    </a>
+                </div>
+            )}
+
+            <div className="mt-3 border border-gray-200 bg-gray-50 px-3 py-2">
+                <p className="text-xs font-medium text-gray-700">Detail ticket</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-gray-800">
+                    {ticket.message}
+                </p>
+            </div>
+
+            <div className="mt-3 space-y-2">
+                {ticket.messages.length === 0 ? (
+                    <p className="border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-400">
+                        Belum ada percakapan. Tunggu dev menanggapi ticket ini.
+                    </p>
+                ) : (
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                    {ticket.messages.map((message) => {
+                        const isUser = message.sender_type === "user";
+
+                        return (
+                            <div
+                                key={`${message.sender_type}-${message.id}-${message.created_at}`}
+                                className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                            >
+                                <div
+                                    className={cn(
+                                        "max-w-[85%] border px-3 py-2",
+                                        isUser
+                                            ? "border-primary/20 bg-primary/10 text-gray-900"
+                                            : "border-emerald-200 bg-emerald-50 text-emerald-950"
+                                    )}
+                                >
+                                    <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
+                                        <span className="font-medium">
+                                            {isUser ? "Kamu" : "Dev"}
+                                        </span>
+                                        <span className={isUser ? "text-gray-500" : "text-emerald-700"}>
+                                            {message.created_at ?? "-"}
+                                        </span>
+                                    </div>
+                                    <p className="whitespace-pre-wrap text-sm leading-5">
+                                        {message.message}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    </div>
+                )}
+            </div>
+
+            <form onSubmit={submit} className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <Textarea
+                    value={data.message}
+                    onChange={(event) => setData("message", event.target.value)}
+                    className="min-h-20 resize-y text-sm"
+                    placeholder={
+                        ticket.can_reply
+                            ? "Tulis balasan kamu..."
+                            : "Menunggu tanggapan dev."
+                    }
+                    disabled={!ticket.can_reply || processing}
+                />
+                {errors.message && (
+                    <p className="text-xs text-red-600">{errors.message}</p>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-gray-400">
+                        {ticket.can_reply
+                            ? "Kamu bisa membalas karena dev sudah menanggapi."
+                            : "Kamu bisa membalas setelah dev menanggapi."}
+                    </p>
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={!ticket.can_reply || processing}
+                    >
+                        <Send size={14} />
+                        Balas
+                    </Button>
+                </div>
+            </form>
+                </div>
+            )}
+        </div>
+    );
 }
 
 function FeedbackButton() {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"create" | "tickets">("create");
     const [tickets, setTickets] = useState<UserTicket[]>([]);
+    const [expandedTicketId, setExpandedTicketId] = useState<number | null>(null);
     const [isLoadingTickets, setIsLoadingTickets] = useState(false);
     const [ticketLoadError, setTicketLoadError] = useState("");
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
@@ -239,6 +430,13 @@ function FeedbackButton() {
 
             const payload = (await response.json()) as { tickets: UserTicket[] };
             setTickets(payload.tickets);
+            setExpandedTicketId((currentId) => {
+                if (currentId && payload.tickets.some((ticket) => ticket.id === currentId)) {
+                    return currentId;
+                }
+
+                return payload.tickets[0]?.id ?? null;
+            });
         } catch (error) {
             setTicketLoadError(
                 error instanceof Error ? error.message : "Tidak bisa memuat ticket."
@@ -450,63 +648,17 @@ function FeedbackButton() {
                                     ) : (
                                         <div className="space-y-3">
                                             {tickets.map((ticket) => (
-                                                <div
+                                                <UserTicketCard
                                                     key={ticket.id}
-                                                    className="border border-gray-200 bg-white p-3"
-                                                >
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
-                                                            #{ticket.id}
-                                                        </span>
-                                                        <span className="border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
-                                                            {ticketCategoryLabels[ticket.category] ?? ticket.category}
-                                                        </span>
-                                                        <span
-                                                            className={cn(
-                                                                "border px-2 py-1 text-xs font-medium",
-                                                                ticketStatusStyles[ticket.status] ?? ticketStatusStyles.open
-                                                            )}
-                                                        >
-                                                            {ticketStatusLabels[ticket.status] ?? ticket.status}
-                                                        </span>
-                                                        <span className="text-xs text-gray-400">
-                                                            {ticket.created_at ?? "-"}
-                                                        </span>
-                                                    </div>
-
-                                                    <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm text-gray-800">
-                                                        {ticket.message}
-                                                    </p>
-
-                                                    <div className="mt-3 flex flex-wrap gap-2">
-                                                    {ticket.image_url && (
-                                                        <a
-                                                            href={ticket.image_url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex items-center gap-1 border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
-                                                        >
-                                                            Lampiran
-                                                        </a>
-                                                    )}
-                                                    </div>
-
-                                                    {ticket.developer_response ? (
-                                                        <div className="mt-3 border border-emerald-200 bg-emerald-50 px-3 py-2">
-                                                            <p className="text-xs font-medium text-emerald-800">
-                                                                Tanggapan dev
-                                                                {ticket.responded_at ? ` - ${ticket.responded_at}` : ""}
-                                                            </p>
-                                                            <p className="mt-1 whitespace-pre-wrap text-sm text-emerald-900">
-                                                                {ticket.developer_response}
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="mt-3 text-xs text-gray-400">
-                                                            Belum ada tanggapan dev.
-                                                        </p>
-                                                    )}
-                                                </div>
+                                                    ticket={ticket}
+                                                    isExpanded={expandedTicketId === ticket.id}
+                                                    onToggle={() =>
+                                                        setExpandedTicketId((currentId) =>
+                                                            currentId === ticket.id ? null : ticket.id
+                                                        )
+                                                    }
+                                                    onReplySent={() => void loadTickets()}
+                                                />
                                             ))}
                                         </div>
                                     )}
@@ -817,7 +969,13 @@ function Header({
             {/* Quick Action Button */}
             <QuickActionButton />
 
-            <FeedbackButton />
+            <Link
+                href="/bantuan"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-2 border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+                <LifeBuoy size={16} />
+                <span className="hidden sm:inline">Bantuan</span>
+            </Link>
 
             {/* Tenant Selector */}
             {/* User Menu */}

@@ -94,8 +94,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['verified', 'has.company'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
+        Route::get('/bantuan', [FeedbackController::class, 'pageIndex'])->name('feedback.page.index');
+        Route::get('/bantuan/ticket/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
+        Route::get('/bantuan/ticket/{feedback}/attachment', [FeedbackController::class, 'attachment'])->name('feedback.attachment');
+        Route::post('/bantuan/ticket', [FeedbackController::class, 'store'])->name('feedback.page.store');
+        Route::post('/bantuan/ticket/{feedback}/messages', [FeedbackController::class, 'reply'])->name('feedback.page.messages.store');
         Route::get('/feedback/tickets', [FeedbackController::class, 'index'])->name('feedback.index');
         Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+        Route::post('/feedback/{feedback}/messages', [FeedbackController::class, 'reply'])->name('feedback.messages.store');
         
         // Master Data - Mitra (gabungan pelanggan & supplier)
         Route::prefix('master')->group(function () {
@@ -267,6 +273,8 @@ Route::middleware('auth')->group(function () {
         Route::get('companies', [DevCompanyController::class, 'index'])->name('dev.companies.index');
         Route::get('companies/{company}', [DevCompanyController::class, 'show'])->name('dev.companies.show');
         Route::get('feedback', [DevFeedbackController::class, 'index'])->name('dev.feedback.index');
+        Route::get('feedback/{feedback}/attachment', [DevFeedbackController::class, 'attachment'])->name('dev.feedback.attachment');
         Route::put('feedback/{feedback}', [DevFeedbackController::class, 'update'])->name('dev.feedback.update');
+        Route::post('feedback/{feedback}/messages', [DevFeedbackController::class, 'reply'])->name('dev.feedback.messages.store');
     });
 });

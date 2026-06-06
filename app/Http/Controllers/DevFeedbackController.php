@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
+use App\Models\FeedbackMessage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DevFeedbackController extends Controller
 {
@@ -21,6 +24,7 @@ class DevFeedbackController extends Controller
                 'user:id,name,email',
                 'company:id,name,email',
                 'responder:id,name,email',
+                'messages.user:id,name,email',
             ])
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search) {
@@ -46,11 +50,22 @@ class DevFeedbackController extends Controller
                 'category' => $feedback->category,
                 'status' => $feedback->status,
                 'message' => $feedback->message,
-                'image_url' => $feedback->image_path ? asset('storage/'.$feedback->image_path) : null,
+                'image_url' => $feedback->image_path ? route('dev.feedback.attachment', $feedback) : null,
                 'user_agent' => $feedback->user_agent,
-                'developer_response' => $feedback->developer_response,
                 'created_at' => $feedback->created_at?->format('Y-m-d H:i'),
-                'responded_at' => $feedback->responded_at?->format('Y-m-d H:i'),
+                'messages' => $feedback->messages
+                    ->sortBy('created_at')
+                    ->values()
+                    ->map(fn (FeedbackMessage $message) => [
+                        'id' => $message->id,
+                        'sender_type' => $message->sender_type,
+                        'message' => $message->message,
+                        'created_at' => $message->created_at?->format('Y-m-d H:i'),
+                        'user' => $message->user ? [
+                            'name' => $message->user->name,
+                            'email' => $message->user->email,
+                        ] : null,
+                    ]),
                 'user' => $feedback->user ? [
                     'name' => $feedback->user->name,
                     'email' => $feedback->user->email,
@@ -78,23 +93,42 @@ class DevFeedbackController extends Controller
     {
         $data = $request->validate([
             'status' => ['required', 'string', Rule::in(['open', 'in_progress', 'resolved', 'closed'])],
-            'developer_response' => ['nullable', 'string', 'max:3000'],
         ]);
-
-        $responseChanged = ($data['developer_response'] ?? null) !== $feedback->developer_response;
 
         $feedback->fill([
             'status' => $data['status'],
-            'developer_response' => $data['developer_response'] ?? null,
         ]);
-
-        if ($responseChanged && filled($data['developer_response'] ?? null)) {
-            $feedback->responded_by = $request->user()->id;
-            $feedback->responded_at = now();
-        }
 
         $feedback->save();
 
-        return back()->with('success', 'Ticket berhasil diperbarui.');
+        return back()->with('success', 'Status ticket berhasil diperbarui.');
+    }
+
+    public function attachment(Feedback $feedback): StreamedResponse
+    {
+        abort_if(blank($feedback->image_path), 404);
+        abort_unless(Storage::disk('public')->exists($feedback->image_path), 404);
+
+        return Storage::disk('public')->response($feedback->image_path);
+    }
+
+    public function reply(Request $request, Feedback $feedback): RedirectResponse
+    {
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:3000'],
+        ]);
+
+        $feedback->messages()->create([
+            'user_id' => $request->user()->id,
+            'sender_type' => 'developer',
+            'message' => $data['message'],
+        ]);
+
+        $feedback->forceFill([
+            'responded_by' => $request->user()->id,
+            'responded_at' => now(),
+        ])->save();
+
+        return back()->with('success', 'Balasan dev berhasil dikirim.');
     }
 }
