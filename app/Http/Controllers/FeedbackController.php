@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Feedback;
 use App\Models\FeedbackMessage;
+use App\Services\TelegramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,7 +86,7 @@ class FeedbackController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, TelegramService $telegram): RedirectResponse
     {
         $data = $request->validate([
             'category' => ['required', 'string', 'in:error,data_mismatch,feature_request,question'],
@@ -104,6 +105,13 @@ class FeedbackController extends Controller
             'image_path' => $imagePath,
             'user_agent' => Str::limit((string) $request->userAgent(), 500, ''),
         ]);
+
+        $feedback->load([
+            'user:id,name,email',
+            'company:id,name',
+        ]);
+
+        $telegram->sendMessage($this->telegramTicketMessage($feedback));
 
         return redirect()
             ->route('feedback.show', $feedback)
@@ -163,5 +171,32 @@ class FeedbackController extends Controller
             'can_reply' => ($lastMessage['sender_type'] ?? null) === 'developer',
             'messages' => $messages,
         ];
+    }
+
+    private function telegramTicketMessage(Feedback $feedback): string
+    {
+        $categoryLabels = [
+            'error' => 'Terjadi error',
+            'data_mismatch' => 'Data tidak sesuai',
+            'feature_request' => 'Permintaan fitur',
+            'question' => 'Pertanyaan',
+        ];
+
+        $detail = Str::limit($feedback->message, 800);
+        $attachmentText = $feedback->image_path ? 'Ada' : 'Tidak ada';
+
+        return implode("\n", [
+            '<b>Ticket baru</b>',
+            'ID: #'.e((string) $feedback->id),
+            'Kategori: '.e($categoryLabels[$feedback->category] ?? $feedback->category),
+            'User: '.e($feedback->user?->name ?? '-').' ('.e($feedback->user?->email ?? '-').')',
+            'Perusahaan: '.e($feedback->company?->name ?? '-'),
+            'Lampiran: '.e($attachmentText),
+            '',
+            '<b>Detail</b>',
+            e($detail),
+            '',
+            'Link: '.e(route('dev.feedback.index')),
+        ]);
     }
 }
