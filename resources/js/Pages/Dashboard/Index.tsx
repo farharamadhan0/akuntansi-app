@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Head, Link, router } from "@inertiajs/react";
-import { FileClock, ArrowRight, Settings } from "lucide-react";
+import { Head, router } from "@inertiajs/react";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import WidgetGrid from "./components/WidgetGrid";
 import CustomizeModal from "./components/CustomizeModal";
-import { getDefaultLayout, mergeWithDefaults, type WidgetLayoutItem } from "./widgets/registry";
+import { getEmptyLayout, mergeWithDefaults, type WidgetLayoutItem } from "./widgets/registry";
 import type { DashboardProps } from "./types";
 
 export default function Dashboard({
@@ -20,9 +20,10 @@ export default function Dashboard({
     layout: savedLayout,
 }: DashboardProps) {
     const [layout, setLayout] = useState<WidgetLayoutItem[]>(() =>
-        savedLayout ? mergeWithDefaults(savedLayout) : getDefaultLayout()
+        savedLayout ? mergeWithDefaults(savedLayout) : getEmptyLayout()
     );
     const [showCustomize, setShowCustomize] = useState(false);
+    const hasVisibleWidgets = layout.some((item) => item.visible);
 
     const handleSaveLayout = (newLayout: WidgetLayoutItem[]) => {
         setLayout(newLayout);
@@ -68,7 +69,19 @@ export default function Dashboard({
                 </div>
             </div>
 
-            <WidgetGrid layout={layout} data={dashboardData} />
+            {hasVisibleWidgets ? (
+                <WidgetGrid layout={layout} data={dashboardData} />
+            ) : (
+                <div className="flex min-h-[50vh] items-center justify-center">
+                    <Button
+                        type="button"
+                        onClick={() => setShowCustomize(true)}
+                    >
+                        <Settings size={16} />
+                        Atur Dashboard
+                    </Button>
+                </div>
+            )}
 
             <CustomizeModal
                 open={showCustomize}

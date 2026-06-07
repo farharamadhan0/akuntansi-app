@@ -84,6 +84,15 @@ export function getDefaultLayout(): WidgetLayoutItem[] {
     }));
 }
 
+export function getEmptyLayout(): WidgetLayoutItem[] {
+    return WIDGET_REGISTRY.map((w) => ({
+        widgetId: w.id,
+        visible: false,
+        order: w.defaultOrder,
+        size: w.defaultSize,
+    }));
+}
+
 export function mergeWithDefaults(saved: WidgetLayoutItem[]): WidgetLayoutItem[] {
     const savedMap = new Map(saved.map((s) => [s.widgetId, s]));
     const merged: WidgetLayoutItem[] = [];
