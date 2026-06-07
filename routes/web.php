@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
 
             // Master Data - Produk
             Route::get('produk', [ProductController::class, 'index'])->middleware('permission:products.view')->name('products.index');
+            Route::get('produk/template-import', [ProductController::class, 'downloadImportTemplate'])->middleware('permission:products.create')->name('products.import.template');
+            Route::post('produk/import', [ProductController::class, 'import'])->middleware('permission:products.create')->name('products.import');
             Route::get('produk/tambah', [ProductController::class, 'create'])->middleware('permission:products.create')->name('products.create');
             Route::post('produk', [ProductController::class, 'store'])->middleware('permission:products.create')->name('products.store');
             Route::get('produk/{product}', [ProductController::class, 'show'])->middleware('permission:products.view')->name('products.show');

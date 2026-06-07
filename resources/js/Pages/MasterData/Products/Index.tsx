@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/lib/permissions';
-import { MoreVertical, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Download, MoreVertical, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2, Upload } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Product {
@@ -65,11 +65,39 @@ function formatCurrency(value: number) {
 export default function Index({ products, filters }: Props) {
     const { can } = usePermissions();
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+    const [showImportModal, setShowImportModal] = useState(false);
     const perPage = filters?.per_page ?? 25;
+    const {
+        data: importData,
+        setData: setImportData,
+        post: postImport,
+        processing: importing,
+        errors: importErrors,
+        reset: resetImport,
+        clearErrors: clearImportErrors,
+    } = useForm<{ file: File | null }>({
+        file: null,
+    });
 
     const handleDelete = (product: Product) => {
         router.delete(`/master/produk/${product.id}`, {
             onFinish: () => setDeleteTarget(null),
+        });
+    };
+
+    const closeImportModal = () => {
+        setShowImportModal(false);
+        resetImport('file');
+        clearImportErrors();
+    };
+
+    const submitImport = (event: FormEvent) => {
+        event.preventDefault();
+
+        postImport('/master/produk/import', {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: closeImportModal,
         });
     };
 
@@ -87,12 +115,23 @@ export default function Index({ products, filters }: Props) {
                     <p className="mt-1 max-w-full text-sm text-muted-foreground">Kelola barang dan jasa dalam satu master produk.</p>
                 </div>
                 {can('products.create') && (
-                    <Link href="/master/produk/tambah" className="w-full sm:w-auto">
-                        <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
-                            <Plus size={16} className="shrink-0" />
-                            <span className="truncate">Tambah Produk</span>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto"
+                            onClick={() => setShowImportModal(true)}
+                        >
+                            <Upload size={16} className="shrink-0" />
+                            <span className="truncate">Import</span>
                         </Button>
-                    </Link>
+                        <Link href="/master/produk/tambah" className="w-full sm:w-auto">
+                            <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
+                                <Plus size={16} className="shrink-0" />
+                                <span className="truncate">Tambah Produk</span>
+                            </Button>
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -317,6 +356,59 @@ export default function Index({ products, filters }: Props) {
                             </Button>
                         </div>
                     </div>
+                </div>
+            )}
+            {showImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <form onSubmit={submitImport} className="w-full max-w-lg rounded-lg bg-white p-5 shadow-lg sm:p-6">
+                        <h3 className="mb-2 text-lg font-semibold">Import Produk</h3>
+                        <p className="mb-4 text-sm text-gray-600">
+                            Gunakan CSV dari template. Jika ada satu baris gagal validasi, seluruh import dibatalkan.
+                        </p>
+
+                        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full justify-center gap-2 sm:w-auto"
+                                onClick={() => { window.location.href = '/master/produk/template-import'; }}
+                            >
+                                <Download size={16} />
+                                Template CSV
+                            </Button>
+                        </div>
+
+                        <label className="block text-sm font-medium text-gray-700" htmlFor="product-import-file">
+                            File CSV
+                        </label>
+                        <input
+                            id="product-import-file"
+                            type="file"
+                            accept=".csv,text/csv"
+                            className="mt-2 block w-full text-sm text-gray-700 file:mr-3 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs file:font-medium"
+                            onChange={(event) => setImportData('file', event.target.files?.[0] ?? null)}
+                        />
+                        {importData.file && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                {importData.file.name}
+                            </p>
+                        )}
+                        {importErrors.file && (
+                            <div className="mt-3 max-h-40 overflow-auto whitespace-pre-line rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                                {importErrors.file}
+                            </div>
+                        )}
+
+                        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={closeImportModal} disabled={importing}>
+                                Batal
+                            </Button>
+                            <Button type="submit" className="w-full gap-2 sm:w-auto" disabled={importing}>
+                                <Upload size={16} />
+                                {importing ? 'Mengimport...' : 'Import'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
             )}
         </AuthenticatedLayout>
