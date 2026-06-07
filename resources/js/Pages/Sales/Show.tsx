@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Edit3 } from 'lucide-react';
+import { Banknote, Edit3 } from 'lucide-react';
 import { formatDateDDMMYYYY } from '@/lib/format';
 
 interface SaleItem {
@@ -40,9 +40,9 @@ interface SaleData {
     corrected_at?: string | null;
     corrected_by?: CorrectionRef | null;
     corrects?: CorrectionRef | null;
-    partner?: { name: string; code?: string | null; } | null;
+    partner?: { id: number; name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
-    receivable?: { id: number; receivable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
+    receivable?: { id: number; receivable_number: string; payment_status: string; amount: number; paid_amount: number; remaining_amount: number; } | null;
     items: SaleItem[];
 }
 
@@ -72,6 +72,13 @@ const statusBadge: Record<string, string> = {
 
 export default function Show({ sale, journalEntries }: Props) {
     const [reason, setReason] = useState('');
+    const receivablePaymentUrl = sale.status === 'posted'
+        && sale.payment_type === 'credit'
+        && sale.receivable
+        && sale.receivable.payment_status !== 'paid'
+        && sale.receivable.remaining_amount > 0
+        ? `/transaksi/piutang-bayar/catat?receivable_id=${sale.receivable.id}`
+        : null;
 
     return (
         <AuthenticatedLayout>
@@ -163,10 +170,23 @@ export default function Show({ sale, journalEntries }: Props) {
                                     <div className="text-xs text-muted-foreground">
                                         Dibayar {formatCurrency(sale.receivable.paid_amount)} dari {formatCurrency(sale.receivable.amount)}
                                     </div>
+                                    {sale.receivable.remaining_amount > 0 && (
+                                        <div className="text-xs font-medium text-green-700">
+                                            Sisa {formatCurrency(sale.receivable.remaining_amount)}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             {sale.reference && <div><div className="text-sm text-muted-foreground">Referensi</div><div className="font-medium">{sale.reference}</div></div>}
                             {sale.notes && <div><div className="text-sm text-muted-foreground">Catatan</div><div>{sale.notes}</div></div>}
+                            {receivablePaymentUrl && (
+                                <Link href={receivablePaymentUrl}>
+                                    <Button className="w-full gap-2">
+                                        <Banknote size={16} />
+                                        Terima Pembayaran
+                                    </Button>
+                                </Link>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

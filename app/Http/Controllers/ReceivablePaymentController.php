@@ -78,8 +78,15 @@ class ReceivablePaymentController extends Controller
                 'is_overdue' => $r->isOverdue(),
             ]);
 
-        // Filter by partner if specified
         $partnerId = $request->query('partner_id');
+        $receivableId = $request->query('receivable_id');
+
+        $preselectedReceivable = $receivableId
+            ? Receivable::where('company_id', $companyId)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->find($receivableId)
+            : null;
 
         $cashBankAccounts = CashBankAccount::where('company_id', $companyId)
             ->active()
@@ -90,7 +97,8 @@ class ReceivablePaymentController extends Controller
         return Inertia::render('Receivables/Payments/Create', [
             'receivables' => $receivables,
             'cashBankAccounts' => $cashBankAccounts,
-            'preselectedPartnerId' => $partnerId ? (int) $partnerId : null,
+            'preselectedPartnerId' => $preselectedReceivable?->partner_id ?? ($partnerId ? (int) $partnerId : null),
+            'preselectedReceivableId' => $preselectedReceivable?->id,
         ]);
     }
 

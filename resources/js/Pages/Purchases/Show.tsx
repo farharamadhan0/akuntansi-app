@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Edit3 } from 'lucide-react';
+import { Banknote, Edit3 } from 'lucide-react';
 import { formatDateDDMMYYYY } from '@/lib/format';
 
 interface PurchaseItem {
@@ -40,9 +40,9 @@ interface PurchaseData {
     corrected_at?: string | null;
     corrected_by?: CorrectionRef | null;
     corrects?: CorrectionRef | null;
-    partner?: { name: string; code?: string | null; } | null;
+    partner?: { id: number; name: string; code?: string | null; } | null;
     cash_bank_account?: { name: string; } | null;
-    payable?: { id: number; payable_number: string; payment_status: string; amount: number; paid_amount: number; } | null;
+    payable?: { id: number; payable_number: string; payment_status: string; amount: number; paid_amount: number; remaining_amount: number; } | null;
     items: PurchaseItem[];
 }
 
@@ -72,6 +72,13 @@ const statusBadge: Record<string, string> = {
 
 export default function Show({ purchase, journalEntries }: Props) {
     const [reason, setReason] = useState('');
+    const payablePaymentUrl = purchase.status === 'posted'
+        && purchase.payment_type === 'credit'
+        && purchase.payable
+        && purchase.payable.payment_status !== 'paid'
+        && purchase.payable.remaining_amount > 0
+        ? `/transaksi/hutang-bayar/catat?payable_id=${purchase.payable.id}`
+        : null;
 
     return (
         <AuthenticatedLayout>
@@ -161,10 +168,23 @@ export default function Show({ purchase, journalEntries }: Props) {
                                     <div className="text-xs text-muted-foreground">
                                         Dibayar {formatCurrency(purchase.payable.paid_amount)} dari {formatCurrency(purchase.payable.amount)}
                                     </div>
+                                    {purchase.payable.remaining_amount > 0 && (
+                                        <div className="text-xs font-medium text-orange-600">
+                                            Sisa {formatCurrency(purchase.payable.remaining_amount)}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             {purchase.reference && <div><div className="text-sm text-muted-foreground">Referensi</div><div className="font-medium">{purchase.reference}</div></div>}
                             {purchase.notes && <div><div className="text-sm text-muted-foreground">Catatan</div><div>{purchase.notes}</div></div>}
+                            {payablePaymentUrl && (
+                                <Link href={payablePaymentUrl}>
+                                    <Button className="w-full gap-2">
+                                        <Banknote size={16} />
+                                        Bayar Pembelian
+                                    </Button>
+                                </Link>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

@@ -150,6 +150,7 @@ class PurchaseController extends Controller
                     'purchase_number' => $purchase->corrects->purchase_number,
                 ] : null,
                 'partner' => $purchase->partner ? [
+                    'id' => $purchase->partner->id,
                     'name' => $purchase->partner->name,
                     'code' => $purchase->partner->code,
                 ] : null,
@@ -162,6 +163,7 @@ class PurchaseController extends Controller
                     'payment_status' => $purchase->payable->payment_status->value,
                     'amount' => (float) $purchase->payable->amount,
                     'paid_amount' => (float) $purchase->payable->paid_amount,
+                    'remaining_amount' => (float) $purchase->payable->remaining_amount,
                 ] : null,
                 'items' => $purchase->items->map(fn ($item) => [
                     'id' => $item->id,

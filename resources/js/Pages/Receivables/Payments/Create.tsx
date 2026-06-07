@@ -34,6 +34,7 @@ interface Props {
     receivables: Receivable[];
     cashBankAccounts: CashBankAccount[];
     preselectedPartnerId: number | null;
+    preselectedReceivableId: number | null;
 }
 
 interface Allocation {
@@ -54,7 +55,7 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Create({ receivables, cashBankAccounts, preselectedPartnerId }: Props) {
+export default function Create({ receivables, cashBankAccounts, preselectedPartnerId, preselectedReceivableId }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
     const flashError = flash?.error;
 
@@ -95,6 +96,18 @@ export default function Create({ receivables, cashBankAccounts, preselectedPartn
             }));
         setData('allocations', formAllocations);
     }, [allocations]);
+
+    useEffect(() => {
+        if (!preselectedReceivableId) return;
+
+        const receivable = receivables.find((entry) => entry.id === preselectedReceivableId);
+        if (!receivable) return;
+
+        setSelectedCustomerId(receivable.partner_id);
+        setAllocations({
+            [receivable.id]: receivable.remaining_amount.toString(),
+        });
+    }, [preselectedReceivableId, receivables]);
 
     const handleAllocationChange = (receivableId: number, value: string) => {
         setAllocations(prev => ({

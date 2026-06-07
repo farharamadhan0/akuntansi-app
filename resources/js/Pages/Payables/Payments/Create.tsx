@@ -34,6 +34,7 @@ interface Props {
     payables: Payable[];
     cashBankAccounts: CashBankAccount[];
     preselectedPartnerId: number | null;
+    preselectedPayableId: number | null;
 }
 
 interface Allocation {
@@ -54,7 +55,7 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Create({ payables, cashBankAccounts, preselectedPartnerId }: Props) {
+export default function Create({ payables, cashBankAccounts, preselectedPartnerId, preselectedPayableId }: Props) {
     const { flash } = usePage().props as { flash?: { error?: string } };
     const flashError = flash?.error;
 
@@ -91,6 +92,18 @@ export default function Create({ payables, cashBankAccounts, preselectedPartnerI
             }));
         setData('allocations', formAllocations);
     }, [allocations]);
+
+    useEffect(() => {
+        if (!preselectedPayableId) return;
+
+        const payable = payables.find((entry) => entry.id === preselectedPayableId);
+        if (!payable) return;
+
+        setSelectedSupplierId(payable.partner_id);
+        setAllocations({
+            [payable.id]: payable.remaining_amount.toString(),
+        });
+    }, [preselectedPayableId, payables]);
 
     const handleAllocationChange = (payableId: number, value: string) => {
         setAllocations(prev => ({

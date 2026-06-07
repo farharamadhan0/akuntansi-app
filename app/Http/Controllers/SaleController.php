@@ -142,6 +142,7 @@ class SaleController extends Controller
                 'void_reason' => $sale->void_reason,
                 'corrected_at' => $sale->corrected_at?->format('Y-m-d H:i'),
                 'partner' => $sale->partner ? [
+                    'id' => $sale->partner->id,
                     'name' => $sale->partner->name,
                     'code' => $sale->partner->code,
                 ] : null,
@@ -154,6 +155,7 @@ class SaleController extends Controller
                     'payment_status' => $sale->receivable->payment_status->value,
                     'amount' => (float) $sale->receivable->amount,
                     'paid_amount' => (float) $sale->receivable->paid_amount,
+                    'remaining_amount' => (float) $sale->receivable->remaining_amount,
                 ] : null,
                 'corrected_by' => $sale->correctedBy ? [
                     'id' => $sale->correctedBy->id,

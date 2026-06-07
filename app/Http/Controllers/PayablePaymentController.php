@@ -78,6 +78,14 @@ class PayablePaymentController extends Controller
             ]);
 
         $partnerId = $request->query('partner_id');
+        $payableId = $request->query('payable_id');
+
+        $preselectedPayable = $payableId
+            ? Payable::where('company_id', $companyId)
+                ->where('status', TransactionStatus::Posted)
+                ->where('payment_status', '!=', PaymentStatus::Paid)
+                ->find($payableId)
+            : null;
 
         $cashBankAccounts = CashBankAccount::where('company_id', $companyId)
             ->active()
@@ -88,7 +96,8 @@ class PayablePaymentController extends Controller
         return Inertia::render('Payables/Payments/Create', [
             'payables' => $payables,
             'cashBankAccounts' => $cashBankAccounts,
-            'preselectedPartnerId' => $partnerId ? (int) $partnerId : null,
+            'preselectedPartnerId' => $preselectedPayable?->partner_id ?? ($partnerId ? (int) $partnerId : null),
+            'preselectedPayableId' => $preselectedPayable?->id,
         ]);
     }
 
