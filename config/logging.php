@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\DatabaseCriticalLogger;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -54,7 +55,10 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => array_values(array_unique(array_filter([
+                ...explode(',', (string) env('LOG_STACK', 'single')),
+                'database_critical',
+            ]))),
             'ignore_exceptions' => false,
         ],
 
@@ -121,6 +125,11 @@ return [
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,
+        ],
+
+        'database_critical' => [
+            'driver' => 'custom',
+            'via' => DatabaseCriticalLogger::class,
         ],
 
         'emergency' => [

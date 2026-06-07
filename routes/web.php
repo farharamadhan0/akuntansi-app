@@ -25,6 +25,7 @@ use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\DevDashboardController;
 use App\Http\Controllers\DevCompanyController;
 use App\Http\Controllers\DevFeedbackController;
+use App\Http\Controllers\DevErrorLogController;
 use App\Http\Controllers\FeedbackController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -276,5 +277,6 @@ Route::middleware('auth')->group(function () {
         Route::get('feedback/{feedback}/attachment', [DevFeedbackController::class, 'attachment'])->name('dev.feedback.attachment');
         Route::put('feedback/{feedback}', [DevFeedbackController::class, 'update'])->name('dev.feedback.update');
         Route::post('feedback/{feedback}/messages', [DevFeedbackController::class, 'reply'])->name('dev.feedback.messages.store');
+        Route::get('error-logs', [DevErrorLogController::class, 'index'])->name('dev.error-logs.index');
     });
 });
