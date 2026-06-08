@@ -104,30 +104,44 @@ class ProductController extends Controller
             ->with('success', 'Produk berhasil ditambahkan.');
     }
 
-    public function downloadImportTemplate(): StreamedResponse
+    public function downloadImportTemplate(string $type): StreamedResponse
     {
+        $type = $this->normalizeImportProductType($type);
+        abort_unless(in_array($type, ['goods', 'service'], true), 404);
+
         $headers = [
-            'product_code',
+            'kode_produk',
             'sku',
-            'name',
-            'product_type',
-            'unit',
-            'sales_price',
-            'purchase_price',
-            'is_stock_tracked',
-            'is_active',
-            'description',
-            'inventory_account_id',
-            'revenue_account_id',
-            'expense_account_id',
-            'cogs_account_id',
+            'nama',
+            'satuan',
+            'harga_jual',
+            'harga_beli',
+            'deskripsi',
         ];
 
-        $rows = [
-            $headers,
-            ['PRD-001', 'SKU-001', 'Contoh Barang', 'goods', 'pcs', '15000', '10000', 'ya', 'ya', 'Baris contoh, boleh dihapus', '', '', '', ''],
-            ['SRV-001', '', 'Contoh Jasa', 'service', 'paket', '250000', '0', 'tidak', 'ya', '', '', '', '', ''],
-        ];
+        if ($type === 'goods') {
+            $headers = [
+                'kode_produk',
+                'sku',
+                'nama',
+                'satuan',
+                'harga_jual',
+                'harga_beli',
+                'deskripsi',
+            ];
+
+            $rows = [
+                $headers,
+                ['PRD-001', 'SKU-001', 'Contoh Barang', 'pcs', '15000', '10000', 'Baris contoh, boleh dihapus'],
+            ];
+        } else {
+            $rows = [
+                $headers,
+                ['SRV-001', '', 'Contoh Jasa', 'paket', '250000', '0', 'Baris contoh, boleh dihapus'],
+            ];
+        }
+
+        $filenameType = $type === 'goods' ? 'barang' : 'jasa';
 
         return response()->streamDownload(function () use ($rows) {
             $output = fopen('php://output', 'w');
@@ -138,13 +152,16 @@ class ProductController extends Controller
             }
 
             fclose($output);
-        }, 'template-import-produk.csv', [
+        }, "template-import-produk-{$filenameType}.csv", [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
-    public function import(Request $request): RedirectResponse
+    public function import(Request $request, string $type): RedirectResponse
     {
+        $type = $this->normalizeImportProductType($type);
+        abort_unless(in_array($type, ['goods', 'service'], true), 404);
+
         $validator = Validator::make($request->all(), [
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
         ], [
@@ -171,7 +188,7 @@ class ProductController extends Controller
                 ->with('error', 'Import produk gagal.');
         }
 
-        [$validatedRows, $rowErrors] = $this->validateProductImportRows($rows);
+        [$validatedRows, $rowErrors] = $this->validateProductImportRows($rows, $type);
 
         if ($rowErrors !== []) {
             return back()
@@ -361,8 +378,8 @@ class ProductController extends Controller
             return [[], ['Header CSV tidak ditemukan.']];
         }
 
-        $headers = array_map(fn ($header) => Str::of((string) $header)->trim()->lower()->replace("\xEF\xBB\xBF", '')->toString(), $headers);
-        $requiredHeaders = ['name', 'product_type', 'unit'];
+        $headers = array_map(fn ($header) => $this->normalizeProductImportHeader($header), $headers);
+        $requiredHeaders = ['name', 'unit'];
         $missingHeaders = array_values(array_diff($requiredHeaders, $headers));
 
         if ($missingHeaders !== []) {
@@ -399,7 +416,7 @@ class ProductController extends Controller
         return [$rows, $errors];
     }
 
-    protected function validateProductImportRows(array $rows): array
+    protected function validateProductImportRows(array $rows, string $type): array
     {
         $companyId = auth()->user()->current_company_id;
         $validatedRows = [];
@@ -409,7 +426,7 @@ class ProductController extends Controller
 
         foreach ($rows as $row) {
             $line = $row['line'];
-            $data = $this->normalizeProductImportRow($row['data']);
+            $data = $this->normalizeProductImportRow($row['data'], $type);
 
             $validator = Validator::make($data, [
                 'product_code' => [
@@ -428,34 +445,8 @@ class ProductController extends Controller
                 'product_type' => ['required', Rule::in(['goods', 'service'])],
                 'unit' => ['required', 'string', 'max:20'],
                 'description' => ['nullable', 'string'],
-                'is_stock_tracked' => ['nullable', 'boolean'],
                 'sales_price' => ['nullable', 'numeric', 'min:0'],
                 'purchase_price' => ['nullable', 'numeric', 'min:0'],
-                'inventory_account_id' => [
-                    'nullable',
-                    Rule::exists('accounts', 'id')
-                        ->where('company_id', $companyId)
-                        ->where('is_active', true),
-                ],
-                'revenue_account_id' => [
-                    'nullable',
-                    Rule::exists('accounts', 'id')
-                        ->where('company_id', $companyId)
-                        ->where('is_active', true),
-                ],
-                'expense_account_id' => [
-                    'nullable',
-                    Rule::exists('accounts', 'id')
-                        ->where('company_id', $companyId)
-                        ->where('is_active', true),
-                ],
-                'cogs_account_id' => [
-                    'nullable',
-                    Rule::exists('accounts', 'id')
-                        ->where('company_id', $companyId)
-                        ->where('is_active', true),
-                ],
-                'is_active' => ['nullable', 'boolean'],
             ], (new ProductRequest())->messages());
 
             $validator->after(function ($validator) use ($data, $line, &$seenProductCodes, &$seenSkus) {
@@ -488,16 +479,8 @@ class ProductController extends Controller
                 continue;
             }
 
-            $parentAccountError = $this->parentAccountError($data);
-
-            if ($parentAccountError !== null) {
-                $errors[] = "Baris {$line}: {$parentAccountError}";
-                continue;
-            }
-
-            if ($data['product_type'] === 'service') {
-                $data['is_stock_tracked'] = false;
-            }
+            $data['is_stock_tracked'] = $type === 'goods';
+            $data['is_active'] = true;
 
             $validatedRows[] = $data;
         }
@@ -505,24 +488,39 @@ class ProductController extends Controller
         return [$validatedRows, $errors];
     }
 
-    protected function normalizeProductImportRow(array $row): array
+    protected function normalizeProductImportRow(array $row, string $type): array
     {
         return [
             'product_code' => $this->normalizeImportText($row['product_code'] ?? null),
             'sku' => $this->normalizeImportText($row['sku'] ?? null),
             'name' => $this->normalizeImportText($row['name'] ?? null),
-            'product_type' => $this->normalizeProductType($row['product_type'] ?? null),
+            'product_type' => $type,
             'unit' => $this->normalizeImportText($row['unit'] ?? null),
             'sales_price' => $this->normalizeImportNumber($row['sales_price'] ?? null),
             'purchase_price' => $this->normalizeImportNumber($row['purchase_price'] ?? null),
-            'is_stock_tracked' => $this->normalizeImportBoolean($row['is_stock_tracked'] ?? null),
-            'is_active' => $this->normalizeImportBoolean($row['is_active'] ?? null),
+            'is_stock_tracked' => $type === 'goods',
             'description' => $this->normalizeImportText($row['description'] ?? null),
-            'inventory_account_id' => $this->normalizeImportInteger($row['inventory_account_id'] ?? null),
-            'revenue_account_id' => $this->normalizeImportInteger($row['revenue_account_id'] ?? null),
-            'expense_account_id' => $this->normalizeImportInteger($row['expense_account_id'] ?? null),
-            'cogs_account_id' => $this->normalizeImportInteger($row['cogs_account_id'] ?? null),
         ];
+    }
+
+    protected function normalizeProductImportHeader(mixed $header): string
+    {
+        $header = Str::of((string) $header)
+            ->trim()
+            ->lower()
+            ->replace("\xEF\xBB\xBF", '')
+            ->replace([' ', '-'], '_')
+            ->toString();
+
+        return match ($header) {
+            'kode_produk', 'kode_barang', 'kode_jasa' => 'product_code',
+            'nama', 'nama_produk', 'nama_barang', 'nama_jasa' => 'name',
+            'satuan' => 'unit',
+            'harga_jual' => 'sales_price',
+            'harga_beli' => 'purchase_price',
+            'deskripsi', 'keterangan' => 'description',
+            default => $header,
+        };
     }
 
     protected function normalizeImportText(mixed $value): ?string
@@ -540,14 +538,14 @@ class ProductController extends Controller
         return $value;
     }
 
-    protected function normalizeProductType(mixed $value): ?string
+    protected function normalizeImportProductType(string $value): string
     {
-        $value = Str::lower((string) $this->normalizeImportText($value));
+        $value = Str::lower($value);
 
         return match ($value) {
             'barang', 'goods', 'produk' => 'goods',
             'jasa', 'service', 'layanan' => 'service',
-            default => $value !== '' ? $value : null,
+            default => $value,
         };
     }
 
@@ -582,21 +580,6 @@ class ProductController extends Controller
         }
 
         return $value;
-    }
-
-    protected function normalizeImportInteger(mixed $value): mixed
-    {
-        $number = $this->normalizeImportNumber($value);
-
-        if ($number === null) {
-            return null;
-        }
-
-        if (! is_numeric($number)) {
-            return $number;
-        }
-
-        return (int) $number;
     }
 
     protected function normalizeImportBoolean(mixed $value): mixed
@@ -638,37 +621,4 @@ class ProductController extends Controller
         return true;
     }
 
-    protected function parentAccountError(array $data): ?string
-    {
-        $fields = [
-            'inventory_account_id' => 'Akun persediaan',
-            'revenue_account_id' => 'Akun penjualan',
-            'expense_account_id' => 'Akun beban',
-            'cogs_account_id' => 'Akun HPP',
-        ];
-
-        $accountIds = collect($fields)
-            ->keys()
-            ->map(fn (string $field) => $data[$field] ?? null)
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($accountIds->isEmpty()) {
-            return null;
-        }
-
-        $parentAccountIds = Account::whereIn('id', $accountIds)
-            ->whereHas('children')
-            ->pluck('id')
-            ->all();
-
-        foreach ($fields as $field => $label) {
-            if (in_array((int) ($data[$field] ?? 0), $parentAccountIds, true)) {
-                return "{$label} tidak boleh akun induk/group";
-            }
-        }
-
-        return null;
-    }
 }

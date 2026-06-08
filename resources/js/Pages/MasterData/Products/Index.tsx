@@ -2,7 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -65,7 +65,7 @@ function formatCurrency(value: number) {
 export default function Index({ products, filters }: Props) {
     const { can } = usePermissions();
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-    const [showImportModal, setShowImportModal] = useState(false);
+    const [importType, setImportType] = useState<'goods' | 'service' | null>(null);
     const perPage = filters?.per_page ?? 25;
     const {
         data: importData,
@@ -86,7 +86,7 @@ export default function Index({ products, filters }: Props) {
     };
 
     const closeImportModal = () => {
-        setShowImportModal(false);
+        setImportType(null);
         resetImport('file');
         clearImportErrors();
     };
@@ -94,12 +94,24 @@ export default function Index({ products, filters }: Props) {
     const submitImport = (event: FormEvent) => {
         event.preventDefault();
 
-        postImport('/master/produk/import', {
+        if (!importType) return;
+
+        const typePath = importType === 'goods' ? 'barang' : 'jasa';
+
+        postImport(`/master/produk/import/${typePath}`, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: closeImportModal,
         });
     };
+
+    const importTitle = importType === 'goods' ? 'Import Barang' : 'Import Jasa';
+    const importDescription = importType === 'goods'
+        ? 'Gunakan CSV template barang. Jika ada satu baris gagal validasi, seluruh import dibatalkan.'
+        : 'Gunakan CSV template jasa. Jika ada satu baris gagal validasi, seluruh import dibatalkan.';
+    const importTemplatePath = importType === 'goods'
+        ? '/master/produk/template-import/barang'
+        : '/master/produk/template-import/jasa';
 
     return (
         <AuthenticatedLayout>
@@ -120,10 +132,19 @@ export default function Index({ products, filters }: Props) {
                             type="button"
                             variant="outline"
                             className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto"
-                            onClick={() => setShowImportModal(true)}
+                            onClick={() => setImportType('goods')}
                         >
                             <Upload size={16} className="shrink-0" />
-                            <span className="truncate">Import</span>
+                            <span className="truncate">Import Barang</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto"
+                            onClick={() => setImportType('service')}
+                        >
+                            <Upload size={16} className="shrink-0" />
+                            <span className="truncate">Import Jasa</span>
                         </Button>
                         <Link href="/master/produk/tambah" className="w-full sm:w-auto">
                             <Button className="w-full min-w-0 justify-center gap-2 overflow-hidden sm:w-auto">
@@ -358,24 +379,23 @@ export default function Index({ products, filters }: Props) {
                     </div>
                 </div>
             )}
-            {showImportModal && (
+            {importType && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <form onSubmit={submitImport} className="w-full max-w-lg rounded-lg bg-white p-5 shadow-lg sm:p-6">
-                        <h3 className="mb-2 text-lg font-semibold">Import Produk</h3>
-                        <p className="mb-4 text-sm text-gray-600">
-                            Gunakan CSV dari template. Jika ada satu baris gagal validasi, seluruh import dibatalkan.
-                        </p>
+                        <h3 className="mb-2 text-lg font-semibold">{importTitle}</h3>
+                        <p className="mb-4 text-sm text-gray-600">{importDescription}</p>
 
                         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full justify-center gap-2 sm:w-auto"
-                                onClick={() => { window.location.href = '/master/produk/template-import'; }}
+                            <a
+                                href={importTemplatePath}
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    className: 'w-full justify-center gap-2 sm:w-auto',
+                                })}
                             >
                                 <Download size={16} />
                                 Template CSV
-                            </Button>
+                            </a>
                         </div>
 
                         <label className="block text-sm font-medium text-gray-700" htmlFor="product-import-file">

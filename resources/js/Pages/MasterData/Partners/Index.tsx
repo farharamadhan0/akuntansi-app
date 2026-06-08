@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/ui/pagination';
 import {
@@ -454,15 +454,16 @@ export default function Index({ partners, filters }: Props) {
                         <p className="mb-4 text-sm text-gray-600">{importDescription}</p>
 
                         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full justify-center gap-2 sm:w-auto"
-                                onClick={() => { window.location.href = `/master/mitra/template-import/${importType}`; }}
+                            <a
+                                href={`/master/mitra/template-import/${importType}`}
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    className: 'w-full justify-center gap-2 sm:w-auto',
+                                })}
                             >
                                 <Download size={16} />
                                 Template CSV
-                            </Button>
+                            </a>
                         </div>
 
                         <label className="block text-sm font-medium text-gray-700" htmlFor="partner-import-file">
