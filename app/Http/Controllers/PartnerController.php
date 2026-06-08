@@ -10,8 +10,12 @@ use App\Services\NumberGeneratorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PartnerController extends Controller
 {
@@ -77,6 +81,116 @@ class PartnerController extends Controller
     public function create(): Response
     {
         return Inertia::render('MasterData/Partners/Form');
+    }
+
+    public function downloadImportTemplate(string $type): StreamedResponse
+    {
+        $type = $this->normalizeImportType($type);
+        abort_unless(in_array($type, Partner::TYPES, true), 404);
+
+        $typeLabel = $type === Partner::TYPE_CUSTOMER ? 'customer' : 'supplier';
+        $headers = [
+            'code',
+            'name',
+            'email',
+            'phone',
+            'address',
+            'tax_id',
+            'credit_limit',
+            'is_active',
+            'notes',
+        ];
+
+        $rows = [
+            $headers,
+            [
+                $type === Partner::TYPE_CUSTOMER ? 'CUST-001' : 'SUP-001',
+                $type === Partner::TYPE_CUSTOMER ? 'Contoh Pelanggan' : 'Contoh Supplier',
+                $type === Partner::TYPE_CUSTOMER ? 'pelanggan@example.com' : 'supplier@example.com',
+                '081234567890',
+                'Alamat contoh',
+                '0123456789012345',
+                $type === Partner::TYPE_CUSTOMER ? '5000000' : '0',
+                'ya',
+                'Baris contoh, boleh dihapus',
+            ],
+        ];
+
+        return response()->streamDownload(function () use ($rows) {
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
+
+            foreach ($rows as $row) {
+                fputcsv($output, $row);
+            }
+
+            fclose($output);
+        }, "template-import-mitra-{$typeLabel}.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function import(Request $request, string $type): RedirectResponse
+    {
+        $type = $this->normalizeImportType($type);
+
+        if (! in_array($type, Partner::TYPES, true)) {
+            abort(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ], [
+            'file.required' => 'File import wajib dipilih.',
+            'file.mimes' => 'File import harus berformat CSV.',
+            'file.max' => 'Ukuran file import maksimal 2 MB.',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->with('error', 'Import mitra gagal.');
+        }
+
+        [$rows, $parseErrors] = $this->readPartnerImportCsv($request->file('file')->getRealPath());
+
+        if ($parseErrors !== []) {
+            return back()
+                ->withErrors(['file' => implode("\n", $parseErrors)])
+                ->with('error', 'Import mitra gagal. Perbaiki file lalu unggah kembali.');
+        }
+
+        if ($rows === []) {
+            return back()
+                ->withErrors(['file' => 'File import tidak memiliki data mitra.'])
+                ->with('error', 'Import mitra gagal.');
+        }
+
+        [$validatedRows, $rowErrors] = $this->validatePartnerImportRows($rows, $type);
+
+        if ($rowErrors !== []) {
+            return back()
+                ->withErrors(['file' => implode("\n", $rowErrors)])
+                ->with('error', 'Import mitra gagal. Tidak ada data yang disimpan.');
+        }
+
+        DB::transaction(function () use ($validatedRows) {
+            foreach ($validatedRows as $row) {
+                $types = $row['types'];
+                unset($row['types']);
+
+                if (! filled($row['code'] ?? null)) {
+                    $row['code'] = $this->numberGenerator->generatePartnerCode($row['company_id']);
+                }
+
+                $partner = Partner::create($row);
+                $partner->syncTypes($types);
+            }
+        });
+
+        $label = $type === Partner::TYPE_CUSTOMER ? 'pelanggan' : 'supplier';
+
+        return redirect()
+            ->route('partners.index')
+            ->with('success', count($validatedRows)." {$label} berhasil diimport.");
     }
 
     public function show(Partner $partner): Response
@@ -279,5 +393,236 @@ class PartnerController extends Controller
         if ($partner->company_id !== auth()->user()->current_company_id) {
             abort(403);
         }
+    }
+
+    protected function readPartnerImportCsv(string $path): array
+    {
+        $handle = fopen($path, 'r');
+
+        if ($handle === false) {
+            return [[], ['File import tidak bisa dibaca.']];
+        }
+
+        $firstLine = fgets($handle);
+        rewind($handle);
+
+        $delimiter = $this->detectCsvDelimiter((string) $firstLine);
+        $headers = fgetcsv($handle, 0, $delimiter);
+
+        if ($headers === false) {
+            fclose($handle);
+
+            return [[], ['Header CSV tidak ditemukan.']];
+        }
+
+        $headers = array_map(fn ($header) => Str::of((string) $header)->trim()->lower()->replace("\xEF\xBB\xBF", '')->toString(), $headers);
+        $requiredHeaders = ['name'];
+        $missingHeaders = array_values(array_diff($requiredHeaders, $headers));
+
+        if ($missingHeaders !== []) {
+            fclose($handle);
+
+            return [[], ['Kolom wajib tidak ditemukan: '.implode(', ', $missingHeaders).'.']];
+        }
+
+        $rows = [];
+        $errors = [];
+        $lineNumber = 1;
+
+        while (($values = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $lineNumber++;
+
+            if ($this->isBlankCsvRow($values)) {
+                continue;
+            }
+
+            if (count($values) > count($headers)) {
+                $errors[] = "Baris {$lineNumber}: jumlah kolom lebih banyak dari header.";
+                continue;
+            }
+
+            $values = array_pad($values, count($headers), null);
+            $rows[] = [
+                'line' => $lineNumber,
+                'data' => array_combine($headers, $values),
+            ];
+        }
+
+        fclose($handle);
+
+        return [$rows, $errors];
+    }
+
+    protected function validatePartnerImportRows(array $rows, string $type): array
+    {
+        $companyId = auth()->user()->current_company_id;
+        $validatedRows = [];
+        $errors = [];
+        $seenCodes = [];
+
+        foreach ($rows as $row) {
+            $line = $row['line'];
+            $data = $this->normalizePartnerImportRow($row['data'], $type, $companyId);
+
+            $validator = Validator::make($data, [
+                'name' => ['required', 'string', 'max:255'],
+                'code' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    Rule::unique('partners')->where('company_id', $companyId),
+                ],
+                'email' => ['nullable', 'email', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:50'],
+                'address' => ['nullable', 'string', 'max:1000'],
+                'tax_id' => ['nullable', 'string', 'max:50'],
+                'credit_limit' => ['nullable', 'numeric', 'min:0'],
+                'notes' => ['nullable', 'string', 'max:1000'],
+                'is_active' => ['boolean'],
+                'types' => ['required', 'array', 'min:1'],
+                'types.*' => ['string', Rule::in(Partner::TYPES)],
+            ], (new PartnerRequest())->messages());
+
+            $validator->after(function ($validator) use ($data, $line, &$seenCodes) {
+                if ($data['code'] === null) {
+                    return;
+                }
+
+                $key = Str::lower($data['code']);
+
+                if (isset($seenCodes[$key])) {
+                    $validator->errors()->add('code', "Kode mitra duplikat dengan baris {$seenCodes[$key]}.");
+                } else {
+                    $seenCodes[$key] = $line;
+                }
+            });
+
+            if ($validator->fails()) {
+                foreach ($validator->errors()->all() as $message) {
+                    $errors[] = "Baris {$line}: {$message}";
+                }
+
+                continue;
+            }
+
+            $validatedRows[] = $data;
+        }
+
+        return [$validatedRows, $errors];
+    }
+
+    protected function normalizePartnerImportRow(array $row, string $type, int $companyId): array
+    {
+        $code = $this->normalizeImportText($row['code'] ?? null);
+
+        return [
+            'company_id' => $companyId,
+            'code' => $code,
+            'name' => $this->normalizeImportText($row['name'] ?? null),
+            'email' => $this->normalizeImportText($row['email'] ?? null),
+            'phone' => $this->normalizeImportText($row['phone'] ?? null),
+            'address' => $this->normalizeImportText($row['address'] ?? null),
+            'tax_id' => $this->normalizeImportText($row['tax_id'] ?? null),
+            'credit_limit' => $this->normalizeImportNumber($row['credit_limit'] ?? null),
+            'notes' => $this->normalizeImportText($row['notes'] ?? null),
+            'is_active' => $this->normalizeImportBoolean($row['is_active'] ?? 'ya'),
+            'types' => [$type],
+        ];
+    }
+
+    protected function normalizeImportText(mixed $value): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d+\.0+$/', $value) === 1) {
+            return Str::before($value, '.');
+        }
+
+        return $value;
+    }
+
+    protected function normalizeImportNumber(mixed $value): ?string
+    {
+        $rawValue = trim((string) ($value ?? ''));
+        $value = $rawValue;
+
+        if ($value === '') {
+            return null;
+        }
+
+        $value = preg_replace('/[^\d,.\-]/', '', $value);
+
+        if ($value === '' || $value === null) {
+            return $rawValue;
+        }
+
+        $lastComma = strrpos($value, ',');
+        $lastDot = strrpos($value, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+            $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
+            $value = str_replace($thousandSeparator, '', $value);
+            $value = str_replace($decimalSeparator, '.', $value);
+        } elseif ($lastComma !== false) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif (substr_count($value, '.') > 1) {
+            $value = str_replace('.', '', $value);
+        }
+
+        return $value;
+    }
+
+    protected function normalizeImportBoolean(mixed $value): mixed
+    {
+        $value = Str::lower((string) $this->normalizeImportText($value));
+
+        if ($value === '') {
+            return null;
+        }
+
+        return match ($value) {
+            '1', 'true', 'yes', 'ya', 'y', 'aktif', 'active' => true,
+            '0', 'false', 'no', 'tidak', 'n', 'nonaktif', 'inactive' => false,
+            default => $value,
+        };
+    }
+
+    protected function normalizeImportType(string $type): string
+    {
+        return match (Str::lower($type)) {
+            'customer', 'pelanggan' => Partner::TYPE_CUSTOMER,
+            'supplier', 'pemasok' => Partner::TYPE_SUPPLIER,
+            default => $type,
+        };
+    }
+
+    protected function detectCsvDelimiter(string $line): string
+    {
+        $delimiters = [',' => 0, ';' => 0, "\t" => 0];
+
+        foreach ($delimiters as $delimiter => $_) {
+            $delimiters[$delimiter] = substr_count($line, $delimiter);
+        }
+
+        arsort($delimiters);
+
+        return array_key_first($delimiters) ?: ',';
+    }
+
+    protected function isBlankCsvRow(array $values): bool
+    {
+        foreach ($values as $value) {
+            if (trim((string) $value) !== '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

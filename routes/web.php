@@ -107,6 +107,8 @@ Route::middleware('auth')->group(function () {
         // Master Data - Mitra (gabungan pelanggan & supplier)
         Route::prefix('master')->group(function () {
             Route::get('mitra', [PartnerController::class, 'index'])->middleware('permission:partners.view')->name('partners.index');
+            Route::get('mitra/template-import/{type}', [PartnerController::class, 'downloadImportTemplate'])->middleware('permission:partners.create')->name('partners.import.template');
+            Route::post('mitra/import/{type}', [PartnerController::class, 'import'])->middleware('permission:partners.create')->name('partners.import');
             Route::get('mitra/tambah', [PartnerController::class, 'create'])->middleware('permission:partners.create')->name('partners.create');
             Route::post('mitra', [PartnerController::class, 'store'])->middleware('permission:partners.create')->name('partners.store');
             Route::get('mitra/{partner}', [PartnerController::class, 'show'])->middleware('permission:partners.view')->name('partners.show');

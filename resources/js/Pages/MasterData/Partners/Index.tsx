@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usePermissions } from '@/lib/permissions';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Users, Search, MoreVertical } from 'lucide-react';
+import { Download, MoreVertical, Pencil, Plus, Search, ToggleLeft, ToggleRight, Trash2, Upload, Users } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -81,7 +81,19 @@ export default function Index({ partners, filters }: Props) {
     const { can } = usePermissions();
     const [search, setSearch] = useState(filters.search ?? '');
     const [deleteTarget, setDeleteTarget] = useState<Partner | null>(null);
+    const [importType, setImportType] = useState<'customer' | 'supplier' | null>(null);
     const perPage = filters?.per_page ?? 25;
+    const {
+        data: importData,
+        setData: setImportData,
+        post: postImport,
+        processing: importing,
+        errors: importErrors,
+        reset: resetImport,
+        clearErrors: clearImportErrors,
+    } = useForm<{ file: File | null }>({
+        file: null,
+    });
 
     const buildQuery = (overrides: Partial<Filters>) => ({
         search,
@@ -114,8 +126,30 @@ export default function Index({ partners, filters }: Props) {
         });
     };
 
+    const closeImportModal = () => {
+        setImportType(null);
+        resetImport('file');
+        clearImportErrors();
+    };
+
+    const submitImport = (event: FormEvent) => {
+        event.preventDefault();
+
+        if (!importType) return;
+
+        postImport(`/master/mitra/import/${importType}`, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: closeImportModal,
+        });
+    };
+
     const activeStatus = filters.status ?? 'active';
     const activeType = filters.type ?? 'all';
+    const importTitle = importType === 'customer' ? 'Import Pelanggan' : 'Import Supplier';
+    const importDescription = importType === 'customer'
+        ? 'Gunakan CSV template pelanggan. Jika ada satu baris gagal validasi, seluruh import dibatalkan.'
+        : 'Gunakan CSV template supplier. Jika ada satu baris gagal validasi, seluruh import dibatalkan.';
 
     return (
         <AuthenticatedLayout>
@@ -137,12 +171,32 @@ export default function Index({ partners, filters }: Props) {
                     </p>
                 </div>
                 {can('partners.create') && (
-                    <Link href="/master/mitra/tambah" className="w-full sm:w-auto">
-                        <Button className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto">
-                            <Plus size={18} className="shrink-0" />
-                            <span className="truncate">Tambah Mitra</span>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto"
+                            onClick={() => setImportType('customer')}
+                        >
+                            <Upload size={16} className="shrink-0" />
+                            <span className="truncate">Import Customer</span>
                         </Button>
-                    </Link>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto"
+                            onClick={() => setImportType('supplier')}
+                        >
+                            <Upload size={16} className="shrink-0" />
+                            <span className="truncate">Import Supplier</span>
+                        </Button>
+                        <Link href="/master/mitra/tambah" className="w-full sm:w-auto">
+                            <Button className="w-full min-w-0 justify-center gap-1.5 overflow-hidden sm:w-auto">
+                                <Plus size={18} className="shrink-0" />
+                                <span className="truncate">Tambah Mitra</span>
+                            </Button>
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -391,6 +445,57 @@ export default function Index({ partners, filters }: Props) {
                             </Button>
                         </div>
                     </div>
+                </div>
+            )}
+            {importType && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <form onSubmit={submitImport} className="w-full max-w-lg rounded-lg bg-white p-5 shadow-lg sm:p-6">
+                        <h3 className="mb-2 text-lg font-semibold">{importTitle}</h3>
+                        <p className="mb-4 text-sm text-gray-600">{importDescription}</p>
+
+                        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full justify-center gap-2 sm:w-auto"
+                                onClick={() => { window.location.href = `/master/mitra/template-import/${importType}`; }}
+                            >
+                                <Download size={16} />
+                                Template CSV
+                            </Button>
+                        </div>
+
+                        <label className="block text-sm font-medium text-gray-700" htmlFor="partner-import-file">
+                            File CSV
+                        </label>
+                        <input
+                            id="partner-import-file"
+                            type="file"
+                            accept=".csv,text/csv"
+                            className="mt-2 block w-full text-sm text-gray-700 file:mr-3 file:h-8 file:border file:border-border file:bg-background file:px-3 file:text-xs file:font-medium"
+                            onChange={(event) => setImportData('file', event.target.files?.[0] ?? null)}
+                        />
+                        {importData.file && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                {importData.file.name}
+                            </p>
+                        )}
+                        {importErrors.file && (
+                            <div className="mt-3 max-h-40 overflow-auto whitespace-pre-line rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                                {importErrors.file}
+                            </div>
+                        )}
+
+                        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={closeImportModal} disabled={importing}>
+                                Batal
+                            </Button>
+                            <Button type="submit" className="w-full gap-2 sm:w-auto" disabled={importing}>
+                                <Upload size={16} />
+                                {importing ? 'Mengimport...' : 'Import'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
             )}
         </AuthenticatedLayout>
