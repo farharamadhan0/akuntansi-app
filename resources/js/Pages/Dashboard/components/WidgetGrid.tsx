@@ -20,12 +20,7 @@ function getColSpan(size: WidgetSize): number {
 function renderWidget(widgetId: string, data: DashboardData) {
     switch (widgetId) {
         case "summary-cards":
-            return (
-                <SummaryCards
-                    stats={data.stats}
-                    cashBankAccountCount={data.stats.cashBankAccountCount}
-                />
-            );
+            return <SummaryCards stats={data.stats} />;
         case "trend-chart":
             return <TrendChart trend={data.trend} />;
         case "top-expense":

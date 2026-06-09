@@ -150,7 +150,7 @@ function SortableItem({
             {/* Label */}
             <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-700 truncate">{meta.label}</p>
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs text-gray-400 truncate" title={meta.description}>
                     {meta.description}
                 </p>
             </div>

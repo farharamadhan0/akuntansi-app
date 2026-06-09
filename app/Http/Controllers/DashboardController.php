@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CashBankAccount;
 use App\Models\DashboardPreference;
+use App\Models\Sale;
 use App\Models\Transaction;
 use App\Models\Receivable;
 use App\Models\Payable;
@@ -66,6 +67,8 @@ class DashboardController extends Controller
         $incomeLastMonth = 0.0;
         $expenseThisMonth = 0.0;
         $expenseLastMonth = 0.0;
+        $salesThisMonth = 0.0;
+        $salesLastMonth = 0.0;
         $netProfitThisMonth = 0.0;
         $netProfitLastMonth = 0.0;
         $cashBankAccounts = collect();
@@ -110,6 +113,16 @@ class DashboardController extends Controller
                 ->where('status', TransactionStatus::Posted)
                 ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
                 ->sum('amount');
+
+            $salesThisMonth = (float) Sale::where('company_id', $companyId)
+                ->where('status', TransactionStatus::Posted)
+                ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                ->sum('total_amount');
+
+            $salesLastMonth = (float) Sale::where('company_id', $companyId)
+                ->where('status', TransactionStatus::Posted)
+                ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+                ->sum('total_amount');
 
             $netProfitThisMonth = $incomeThisMonth - $expenseThisMonth;
             $netProfitLastMonth = $incomeLastMonth - $expenseLastMonth;
@@ -264,6 +277,8 @@ class DashboardController extends Controller
                 'incomeLastMonth'  => $incomeLastMonth,
                 'expenseThisMonth' => $expenseThisMonth,
                 'expenseLastMonth' => $expenseLastMonth,
+                'salesThisMonth'   => $salesThisMonth,
+                'salesLastMonth'   => $salesLastMonth,
                 'netProfit'        => $netProfitThisMonth,
                 'netProfitLastMonth' => $netProfitLastMonth,
                 'totalCashBank'    => $totalCashBank,

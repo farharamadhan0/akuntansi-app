@@ -5,6 +5,8 @@ export interface Stats {
     incomeLastMonth: number;
     expenseThisMonth: number;
     expenseLastMonth: number;
+    salesThisMonth: number;
+    salesLastMonth: number;
     netProfit: number;
     netProfitLastMonth: number;
     totalCashBank: number;

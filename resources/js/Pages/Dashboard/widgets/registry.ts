@@ -20,7 +20,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
     {
         id: 'summary-cards',
         label: 'Ringkasan Keuangan',
-        description: 'Uang masuk, keluar, saldo, dan laba bulan ini',
+        description: 'Uang masuk, keluar, penjualan, dan laba bulan ini',
         defaultVisible: true,
         defaultOrder: 1,
         defaultSize: 'full',

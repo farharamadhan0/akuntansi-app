@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
     TrendingUp,
     TrendingDown,
-    Wallet,
     DollarSign,
     LucideIcon,
     ArrowUpRight,
@@ -106,16 +105,17 @@ interface SummaryCardsProps {
         incomeLastMonth: number;
         expenseThisMonth: number;
         expenseLastMonth: number;
+        salesThisMonth: number;
+        salesLastMonth: number;
         netProfit: number;
         netProfitLastMonth: number;
-        totalCashBank: number;
     };
-    cashBankAccountCount: number;
 }
 
-export default function SummaryCards({ stats, cashBankAccountCount }: SummaryCardsProps) {
+export default function SummaryCards({ stats }: SummaryCardsProps) {
     const incomeDelta = computeDelta(stats.incomeThisMonth, stats.incomeLastMonth);
     const expenseDelta = computeDelta(stats.expenseThisMonth, stats.expenseLastMonth);
+    const salesDelta = computeDelta(stats.salesThisMonth, stats.salesLastMonth);
     const profitDelta = computeDelta(stats.netProfit, stats.netProfitLastMonth);
     const profitMargin =
         stats.incomeThisMonth > 0
@@ -147,13 +147,15 @@ export default function SummaryCards({ stats, cashBankAccountCount }: SummaryCar
                 deltaGoodDirection="down"
             />
             <StatCard
-                title="Saldo Kas & Bank"
-                value={formatCurrency(stats.totalCashBank)}
-                icon={Wallet}
+                title="Penjualan"
+                value={formatCurrency(stats.salesThisMonth)}
+                icon={TrendingUp}
                 iconBg="bg-blue-100"
                 iconColor="text-blue-600"
                 valueColor="text-blue-700"
-                subtitle={`${cashBankAccountCount} akun aktif`}
+                link="/transaksi/penjualan"
+                delta={salesDelta}
+                deltaGoodDirection="up"
             />
             <StatCard
                 title="Laba Bulan Ini"
