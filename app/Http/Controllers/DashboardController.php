@@ -28,6 +28,7 @@ class DashboardController extends Controller
         'sales-margin',
         'cash-runway',
         'cash-flow',
+        'top-products',
         'trend-chart',
         'top-expense',
         'receivable',
@@ -55,6 +56,7 @@ class DashboardController extends Controller
         $needsSalesMargin = $this->hasVisibleWidget($visibleWidgets, 'sales-margin');
         $needsCashRunway = $this->hasVisibleWidget($visibleWidgets, 'cash-runway');
         $needsCashFlow = $this->hasVisibleWidget($visibleWidgets, 'cash-flow');
+        $needsTopProducts = $this->hasVisibleWidget($visibleWidgets, 'top-products');
 
         $now = now();
         $today = $now->toDateString();
@@ -98,6 +100,7 @@ class DashboardController extends Controller
         $payableAging = $this->emptyAging();
         $trend = [];
         $topExpenseCategories = collect();
+        $topSellingProducts = collect();
         $stockAttention = [
             'lowStockCount' => 0,
             'negativeStockCount' => 0,
@@ -304,6 +307,27 @@ class DashboardController extends Controller
                 ->values();
         }
 
+        if ($needsTopProducts) {
+            $topSellingProducts = SaleItem::query()
+                ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+                ->join('products', 'products.id', '=', 'sale_items.product_id')
+                ->where('sales.company_id', $companyId)
+                ->where('sales.status', TransactionStatus::Posted)
+                ->whereBetween('sales.date', [$startOfMonth, $endOfMonth])
+                ->selectRaw('products.id as product_id, products.name as product_name, sale_items.unit as unit, SUM(sale_items.quantity) as total_quantity')
+                ->groupBy('products.id', 'products.name', 'sale_items.unit')
+                ->orderByDesc('total_quantity')
+                ->limit(5)
+                ->get()
+                ->map(fn($row) => [
+                    'id' => (int) $row->product_id,
+                    'name' => (string) $row->product_name,
+                    'unit' => (string) $row->unit,
+                    'totalQuantity' => (float) $row->total_quantity,
+                ])
+                ->values();
+        }
+
         if ($this->hasVisibleWidget($visibleWidgets, 'stock-attention')) {
             $stockProducts = Product::where('company_id', $companyId)
                 ->active()
@@ -395,6 +419,7 @@ class DashboardController extends Controller
             'payableAging'        => $payableAging,
             'trend'               => $trend,
             'topExpenseCategories' => $topExpenseCategories,
+            'topSellingProducts'  => $topSellingProducts,
             'stockAttention'      => $stockAttention,
             'cashBankAccounts'    => $cashBankAccounts,
             'recentTransactions'  => $recentTransactions,
@@ -411,7 +436,7 @@ class DashboardController extends Controller
             return array_fill_keys(self::DEFAULT_VISIBLE_WIDGETS, true);
         }
 
-        $visibleWidgets = [];
+        $visibleWidgets = array_fill_keys(self::DEFAULT_VISIBLE_WIDGETS, true);
 
         foreach ($layout as $item) {
             $widgetId = $item['widgetId'] ?? null;

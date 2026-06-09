@@ -56,6 +56,13 @@ export interface TopCategory {
     total: number;
 }
 
+export interface TopSellingProduct {
+    id: number;
+    name: string;
+    unit: string;
+    totalQuantity: number;
+}
+
 export interface StockAttention {
     lowStockCount: number;
     negativeStockCount: number;
@@ -86,8 +93,9 @@ export interface DashboardData {
     recentTransactions: RecentTransaction[];
     receivableAging: Aging;
     payableAging: Aging;
-    trend: TrendPoint[];
+    trend: TrendPoint[]; 
     topExpenseCategories: TopCategory[];
+    topSellingProducts: TopSellingProduct[];
     stockAttention: StockAttention;
     currentMonth: string;
 }

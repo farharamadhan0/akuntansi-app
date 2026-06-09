@@ -3,6 +3,7 @@ import SummaryCards from "../widgets/SummaryCards";
 import SalesMarginCard from "../widgets/SalesMarginCard";
 import CashRunwayCard from "../widgets/CashRunwayCard";
 import CashFlowCard from "../widgets/CashFlowCard";
+import TopProducts from "../widgets/TopProducts";
 import TrendChart from "../widgets/TrendChart";
 import TopExpense from "../widgets/TopExpense";
 import ReceivableCard from "../widgets/ReceivableCard";
@@ -36,6 +37,13 @@ function renderWidget(widgetId: string, data: DashboardData) {
             return <CashRunwayCard stats={data.stats} />;
         case "cash-flow":
             return <CashFlowCard stats={data.stats} />;
+        case "top-products":
+            return (
+                <TopProducts
+                    topSellingProducts={data.topSellingProducts}
+                    currentMonth={data.currentMonth}
+                />
+            );
         case "trend-chart":
             return <TrendChart trend={data.trend} />;
         case "top-expense":
