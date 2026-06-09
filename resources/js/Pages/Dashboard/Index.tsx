@@ -16,6 +16,7 @@ export default function Dashboard({
     payableAging,
     trend,
     topExpenseCategories,
+    stockAttention,
     currentMonth,
     layout: savedLayout,
 }: DashboardProps) {
@@ -42,6 +43,7 @@ export default function Dashboard({
         payableAging,
         trend,
         topExpenseCategories,
+        stockAttention,
         currentMonth,
     };
 

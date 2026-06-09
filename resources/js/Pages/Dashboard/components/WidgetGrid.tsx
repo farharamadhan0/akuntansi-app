@@ -5,6 +5,7 @@ import TopExpense from "../widgets/TopExpense";
 import ReceivableCard from "../widgets/ReceivableCard";
 import PayableCard from "../widgets/PayableCard";
 import CashBankCard from "../widgets/CashBankCard";
+import StockAttentionCard from "../widgets/StockAttentionCard";
 import RecentTransactions from "../widgets/RecentTransactions";
 import type { DashboardData } from "../types";
 
@@ -46,6 +47,8 @@ function renderWidget(widgetId: string, data: DashboardData) {
             );
         case "cash-bank":
             return <CashBankCard cashBankAccounts={data.cashBankAccounts} />;
+        case "stock-attention":
+            return <StockAttentionCard stockAttention={data.stockAttention} />;
         case "recent-transactions":
             return (
                 <RecentTransactions

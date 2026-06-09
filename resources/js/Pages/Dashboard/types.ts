@@ -51,6 +51,12 @@ export interface TopCategory {
     total: number;
 }
 
+export interface StockAttention {
+    lowStockCount: number;
+    negativeStockCount: number;
+    unsoldThirtyDaysCount: number;
+}
+
 export interface CashBankAccount {
     id: number;
     name: string;
@@ -77,6 +83,7 @@ export interface DashboardData {
     payableAging: Aging;
     trend: TrendPoint[];
     topExpenseCategories: TopCategory[];
+    stockAttention: StockAttention;
     currentMonth: string;
 }
 

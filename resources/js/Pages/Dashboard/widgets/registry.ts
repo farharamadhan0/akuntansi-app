@@ -66,11 +66,19 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         defaultSize: '1/2',
     },
     {
+        id: 'stock-attention',
+        label: 'Stok Perlu Perhatian',
+        description: 'Stok rendah, stok negatif, dan produk yang belum terjual',
+        defaultVisible: true,
+        defaultOrder: 7,
+        defaultSize: '1/2',
+    },
+    {
         id: 'recent-transactions',
         label: 'Transaksi Terakhir',
         description: '5 transaksi terakhir yang tercatat',
         defaultVisible: true,
-        defaultOrder: 7,
+        defaultOrder: 8,
         defaultSize: '1/2',
     },
 ];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CashBankAccount;
 use App\Models\DashboardPreference;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Transaction;
 use App\Models\Receivable;
@@ -28,6 +29,7 @@ class DashboardController extends Controller
         'receivable',
         'payable',
         'cash-bank',
+        'stock-attention',
         'recent-transactions',
     ];
 
@@ -84,6 +86,11 @@ class DashboardController extends Controller
         $payableAging = $this->emptyAging();
         $trend = [];
         $topExpenseCategories = collect();
+        $stockAttention = [
+            'lowStockCount' => 0,
+            'negativeStockCount' => 0,
+            'unsoldThirtyDaysCount' => 0,
+        ];
         $draftCount = 0;
         $recentTransactions = collect();
 
@@ -241,6 +248,29 @@ class DashboardController extends Controller
                 ->values();
         }
 
+        if ($this->hasVisibleWidget($visibleWidgets, 'stock-attention')) {
+            $stockProducts = Product::where('company_id', $companyId)
+                ->active()
+                ->goods()
+                ->where('is_stock_tracked', true);
+
+            $stockAttention = [
+                'lowStockCount' => (clone $stockProducts)
+                    ->where('current_stock', '>', 0)
+                    ->where('current_stock', '<=', 5)
+                    ->count(),
+                'negativeStockCount' => (clone $stockProducts)
+                    ->where('current_stock', '<', 0)
+                    ->count(),
+                'unsoldThirtyDaysCount' => (clone $stockProducts)
+                    ->whereDoesntHave('saleItems.sale', function (Builder $query) use ($now) {
+                        $query->where('status', TransactionStatus::Posted)
+                            ->where('date', '>=', $now->copy()->subDays(30)->toDateString());
+                    })
+                    ->count(),
+            ];
+        }
+
         if ($needsSummaryCards) {
             // Draft transactions count (needs review)
             $draftCount = Transaction::where('company_id', $companyId)
@@ -304,6 +334,7 @@ class DashboardController extends Controller
             'payableAging'        => $payableAging,
             'trend'               => $trend,
             'topExpenseCategories' => $topExpenseCategories,
+            'stockAttention'      => $stockAttention,
             'cashBankAccounts'    => $cashBankAccounts,
             'recentTransactions'  => $recentTransactions,
         ]);
