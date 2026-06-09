@@ -42,11 +42,19 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         defaultSize: '1/2',
     },
     {
+        id: 'cash-flow',
+        label: 'Cash Flow Bulan Ini',
+        description: 'Kas masuk, kas keluar, dan net cash flow bulan berjalan',
+        defaultVisible: true,
+        defaultOrder: 4,
+        defaultSize: '1/2',
+    },
+    {
         id: 'trend-chart',
         label: 'Tren 6 Bulan',
         description: 'Grafik pemasukan vs pengeluaran 6 bulan terakhir',
         defaultVisible: true,
-        defaultOrder: 4,
+        defaultOrder: 5,
         defaultSize: '2/3',
     },
     {
@@ -54,7 +62,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Top Kategori Pengeluaran',
         description: 'Kategori pengeluaran terbesar bulan ini',
         defaultVisible: true,
-        defaultOrder: 5,
+        defaultOrder: 6,
         defaultSize: '1/3',
     },
     {
@@ -62,7 +70,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Piutang Belum Lunas',
         description: 'Ringkasan dan aging piutang',
         defaultVisible: true,
-        defaultOrder: 6,
+        defaultOrder: 7,
         defaultSize: '1/2',
     },
     {
@@ -70,7 +78,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Hutang Belum Lunas',
         description: 'Ringkasan dan aging hutang',
         defaultVisible: true,
-        defaultOrder: 7,
+        defaultOrder: 8,
         defaultSize: '1/2',
     },
     {
@@ -78,7 +86,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Saldo Kas & Bank',
         description: 'Daftar saldo akun kas dan bank',
         defaultVisible: true,
-        defaultOrder: 8,
+        defaultOrder: 9,
         defaultSize: '1/2',
     },
     {
@@ -86,7 +94,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Stok Perlu Perhatian',
         description: 'Stok rendah, stok negatif, dan produk yang belum terjual',
         defaultVisible: true,
-        defaultOrder: 9,
+        defaultOrder: 10,
         defaultSize: '1/2',
     },
     {
@@ -94,7 +102,7 @@ export const WIDGET_REGISTRY: WidgetMeta[] = [
         label: 'Transaksi Terakhir',
         description: '5 transaksi terakhir yang tercatat',
         defaultVisible: true,
-        defaultOrder: 10,
+        defaultOrder: 11,
         defaultSize: '1/2',
     },
 ];

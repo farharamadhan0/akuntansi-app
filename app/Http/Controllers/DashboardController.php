@@ -27,6 +27,7 @@ class DashboardController extends Controller
         'summary-cards',
         'sales-margin',
         'cash-runway',
+        'cash-flow',
         'trend-chart',
         'top-expense',
         'receivable',
@@ -53,6 +54,7 @@ class DashboardController extends Controller
         $needsPayable = $this->hasVisibleWidget($visibleWidgets, 'payable');
         $needsSalesMargin = $this->hasVisibleWidget($visibleWidgets, 'sales-margin');
         $needsCashRunway = $this->hasVisibleWidget($visibleWidgets, 'cash-runway');
+        $needsCashFlow = $this->hasVisibleWidget($visibleWidgets, 'cash-flow');
 
         $now = now();
         $today = $now->toDateString();
@@ -104,9 +106,9 @@ class DashboardController extends Controller
         $draftCount = 0;
         $recentTransactions = collect();
 
-        if ($needsSummaryCards || $needsCashRunway) {
+        if ($needsSummaryCards || $needsCashRunway || $needsCashFlow) {
             // Income & Expense this month (posted)
-            if ($needsSummaryCards) {
+            if ($needsSummaryCards || $needsCashFlow) {
                 $incomeThisMonth = (float) Transaction::where('company_id', $companyId)
                     ->where('type', TransactionType::Income)
                     ->where('status', TransactionStatus::Posted)
@@ -120,19 +122,21 @@ class DashboardController extends Controller
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('amount');
 
-            if ($needsSummaryCards) {
+            if ($needsSummaryCards || $needsCashFlow) {
                 // Income & Expense last month (for MoM comparison)
-                $incomeLastMonth = (float) Transaction::where('company_id', $companyId)
-                    ->where('type', TransactionType::Income)
-                    ->where('status', TransactionStatus::Posted)
-                    ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-                    ->sum('amount');
+                if ($needsSummaryCards) {
+                    $incomeLastMonth = (float) Transaction::where('company_id', $companyId)
+                        ->where('type', TransactionType::Income)
+                        ->where('status', TransactionStatus::Posted)
+                        ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+                        ->sum('amount');
 
-                $expenseLastMonth = (float) Transaction::where('company_id', $companyId)
-                    ->where('type', TransactionType::Expense)
-                    ->where('status', TransactionStatus::Posted)
-                    ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-                    ->sum('amount');
+                    $expenseLastMonth = (float) Transaction::where('company_id', $companyId)
+                        ->where('type', TransactionType::Expense)
+                        ->where('status', TransactionStatus::Posted)
+                        ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+                        ->sum('amount');
+                }
             }
         }
 
