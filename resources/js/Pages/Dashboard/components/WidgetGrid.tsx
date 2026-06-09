@@ -23,7 +23,7 @@ function renderWidget(widgetId: string, data: DashboardData) {
             return (
                 <SummaryCards
                     stats={data.stats}
-                    cashBankAccountCount={data.cashBankAccounts.length}
+                    cashBankAccountCount={data.stats.cashBankAccountCount}
                 />
             );
         case "trend-chart":

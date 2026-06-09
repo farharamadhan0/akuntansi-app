@@ -8,6 +8,7 @@ export interface Stats {
     netProfit: number;
     netProfitLastMonth: number;
     totalCashBank: number;
+    cashBankAccountCount: number;
     receivableOutstanding: number;
     receivableOutstandingCount: number;
     receivableOverdue: number;
