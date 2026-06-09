@@ -12,6 +12,8 @@ export interface Stats {
     grossMarginThisMonth: number | null;
     averageExpenseLastMonth: number | null;
     cashRunwayMonths: number | null;
+    cashRunwayDataDays: number;
+    cashRunwayExpenseLabel: string | null;
     netProfit: number;
     netProfitLastMonth: number;
     totalCashBank: number;

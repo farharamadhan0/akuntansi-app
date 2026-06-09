@@ -85,6 +85,8 @@ class DashboardController extends Controller
         $grossMarginThisMonth = null;
         $averageExpenseLastMonth = null;
         $cashRunwayMonths = null;
+        $cashRunwayDataDays = 0;
+        $cashRunwayExpenseLabel = null;
         $netProfitThisMonth = 0.0;
         $netProfitLastMonth = 0.0;
         $cashBankAccounts = collect();
@@ -189,15 +191,40 @@ class DashboardController extends Controller
         }
 
         if ($needsCashRunway) {
-            $averageExpenseLastMonth = (float) Transaction::where('company_id', $companyId)
+            $firstExpenseDate = Transaction::where('company_id', $companyId)
                 ->where('status', TransactionStatus::Posted)
                 ->where('type', TransactionType::Expense)
-                ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-                ->sum('amount');
+                ->min('date');
 
-            $averageExpenseLastMonth = $averageExpenseLastMonth > 0
-                ? $averageExpenseLastMonth
-                : null;
+            if ($firstExpenseDate !== null) {
+                $todayCarbon = $now->copy()->startOfDay();
+                $firstExpenseCarbon = Carbon::parse($firstExpenseDate)->startOfDay();
+                $cashRunwayDataDays = max(1, ((int) $firstExpenseCarbon->diffInDays($todayCarbon, false)) + 1);
+
+                if ($cashRunwayDataDays >= 7) {
+                    $expenseStartDate = $cashRunwayDataDays >= 90
+                        ? $todayCarbon->copy()->subDays(89)->toDateString()
+                        : $firstExpenseCarbon->toDateString();
+                    $expenseEndDate = $todayCarbon->toDateString();
+                    $expenseDays = $cashRunwayDataDays >= 90 ? 90 : $cashRunwayDataDays;
+
+                    $expenseTotal = (float) Transaction::where('company_id', $companyId)
+                        ->where('status', TransactionStatus::Posted)
+                        ->where('type', TransactionType::Expense)
+                        ->whereBetween('date', [$expenseStartDate, $expenseEndDate])
+                        ->sum('amount');
+
+                    $averageExpenseLastMonth = $expenseTotal > 0
+                        ? ($expenseTotal / $expenseDays) * 30
+                        : null;
+
+                    $cashRunwayExpenseLabel = match (true) {
+                        $cashRunwayDataDays < 30 => 'Estimasi awal',
+                        $cashRunwayDataDays < 90 => "Berdasarkan {$cashRunwayDataDays} hari data",
+                        default => 'Berdasarkan rata-rata 90 hari terakhir',
+                    };
+                }
+            }
 
             $cashRunwayMonths = $averageExpenseLastMonth !== null
                 ? $totalCashBank / $averageExpenseLastMonth
@@ -394,6 +421,8 @@ class DashboardController extends Controller
                 'grossMarginThisMonth' => $grossMarginThisMonth,
                 'averageExpenseLastMonth' => $averageExpenseLastMonth,
                 'cashRunwayMonths' => $cashRunwayMonths,
+                'cashRunwayDataDays' => $cashRunwayDataDays,
+                'cashRunwayExpenseLabel' => $cashRunwayExpenseLabel,
                 'netProfit'        => $netProfitThisMonth,
                 'netProfitLastMonth' => $netProfitLastMonth,
                 'totalCashBank'    => $totalCashBank,

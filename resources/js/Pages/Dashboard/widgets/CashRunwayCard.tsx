@@ -7,6 +7,8 @@ interface CashRunwayCardProps {
         totalCashBank: number;
         averageExpenseLastMonth: number | null;
         cashRunwayMonths: number | null;
+        cashRunwayDataDays: number;
+        cashRunwayExpenseLabel: string | null;
     };
 }
 
@@ -19,6 +21,8 @@ function formatMonths(value: number | null) {
 }
 
 export default function CashRunwayCard({ stats }: CashRunwayCardProps) {
+    const hasEnoughData = stats.cashRunwayDataDays >= 7;
+
     return (
         <Card>
             <CardContent className="p-4">
@@ -28,7 +32,7 @@ export default function CashRunwayCard({ stats }: CashRunwayCardProps) {
                             Cash Runway
                         </p>
                         <p className="mt-0.5 text-xs text-gray-400">
-                            Berdasarkan pengeluaran bulan sebelumnya
+                            Berdasarkan rata-rata harian aktual
                         </p>
                     </div>
                     <div className="rounded-lg bg-cyan-100 p-2">
@@ -57,13 +61,18 @@ export default function CashRunwayCard({ stats }: CashRunwayCardProps) {
                                 <TrendingDown size={14} className="text-amber-600" />
                             </div>
                             <span className="text-xs font-medium text-gray-500">
-                                Uang keluar bulan sebelumnya
+                                Estimasi uang keluar 30 hari
                             </span>
                         </div>
                         <p className="mt-3 text-base font-bold text-amber-700 sm:text-lg">
-                            {stats.averageExpenseLastMonth !== null
+                            {hasEnoughData && stats.averageExpenseLastMonth !== null
                                 ? formatCurrency(stats.averageExpenseLastMonth)
                                 : "-"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                            {hasEnoughData
+                                ? stats.cashRunwayExpenseLabel
+                                : "Butuh minimal 7 hari data pengeluaran"}
                         </p>
                     </div>
 
@@ -75,9 +84,11 @@ export default function CashRunwayCard({ stats }: CashRunwayCardProps) {
                             {formatMonths(stats.cashRunwayMonths)}
                         </p>
                         <p className="mt-1 text-xs text-gray-400">
-                            {stats.cashRunwayMonths === null
-                                ? "Belum ada data pengeluaran pada bulan sebelumnya"
-                                : "Estimasi berdasarkan saldo saat ini dan pengeluaran bulan sebelumnya"}
+                            {!hasEnoughData
+                                ? "Belum bisa menampilkan estimasi runway"
+                                : stats.cashRunwayMonths === null
+                                  ? "Belum ada pengeluaran pada periode data ini"
+                                  : "Estimasi berdasarkan saldo saat ini dan pengeluaran rata-rata harian"}
                         </p>
                     </div>
                 </div>
