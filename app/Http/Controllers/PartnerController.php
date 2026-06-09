@@ -90,31 +90,58 @@ class PartnerController extends Controller
 
         $typeLabel = $type === Partner::TYPE_CUSTOMER ? 'customer' : 'supplier';
         $headers = [
-            'code',
-            'name',
+            'kode',
+            'nama',
             'email',
-            'phone',
-            'address',
-            'tax_id',
-            'credit_limit',
-            'is_active',
-            'notes',
+            'telepon',
+            'alamat',
+            'npwp',
+            'status_aktif',
+            'catatan',
         ];
+
+        if ($type === Partner::TYPE_CUSTOMER) {
+            $headers = [
+                'kode',
+                'nama',
+                'email',
+                'telepon',
+                'alamat',
+                'npwp',
+                'limit_kredit',
+                'status_aktif',
+                'catatan',
+            ];
+        }
 
         $rows = [
             $headers,
-            [
-                $type === Partner::TYPE_CUSTOMER ? 'CUST-001' : 'SUP-001',
-                $type === Partner::TYPE_CUSTOMER ? 'Contoh Pelanggan' : 'Contoh Supplier',
-                $type === Partner::TYPE_CUSTOMER ? 'pelanggan@example.com' : 'supplier@example.com',
+        ];
+
+        if ($type === Partner::TYPE_CUSTOMER) {
+            $rows[] = [
+                'CUST-001',
+                'Contoh Pelanggan',
+                'pelanggan@example.com',
                 '081234567890',
                 'Alamat contoh',
                 '0123456789012345',
-                $type === Partner::TYPE_CUSTOMER ? '5000000' : '0',
+                '5000000',
                 'ya',
                 'Baris contoh, boleh dihapus',
-            ],
-        ];
+            ];
+        } else {
+            $rows[] = [
+                'SUP-001',
+                'Contoh Supplier',
+                'supplier@example.com',
+                '081234567890',
+                'Alamat contoh',
+                '0123456789012345',
+                'ya',
+                'Baris contoh, boleh dihapus',
+            ];
+        }
 
         return response()->streamDownload(function () use ($rows) {
             $output = fopen('php://output', 'w');
@@ -415,7 +442,7 @@ class PartnerController extends Controller
             return [[], ['Header CSV tidak ditemukan.']];
         }
 
-        $headers = array_map(fn ($header) => Str::of((string) $header)->trim()->lower()->replace("\xEF\xBB\xBF", '')->toString(), $headers);
+        $headers = array_map(fn ($header) => $this->normalizePartnerImportHeader($header), $headers);
         $requiredHeaders = ['name'];
         $missingHeaders = array_values(array_diff($requiredHeaders, $headers));
 
@@ -523,11 +550,35 @@ class PartnerController extends Controller
             'phone' => $this->normalizeImportText($row['phone'] ?? null),
             'address' => $this->normalizeImportText($row['address'] ?? null),
             'tax_id' => $this->normalizeImportText($row['tax_id'] ?? null),
-            'credit_limit' => $this->normalizeImportNumber($row['credit_limit'] ?? null),
+            'credit_limit' => $type === Partner::TYPE_CUSTOMER
+                ? $this->normalizeImportNumber($row['credit_limit'] ?? null)
+                : null,
             'notes' => $this->normalizeImportText($row['notes'] ?? null),
             'is_active' => $this->normalizeImportBoolean($row['is_active'] ?? 'ya'),
             'types' => [$type],
         ];
+    }
+
+    protected function normalizePartnerImportHeader(mixed $header): string
+    {
+        $header = Str::of((string) $header)
+            ->trim()
+            ->lower()
+            ->replace("\xEF\xBB\xBF", '')
+            ->replace([' ', '-'], '_')
+            ->toString();
+
+        return match ($header) {
+            'kode', 'kode_mitra', 'kode_customer', 'kode_pelanggan', 'kode_supplier' => 'code',
+            'nama', 'nama_mitra', 'nama_customer', 'nama_pelanggan', 'nama_supplier' => 'name',
+            'telepon', 'no_telepon', 'nomor_telepon', 'hp', 'no_hp' => 'phone',
+            'alamat' => 'address',
+            'npwp' => 'tax_id',
+            'limit_kredit', 'batas_kredit' => 'credit_limit',
+            'status_aktif', 'aktif' => 'is_active',
+            'catatan', 'keterangan' => 'notes',
+            default => $header,
+        };
     }
 
     protected function normalizeImportText(mixed $value): ?string

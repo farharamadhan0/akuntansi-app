@@ -179,7 +179,7 @@ export default function Index({ partners, filters }: Props) {
                             onClick={() => setImportType('customer')}
                         >
                             <Upload size={16} className="shrink-0" />
-                            <span className="truncate">Import Customer</span>
+                            <span className="truncate">Import Pelanggan</span>
                         </Button>
                         <Button
                             type="button"
