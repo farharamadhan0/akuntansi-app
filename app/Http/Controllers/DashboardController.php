@@ -6,6 +6,7 @@ use App\Models\CashBankAccount;
 use App\Models\DashboardPreference;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Transaction;
 use App\Models\Receivable;
 use App\Models\Payable;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
 {
     protected const DEFAULT_VISIBLE_WIDGETS = [
         'summary-cards',
+        'sales-margin',
         'trend-chart',
         'top-expense',
         'receivable',
@@ -48,6 +50,7 @@ class DashboardController extends Controller
         $needsCashBank = $this->hasVisibleWidget($visibleWidgets, 'cash-bank');
         $needsReceivable = $this->hasVisibleWidget($visibleWidgets, 'receivable');
         $needsPayable = $this->hasVisibleWidget($visibleWidgets, 'payable');
+        $needsSalesMargin = $this->hasVisibleWidget($visibleWidgets, 'sales-margin');
 
         $now = now();
         $today = $now->toDateString();
@@ -71,6 +74,9 @@ class DashboardController extends Controller
         $expenseLastMonth = 0.0;
         $salesThisMonth = 0.0;
         $salesLastMonth = 0.0;
+        $salesCostThisMonth = 0.0;
+        $grossProfitThisMonth = 0.0;
+        $grossMarginThisMonth = null;
         $netProfitThisMonth = 0.0;
         $netProfitLastMonth = 0.0;
         $cashBankAccounts = collect();
@@ -120,12 +126,17 @@ class DashboardController extends Controller
                 ->where('status', TransactionStatus::Posted)
                 ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
                 ->sum('amount');
+        }
 
+        if ($needsSummaryCards || $needsSalesMargin) {
             $salesThisMonth = (float) Sale::where('company_id', $companyId)
                 ->where('status', TransactionStatus::Posted)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('total_amount');
 
+        }
+
+        if ($needsSummaryCards) {
             $salesLastMonth = (float) Sale::where('company_id', $companyId)
                 ->where('status', TransactionStatus::Posted)
                 ->whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
@@ -143,6 +154,21 @@ class DashboardController extends Controller
             $cashBankAccountCount = $cashBankSummary->count();
             $totalCashBank = (float) $cashBankSummary
                 ->sum(fn(CashBankAccount $acc) => (float) $this->balanceService->getCashBankBalance($acc->id));
+        }
+
+        if ($needsSalesMargin) {
+            $salesCostThisMonth = (float) SaleItem::query()
+                ->selectRaw('COALESCE(SUM(sale_items.cost_amount), 0) as total_cost')
+                ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+                ->where('sales.company_id', $companyId)
+                ->where('sales.status', TransactionStatus::Posted)
+                ->whereBetween('sales.date', [$startOfMonth, $endOfMonth])
+                ->value('total_cost');
+
+            $grossProfitThisMonth = $salesThisMonth - $salesCostThisMonth;
+            $grossMarginThisMonth = $salesThisMonth > 0
+                ? ($grossProfitThisMonth / $salesThisMonth) * 100
+                : null;
         }
 
         if ($needsCashBank) {
@@ -309,6 +335,9 @@ class DashboardController extends Controller
                 'expenseLastMonth' => $expenseLastMonth,
                 'salesThisMonth'   => $salesThisMonth,
                 'salesLastMonth'   => $salesLastMonth,
+                'salesCostThisMonth' => $salesCostThisMonth,
+                'grossProfitThisMonth' => $grossProfitThisMonth,
+                'grossMarginThisMonth' => $grossMarginThisMonth,
                 'netProfit'        => $netProfitThisMonth,
                 'netProfitLastMonth' => $netProfitLastMonth,
                 'totalCashBank'    => $totalCashBank,

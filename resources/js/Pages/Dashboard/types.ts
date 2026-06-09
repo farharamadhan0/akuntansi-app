@@ -7,6 +7,9 @@ export interface Stats {
     expenseLastMonth: number;
     salesThisMonth: number;
     salesLastMonth: number;
+    salesCostThisMonth: number;
+    grossProfitThisMonth: number;
+    grossMarginThisMonth: number | null;
     netProfit: number;
     netProfitLastMonth: number;
     totalCashBank: number;
