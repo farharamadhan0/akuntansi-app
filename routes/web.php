@@ -35,10 +35,13 @@ use Inertia\Inertia;
 
 Route::get('/', function (Request $request) {
     if ($request->user()) {
-        return redirect()->route(
-            $request->user()->current_company_id
-                ? 'dashboard'
-                : 'company.setup'
+        if (! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        return app(\App\Http\Middleware\EnsureHasCompany::class)->handle(
+            $request,
+            fn () => app(DashboardController::class)->index()->toResponse($request)
         );
     }
 
