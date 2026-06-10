@@ -36,6 +36,20 @@ export default function Login() {
                         </div>
                     )}
 
+                    <a
+                        href="/auth/google/redirect"
+                        className="mb-5 flex h-9 w-full items-center justify-center gap-2 border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                        <span className="text-sm font-bold text-blue-600">G</span>
+                        Masuk dengan Google
+                    </a>
+
+                    <div className="mb-5 flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="h-px flex-1 bg-border" />
+                        <span>atau masuk dengan email</span>
+                        <div className="h-px flex-1 bg-border" />
+                    </div>
+
                     <form onSubmit={submit} className="space-y-4">
                         <FormField label="Email" required error={errors.email}>
                             <Input

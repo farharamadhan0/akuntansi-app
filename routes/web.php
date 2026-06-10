@@ -72,6 +72,8 @@ Route::get('email/verify/{id}/{hash}', function (Request $request, string $id, s
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store']);
+    Route::get('auth/google/redirect', [LoginController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback'])->name('google.callback');
     
     Route::get('register', [RegisterController::class, 'create'])->name('register');
     Route::post('register', [RegisterController::class, 'store']);
