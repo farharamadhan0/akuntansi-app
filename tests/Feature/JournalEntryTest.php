@@ -40,10 +40,16 @@ class JournalEntryTest extends TestCase
 
         $this->revenueAccount = Account::where('company_id', $this->companyId)
             ->where('type', AccountType::Revenue)
+            ->where('is_active', true)
+            ->whereDoesntHave('children')
+            ->orderBy('code')
             ->first();
 
         $this->expenseAccount = Account::where('company_id', $this->companyId)
             ->where('type', AccountType::Expense)
+            ->where('is_active', true)
+            ->whereDoesntHave('children')
+            ->orderBy('code')
             ->first();
     }
 

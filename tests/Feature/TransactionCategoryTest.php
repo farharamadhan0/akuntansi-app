@@ -34,10 +34,16 @@ class TransactionCategoryTest extends TestCase
 
         $this->incomeAccount = Account::where('company_id', $this->companyId)
             ->where('type', 'revenue')
+            ->where('is_active', true)
+            ->whereDoesntHave('children')
+            ->orderBy('code')
             ->first();
 
         $this->expenseAccount = Account::where('company_id', $this->companyId)
             ->where('type', 'expense')
+            ->where('is_active', true)
+            ->whereDoesntHave('children')
+            ->orderBy('code')
             ->first();
     }
 
