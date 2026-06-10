@@ -36,9 +36,17 @@ return [
     ],
 
     'telegram' => [
-        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
-        'chat_id' => env('TELEGRAM_CHAT_ID'),
-        'enabled' => env('TELEGRAM_NOTIFICATIONS_ENABLED', true),
+        'feedback' => [
+            'bot_token' => env('TELEGRAM_FEEDBACK_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN')),
+            'chat_id' => env('TELEGRAM_FEEDBACK_CHAT_ID', env('TELEGRAM_CHAT_ID')),
+            'enabled' => env('TELEGRAM_FEEDBACK_NOTIFICATIONS_ENABLED', env('TELEGRAM_NOTIFICATIONS_ENABLED', true)),
+        ],
+
+        'error' => [
+            'bot_token' => env('TELEGRAM_ERROR_BOT_TOKEN'),
+            'chat_id' => env('TELEGRAM_ERROR_CHAT_ID'),
+            'enabled' => env('TELEGRAM_ERROR_NOTIFICATIONS_ENABLED', true),
+        ],
     ],
 
 ];

@@ -7,14 +7,15 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramService
 {
-    public function sendMessage(string $message): void
+    public function sendMessage(string $message, string $channel = 'feedback'): bool
     {
-        $enabled = (bool) config('services.telegram.enabled', true);
-        $botToken = (string) config('services.telegram.bot_token', '');
-        $chatId = (string) config('services.telegram.chat_id', '');
+        $config = (array) config("services.telegram.{$channel}", []);
+        $enabled = (bool) ($config['enabled'] ?? true);
+        $botToken = (string) ($config['bot_token'] ?? '');
+        $chatId = (string) ($config['chat_id'] ?? '');
 
         if (! $enabled || blank($botToken) || blank($chatId)) {
-            return;
+            return false;
         }
 
         try {
@@ -27,10 +28,25 @@ class TelegramService
                     'disable_web_page_preview' => true,
                 ])
                 ->throw();
+
+            return true;
         } catch (\Throwable $exception) {
             Log::warning('Telegram notification failed.', [
+                'channel' => $channel,
                 'message' => $exception->getMessage(),
             ]);
+
+            return false;
         }
+    }
+
+    public function sendFeedbackMessage(string $message): bool
+    {
+        return $this->sendMessage($message, 'feedback');
+    }
+
+    public function sendErrorMessage(string $message): bool
+    {
+        return $this->sendMessage($message, 'error');
     }
 }

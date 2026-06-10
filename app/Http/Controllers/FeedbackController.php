@@ -111,7 +111,7 @@ class FeedbackController extends Controller
             'company:id,name',
         ]);
 
-        $telegram->sendMessage($this->telegramTicketMessage($feedback));
+        $telegram->sendFeedbackMessage($this->telegramTicketMessage($feedback));
 
         return redirect()
             ->route('feedback.show', $feedback)
