@@ -33,6 +33,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/', function (Request $request) {
+    if ($request->user()) {
+        return redirect()->route(
+            $request->user()->current_company_id
+                ? 'dashboard'
+                : 'company.setup'
+        );
+    }
+
+    return Inertia::render('Landing/Index');
+})->name('landing');
+
 // Email Verification (tidak perlu login)
 Route::get('email/verify/{id}/{hash}', function (Request $request, string $id, string $hash) {
     abort_unless(
@@ -93,7 +105,7 @@ Route::middleware('auth')->group(function () {
 
     // Routes requiring active company
     Route::middleware(['verified', 'has.company'])->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
         Route::get('/bantuan', [FeedbackController::class, 'pageIndex'])->name('feedback.page.index');
         Route::get('/bantuan/ticket/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
