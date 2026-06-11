@@ -238,12 +238,6 @@ export default function Show({ product, recentMovements, total_purchases, total_
                                             : '-'}
                                     />
                                     <DetailItem
-                                        label="Akun Beban"
-                                        value={product.expense_account
-                                            ? `${product.expense_account.code} - ${product.expense_account.name}`
-                                            : '-'}
-                                    />
-                                    <DetailItem
                                         label="Akun HPP"
                                         value={product.cogs_account
                                             ? `${product.cogs_account.code} - ${product.cogs_account.name}`

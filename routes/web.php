@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyUserController;
@@ -77,6 +78,11 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [LoginController::class, 'store']);
     Route::get('auth/google/redirect', [LoginController::class, 'redirectToGoogle'])->name('google.redirect');
     Route::get('auth/google/callback', [LoginController::class, 'handleGoogleCallback'])->name('google.callback');
+
+    Route::get('forgot-password', [PasswordResetController::class, 'createForgotPassword'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'storeForgotPassword'])->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'createResetPassword'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'storeResetPassword'])->name('password.update');
     
     Route::get('register', [RegisterController::class, 'create'])->name('register');
     Route::post('register', [RegisterController::class, 'store']);

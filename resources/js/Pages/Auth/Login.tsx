@@ -30,9 +30,11 @@ export default function Login() {
                         Masuk ke Akun
                     </h2>
 
-                    {flash?.status === 'email-verified' && (
+                    {flash?.status && (
                         <div className="mb-4 p-3 rounded-md bg-green-50 border border-green-200 text-sm text-green-700 text-center">
-                            Email kamu berhasil diverifikasi. Silakan masuk.
+                            {flash.status === 'email-verified'
+                                ? 'Email kamu berhasil diverifikasi. Silakan masuk.'
+                                : flash.status}
                         </div>
                     )}
 
@@ -71,7 +73,8 @@ export default function Login() {
                             />
                         </FormField>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
                             <Checkbox
                                 id="remember"
                                 checked={data.remember}
@@ -80,6 +83,11 @@ export default function Login() {
                             <label htmlFor="remember" className="text-xs cursor-pointer">
                                 Ingat saya
                             </label>
+                            </div>
+
+                            <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
+                                Lupa password?
+                            </Link>
                         </div>
 
                         <Button type="submit" className="w-full" disabled={processing}>
