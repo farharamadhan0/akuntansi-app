@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 
 interface Account { id: number; code: string; name: string; type: string; subtype?: string | null; }
 interface ProductTypeOption { value: 'goods' | 'service'; label: string; }
@@ -90,13 +91,13 @@ export default function Form({ product, accounts, product_types, readonly = fals
                                     <Input value={data.name} onChange={(e) => setData('name', e.target.value)} disabled={readonly} />
                                 </FormField>
                                 <FormField label="Tipe Produk" error={errors.product_type} required>
-                                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.product_type} onChange={(e) => {
+                                    <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.product_type} onChange={(e) => {
                                         const value = e.target.value as 'goods' | 'service';
                                         setData('product_type', value);
                                         if (value === 'service') setData('is_stock_tracked', false);
                                     }} disabled={readonly}>
                                         {product_types.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
-                                    </select>
+                                    </Select>
                                 </FormField>
                             </div>
 
@@ -131,25 +132,25 @@ export default function Form({ product, accounts, product_types, readonly = fals
                                     <div className="mt-4 space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <FormField label="Akun Persediaan (Opsional)" error={errors.inventory_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.inventory_account_id} onChange={(e) => setData('inventory_account_id', e.target.value)} disabled={readonly}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.inventory_account_id} onChange={(e) => setData('inventory_account_id', e.target.value)} disabled={readonly}>
                                                     <option value="">-- Tidak diatur --</option>
                                                     {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </select>
+                                                </Select>
                                             </FormField>
                                             <FormField label="Akun Penjualan (Opsional)" error={errors.revenue_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.revenue_account_id} onChange={(e) => setData('revenue_account_id', e.target.value)} disabled={readonly}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.revenue_account_id} onChange={(e) => setData('revenue_account_id', e.target.value)} disabled={readonly}>
                                                     <option value="">-- Tidak diatur --</option>
                                                     {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </select>
+                                                </Select>
                                             </FormField>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <FormField label="Akun HPP (Opsional)" error={errors.cogs_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.cogs_account_id} onChange={(e) => setData('cogs_account_id', e.target.value)} disabled={readonly}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.cogs_account_id} onChange={(e) => setData('cogs_account_id', e.target.value)} disabled={readonly}>
                                                     <option value="">-- Tidak diatur --</option>
                                                     {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </select>
+                                                </Select>
                                             </FormField>
                                         </div>
                                     </div>

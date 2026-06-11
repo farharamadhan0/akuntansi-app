@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 
 interface Role {
     id: number;
@@ -118,7 +119,7 @@ export default function Form({ member, roles }: Props) {
                             )}
 
                             <FormField label="Role" error={errors.role_id} required>
-                                <select
+                                <Select
                                     value={data.role_id}
                                     onChange={(e) => setData('role_id', e.target.value)}
                                     className={selectClass(!!errors.role_id)}
@@ -129,7 +130,7 @@ export default function Form({ member, roles }: Props) {
                                             {r.name}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
 
                             {isEdit && (

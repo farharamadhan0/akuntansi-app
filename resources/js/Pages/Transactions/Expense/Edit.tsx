@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 
 interface CashBankAccount {
     id: number;
@@ -142,7 +143,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                 error={errors.cash_bank_account_id}
                                 hint="Pilih rekening atau kas yang digunakan untuk membayar"
                             >
-                                <select
+                                <Select
                                     className={SELECT_CLASS}
                                     value={data.cash_bank_account_id}
                                     onChange={(e) => setData('cash_bank_account_id', e.target.value)}
@@ -155,7 +156,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                             {acc.type === 'bank' ? ' (Bank)' : ' (Kas)'}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
 
                             <FormField
@@ -179,7 +180,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                     error={errors.category_id}
                                     hint="Opsional"
                                 >
-                                    <select
+                                    <Select
                                         className={SELECT_CLASS}
                                         value={data.category_id}
                                         onChange={(e) => setData('category_id', e.target.value)}
@@ -191,7 +192,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                                 {cat.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 </FormField>
 
                                 <FormField
@@ -199,7 +200,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                     error={errors.partner_id}
                                     hint="Opsional"
                                 >
-                                    <select
+                                    <Select
                                         className={SELECT_CLASS}
                                         value={data.partner_id}
                                         onChange={(e) => setData('partner_id', e.target.value)}
@@ -211,7 +212,7 @@ export default function Edit({ transaction, cashBankAccounts, categories, partne
                                                 {supplier.name}
                                             </option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 </FormField>
                             </div>
 

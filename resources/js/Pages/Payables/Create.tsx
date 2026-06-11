@@ -1,4 +1,4 @@
-﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 import { Wallet } from 'lucide-react';
 
 interface Partner {
@@ -76,7 +77,7 @@ export default function Create({ partners, categories }: Props) {
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
                             <FormField label="Supplier" error={errors.partner_id} required>
-                                <select
+                                <Select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.partner_id}
                                     onChange={(e) => setData('partner_id', e.target.value)}
@@ -87,7 +88,7 @@ export default function Create({ partners, categories }: Props) {
                                             {s.code ? `[${s.code}] ` : ''}{s.name}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -132,7 +133,7 @@ export default function Create({ partners, categories }: Props) {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField label="Kategori Pengeluaran" error={errors.category_id} hint="Opsional">
-                                    <select
+                                    <Select
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         value={data.category_id}
                                         onChange={(e) => setData('category_id', e.target.value)}
@@ -141,7 +142,7 @@ export default function Create({ partners, categories }: Props) {
                                         {categories.map((c) => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 </FormField>
 
                                 <FormField label="Referensi / No. Invoice" error={errors.reference} hint="Opsional">

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface Account {
@@ -135,7 +136,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                             error={errors.account_id}
                             hint="Transaksi dengan kategori ini akan dicatat ke akun buku besar yang dipilih"
                         >
-                            <select
+                            <Select
                                 value={data.account_id}
                                 onChange={(e) => setData('account_id', e.target.value)}
                                 className={`h-8 w-full min-w-0 rounded-none border bg-transparent px-2.5 py-1 text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 ${errors.account_id ? 'border-destructive' : 'border-input'}`}
@@ -146,7 +147,7 @@ export default function Form({ category, revenueAccounts, expenseAccounts }: For
                                         {acc.code} - {acc.name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </FormField>
 
                         <FormField label="Keterangan" error={errors.description} hint="Opsional - penjelasan singkat kategori ini">

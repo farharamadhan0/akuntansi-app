@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Select } from '@/components/ui/select';
 
 interface PaginationLink {
     url: string | null;
@@ -66,7 +67,7 @@ export function Pagination({ transactions: t, perPage, onPerPageChange }: Pagina
                 {showPerPage && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground whitespace-nowrap">Tampilkan</span>
-                        <select
+                        <Select
                             value={perPage}
                             onChange={(e) => onPerPageChange!(Number(e.target.value))}
                             className="h-8 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -74,7 +75,7 @@ export function Pagination({ transactions: t, perPage, onPerPageChange }: Pagina
                             {PER_PAGE_OPTIONS.map((n) => (
                                 <option key={n} value={n}>{n}</option>
                             ))}
-                        </select>
+                        </Select>
                         <span className="hidden text-sm text-muted-foreground whitespace-nowrap sm:inline">per halaman</span>
                     </div>
                 )}

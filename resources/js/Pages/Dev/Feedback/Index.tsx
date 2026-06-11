@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from '@/components/ui/select';
 import DevLayout from "@/Layouts/DevLayout";
 import { cn } from "@/lib/utils";
 
@@ -245,7 +246,7 @@ function TicketItem({ item }: { item: FeedbackItem }) {
                         <label className="text-xs font-medium text-gray-700">
                             Status
                         </label>
-                        <select
+                        <Select
                             value={statusData.status}
                             onChange={(event) => setStatusData("status", event.target.value)}
                             className="h-9 w-full border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
@@ -254,7 +255,7 @@ function TicketItem({ item }: { item: FeedbackItem }) {
                             <option value="in_progress">Diproses</option>
                             <option value="resolved">Selesai</option>
                             <option value="closed">Ditutup</option>
-                        </select>
+                        </Select>
                         {statusErrors.status && (
                             <p className="text-xs text-red-600">{statusErrors.status}</p>
                         )}
@@ -378,7 +379,7 @@ export default function DevFeedbackIndex({ feedback, filters }: Props) {
                             placeholder="Cari ticket..."
                             className="h-9"
                         />
-                        <select
+                        <Select
                             value={status}
                             onChange={(event) => setStatus(event.target.value)}
                             className="h-9 border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
@@ -388,7 +389,7 @@ export default function DevFeedbackIndex({ feedback, filters }: Props) {
                             <option value="in_progress">Diproses</option>
                             <option value="resolved">Selesai</option>
                             <option value="closed">Ditutup</option>
-                        </select>
+                        </Select>
                         <Button type="submit" size="lg" className="h-9">
                             <Search size={16} />
                         </Button>

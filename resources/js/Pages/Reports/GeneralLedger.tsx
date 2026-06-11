@@ -14,6 +14,7 @@ import {
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from '@/components/ui/select';
 import { formatDateDDMMYYYY } from "@/lib/format";
 import { BookOpen, Search } from "lucide-react";
 
@@ -154,7 +155,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                     <label className="mb-1 block text-xs text-gray-500">
                         Akun
                     </label>
-                    <select
+                    <Select
                         className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         value={accountId}
                         onChange={(e) => setAccountId(e.target.value)}
@@ -165,7 +166,7 @@ export default function GeneralLedger({ accounts, ledger, filters }: Props) {
                                 {a.label}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div>
                     <label className="mb-1 block text-xs text-gray-500">

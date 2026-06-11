@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Edit3 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 
 interface Partner {
     id: number;
@@ -111,7 +112,7 @@ export default function Edit({ receivable, partners, categories }: Props) {
                     <CardContent className="p-6">
                         <form onSubmit={submit} className="space-y-4">
                             <FormField label="Pelanggan" error={errors.partner_id} required>
-                                <select
+                                <Select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.partner_id}
                                     onChange={(e) => setData('partner_id', e.target.value)}
@@ -122,7 +123,7 @@ export default function Edit({ receivable, partners, categories }: Props) {
                                             {c.code ? `[${c.code}] ` : ''}{c.name}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -165,7 +166,7 @@ export default function Edit({ receivable, partners, categories }: Props) {
                             </FormField>
 
                             <FormField label="Kategori Pemasukan" error={errors.category_id} hint="Opsional">
-                                <select
+                                <Select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={data.category_id}
                                     onChange={(e) => setData('category_id', e.target.value)}
@@ -176,7 +177,7 @@ export default function Edit({ receivable, partners, categories }: Props) {
                                             {c.name}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
 
                             <FormField label="Referensi" error={errors.reference} hint="Opsional – nomor invoice atau PO">

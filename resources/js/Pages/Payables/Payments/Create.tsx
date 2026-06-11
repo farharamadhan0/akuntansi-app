@@ -1,4 +1,4 @@
-﻿import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect, FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { Banknote, AlertTriangle, Check } from 'lucide-react';
 
@@ -168,7 +169,7 @@ export default function Create({ payables, cashBankAccounts, preselectedPartnerI
                                 </FormField>
 
                                 <FormField label="Dibayar dari" error={errors.cash_bank_account_id} required>
-                                    <select
+                                    <Select
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         value={data.cash_bank_account_id}
                                         onChange={(e) => setData('cash_bank_account_id', e.target.value)}
@@ -179,7 +180,7 @@ export default function Create({ payables, cashBankAccounts, preselectedPartnerI
                                                 {acc.name} ({acc.type === 'cash' ? 'Kas' : 'Bank'})
                                             </option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 </FormField>
                             </div>
 
@@ -206,7 +207,7 @@ export default function Create({ payables, cashBankAccounts, preselectedPartnerI
                     <Card className="mb-4">
                         <CardContent className="p-4">
                             <FormField label="Filter Supplier">
-                                <select
+                                <Select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                     value={selectedSupplierId ?? ''}
                                     onChange={(e) => {
@@ -218,7 +219,7 @@ export default function Create({ payables, cashBankAccounts, preselectedPartnerI
                                     {partners.map((s) => (
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
-                                </select>
+                                </Select>
                             </FormField>
                         </CardContent>
                     </Card>

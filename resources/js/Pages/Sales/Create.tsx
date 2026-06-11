@@ -1,4 +1,4 @@
-﻿import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 
 interface Partner { id: number; name: string; code?: string; }
 interface CashBankAccount { id: number; name: string; }
@@ -82,25 +83,25 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
                     <Card>
                         <CardContent className="grid gap-4 p-6 md:grid-cols-2">
                             <FormField label="Jenis Pembayaran" error={errors.payment_type} required>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => handlePaymentTypeChange(e.target.value)}>
+                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.payment_type} onChange={(e) => handlePaymentTypeChange(e.target.value)}>
                                     <option value="cash">Tunai</option>
                                     <option value="credit">Kredit</option>
-                                </select>
+                                </Select>
                             </FormField>
                             <FormField label="Tanggal" error={errors.date} required>
                                 <Input type="date" value={data.date} onChange={(e) => setData('date', e.target.value)} />
                             </FormField>
                             <FormField label="Pelanggan" error={errors.partner_id}>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)}>
+                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.partner_id} onChange={(e) => setData('partner_id', e.target.value)}>
                                     <option value="">-- Pilih Pelanggan --</option>
                                     {partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.code ? `[${partner.code}] ` : ''}{partner.name}</option>)}
-                                </select>
+                                </Select>
                             </FormField>
                             <FormField label="Kas/Bank" error={errors.cash_bank_account_id}>
-                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.cash_bank_account_id} onChange={(e) => setData('cash_bank_account_id', e.target.value)}>
+                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.cash_bank_account_id} onChange={(e) => setData('cash_bank_account_id', e.target.value)}>
                                     <option value="">-- Pilih Kas/Bank --</option>
                                     {cashBankAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                                </select>
+                                </Select>
                             </FormField>
                             <FormField label="Jatuh Tempo" error={errors.due_date}>
                                 <Input disabled={data.payment_type === 'cash'} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />
@@ -125,7 +126,7 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
                                     <div key={index} className="grid gap-3 rounded-lg border p-4 md:grid-cols-12">
                                         <div className="md:col-span-3">
                                             <FormField label="Produk" error={errors[`items.${index}.product_id` as keyof typeof errors] as string}>
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
                                                     <option value="">-- Pilih Produk --</option>
                                                     {products.map((product) => (
                                                         <option key={product.id} value={product.id}>
@@ -133,7 +134,7 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
                                                             {product.is_stock_tracked ? ` (Stok: ${Number(product.current_stock).toFixed(2)} ${product.unit})` : ''}
                                                         </option>
                                                     ))}
-                                                </select>
+                                                </Select>
                                             </FormField>
                                         </div>
                                         <div className="md:col-span-3"><FormField label="Deskripsi"><Input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></FormField></div>

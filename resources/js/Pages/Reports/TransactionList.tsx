@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 import ReportFilters from '@/components/reports/ReportFilters';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { ArrowDownCircle, ArrowUpCircle, List } from 'lucide-react';
@@ -102,7 +103,7 @@ export default function TransactionList({ rows, summary, filters }: Props) {
                 extra={
                     <div>
                         <label className="mb-1 block text-xs text-gray-500">Jenis</label>
-                        <select
+                        <Select
                             className="h-10 rounded-md border border-input px-3 text-sm"
                             value={typeFilter}
                             onChange={(e) => applyTypeFilter(e.target.value)}
@@ -110,7 +111,7 @@ export default function TransactionList({ rows, summary, filters }: Props) {
                             <option value="">Semua</option>
                             <option value="income">Uang Masuk</option>
                             <option value="expense">Uang Keluar</option>
-                        </select>
+                        </Select>
                     </div>
                 }
             />

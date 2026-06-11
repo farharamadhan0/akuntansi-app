@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Select } from '@/components/ui/select';
 import { BookOpen, Plus, Trash2, Save } from 'lucide-react';
 
 interface Account {
@@ -225,7 +226,7 @@ export default function Form({ entry, accounts, defaultDate }: Props) {
                                     {data.lines.map((line, i) => (
                                         <tr key={i} className="border-b last:border-0">
                                             <td className="px-3 py-2 align-top">
-                                                <select
+                                                <Select
                                                     className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive"
                                                     value={line.account_id}
                                                     onChange={(e) => updateLine(i, 'account_id', e.target.value)}
@@ -237,7 +238,7 @@ export default function Form({ entry, accounts, defaultDate }: Props) {
                                                             {a.code} — {a.name} ({a.type_label})
                                                         </option>
                                                     ))}
-                                                </select>
+                                                </Select>
                                                 {lineErrors[`lines.${i}.account_id`] && (
                                                     <p className="mt-1 text-xs text-destructive">
                                                         {lineErrors[`lines.${i}.account_id`]}

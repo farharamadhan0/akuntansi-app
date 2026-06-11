@@ -30,6 +30,7 @@ import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "rea
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from '@/components/ui/select';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -538,7 +539,7 @@ function FeedbackButton() {
                                             <label className="text-xs font-medium text-gray-700">
                                                 Kategori
                                             </label>
-                                            <select
+                                            <Select
                                                 value={data.category}
                                                 onChange={(event) => setData("category", event.target.value)}
                                                 className="h-9 w-full border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
@@ -547,7 +548,7 @@ function FeedbackButton() {
                                                 <option value="data_mismatch">Data tidak sesuai</option>
                                                 <option value="feature_request">Permintaan fitur</option>
                                                 <option value="question">Pertanyaan</option>
-                                            </select>
+                                            </Select>
                                             {errors.category && (
                                                 <p className="text-xs text-red-600">{errors.category}</p>
                                             )}

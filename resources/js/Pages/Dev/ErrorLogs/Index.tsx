@@ -4,6 +4,7 @@ import { AlertOctagon, ChevronDown, ChevronUp, Clock, Search, ServerCrash } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from '@/components/ui/select';
 import DevLayout from "@/Layouts/DevLayout";
 import { cn } from "@/lib/utils";
 
@@ -222,7 +223,7 @@ export default function DevErrorLogsIndex({ errorLogs, filters }: Props) {
                             placeholder="Cari error..."
                             className="h-9"
                         />
-                        <select
+                        <Select
                             value={level}
                             onChange={(event) => setLevel(event.target.value)}
                             className="h-9 border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
@@ -231,7 +232,7 @@ export default function DevErrorLogsIndex({ errorLogs, filters }: Props) {
                             <option value="CRITICAL">Critical</option>
                             <option value="ALERT">Alert</option>
                             <option value="EMERGENCY">Emergency</option>
-                        </select>
+                        </Select>
                         <Button type="submit" size="lg" className="h-9">
                             <Search size={16} />
                         </Button>

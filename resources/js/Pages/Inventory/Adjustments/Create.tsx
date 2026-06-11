@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
 
 interface Product { id: number; product_code: string; sku?: string | null; name: string; unit: string; current_stock: number; average_cost: number; }
 interface Flash { error?: string; }
@@ -95,18 +96,18 @@ export default function Create({ products }: Props) {
                                     <div key={index} className="grid gap-3 rounded-lg border p-4 md:grid-cols-12">
                                         <div className="md:col-span-4">
                                             <FormField label="Produk" error={errors[`items.${index}.product_id` as keyof typeof errors] as string}>
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.product_id} onChange={(e) => updateItem(index, 'product_id', e.target.value)}>
                                                     <option value="">-- Pilih Produk --</option>
                                                     {products.map((product) => <option key={product.id} value={product.id}>{product.product_code} - {product.name}</option>)}
-                                                </select>
+                                                </Select>
                                             </FormField>
                                         </div>
                                         <div className="md:col-span-2">
                                             <FormField label="Jenis">
-                                                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.adjustment_type} onChange={(e) => updateItem(index, 'adjustment_type', e.target.value)}>
+                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={item.adjustment_type} onChange={(e) => updateItem(index, 'adjustment_type', e.target.value)}>
                                                     <option value="out">Kurang</option>
                                                     <option value="in">Tambah</option>
-                                                </select>
+                                                </Select>
                                             </FormField>
                                         </div>
                                         <div className="md:col-span-2"><FormField label="Qty"><Input type="number" min="0" step="0.01" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} /></FormField></div>
