@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CashBankType;
 use App\Models\Account;
 use App\Models\CashBankAccount;
 use App\Models\JournalEntry;
@@ -22,11 +23,11 @@ class CashBankAccountService
         return DB::transaction(function () use ($companyId, $data, $openingBalance, $openingBalanceDate) {
             $cashBank = CashBankAccount::create([
                 'company_id'     => $companyId,
-                'account_id'     => $data['account_id'],
+                'account_id'     => $this->defaultLedgerAccountId($companyId, $data['type']),
                 'name'           => $data['name'],
                 'type'           => $data['type'],
-                'bank_name'      => $data['bank_name'] ?? null,
-                'account_number' => $data['account_number'] ?? null,
+                'bank_name'      => $data['type'] === CashBankType::Bank->value ? ($data['bank_name'] ?? null) : null,
+                'account_number' => $data['type'] === CashBankType::Bank->value ? ($data['account_number'] ?? null) : null,
                 'is_active'      => true,
             ]);
 
@@ -46,11 +47,11 @@ class CashBankAccountService
     {
         return DB::transaction(function () use ($cashBank, $data, $openingBalance, $openingBalanceDate) {
             $cashBank->update([
-                'account_id'     => $data['account_id'],
+                'account_id'     => $this->defaultLedgerAccountId($cashBank->company_id, $data['type']),
                 'name'           => $data['name'],
                 'type'           => $data['type'],
-                'bank_name'      => $data['bank_name'] ?? null,
-                'account_number' => $data['account_number'] ?? null,
+                'bank_name'      => $data['type'] === CashBankType::Bank->value ? ($data['bank_name'] ?? null) : null,
+                'account_number' => $data['type'] === CashBankType::Bank->value ? ($data['account_number'] ?? null) : null,
             ]);
 
             // Saldo awal hanya boleh diubah selama belum ada transaksi user.
@@ -166,6 +167,20 @@ class CashBankAccountService
             ],
             $cashBank
         );
+    }
+
+    protected function defaultLedgerAccountId(int $companyId, string $type): int
+    {
+        $code = match ($type) {
+            CashBankType::Cash->value => '1110',
+            CashBankType::Bank->value => '1120',
+        };
+
+        return Account::withoutGlobalScope('company')
+            ->where('company_id', $companyId)
+            ->where('code', $code)
+            ->firstOrFail()
+            ->id;
     }
 
     protected function removeOpeningJournal(CashBankAccount $cashBank): void

@@ -7,16 +7,8 @@ import { FormField } from '@/components/ui/form-field';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-interface LedgerAccount {
-    id: number;
-    code: string;
-    name: string;
-    subtype: string;
-}
-
 interface CashBankData {
     id: number;
-    account_id: number;
     name: string;
     type: string;
     bank_name: string;
@@ -30,7 +22,6 @@ interface CashBankType {
 
 interface FormProps {
     cashBank?: CashBankData;
-    ledgerAccounts: LedgerAccount[];
     types: CashBankType[];
     canEditOpeningBalance: boolean;
     openingBalance: number;
@@ -39,7 +30,6 @@ interface FormProps {
 
 export default function Form({
     cashBank,
-    ledgerAccounts,
     types,
     canEditOpeningBalance,
     openingBalance,
@@ -48,7 +38,6 @@ export default function Form({
     const isEdit = !!cashBank;
 
     const { data, setData, post, put, processing, errors } = useForm({
-        account_id: cashBank?.account_id || '',
         name: cashBank?.name || '',
         type: cashBank?.type || 'cash',
         bank_name: cashBank?.bank_name || '',
@@ -65,12 +54,6 @@ export default function Form({
             post('/master/kas-bank');
         }
     };
-
-    const filteredAccounts = ledgerAccounts.filter(acc => {
-        if (data.type === 'cash') return acc.subtype === 'cash';
-        if (data.type === 'bank') return acc.subtype === 'bank';
-        return true;
-    });
 
     return (
         <AuthenticatedLayout>
@@ -103,10 +86,7 @@ export default function Form({
                                             name="type"
                                             value={type.value}
                                             checked={data.type === type.value}
-                                            onChange={(e) => {
-                                                setData('type', e.target.value);
-                                                setData('account_id', '');
-                                            }}
+                                            onChange={(e) => setData('type', e.target.value)}
                                             className="w-4 h-4 text-primary-600"
                                         />
                                         <span>{type.label}</span>
@@ -123,21 +103,6 @@ export default function Form({
                                 onChange={(e) => setData('name', e.target.value)}
                                 aria-invalid={!!errors.name}
                             />
-                        </FormField>
-
-                        <FormField label="Akun Buku Besar" required error={errors.account_id}>
-                            <select
-                                value={data.account_id}
-                                onChange={(e) => setData('account_id', e.target.value)}
-                                className={`h-8 w-full min-w-0 rounded-none border bg-transparent px-2.5 py-1 text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 ${errors.account_id ? 'border-destructive' : 'border-input'}`}
-                            >
-                                <option value="">Pilih akun...</option>
-                                {filteredAccounts.map((acc) => (
-                                    <option key={acc.id} value={acc.id}>
-                                        {acc.code} - {acc.name}
-                                    </option>
-                                ))}
-                            </select>
                         </FormField>
 
                         {data.type === 'bank' && (

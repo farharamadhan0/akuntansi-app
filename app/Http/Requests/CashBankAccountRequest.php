@@ -15,13 +15,7 @@ class CashBankAccountRequest extends FormRequest
 
     public function rules(): array
     {
-        $companyId = $this->user()->current_company_id;
-
         return [
-            'account_id' => [
-                'required',
-                Rule::exists('accounts', 'id')->where('company_id', $companyId),
-            ],
             'name' => ['required', 'string', 'max:100'],
             'type' => ['required', Rule::enum(CashBankType::class)],
             'bank_name' => ['nullable', 'string', 'max:100'],
@@ -34,8 +28,6 @@ class CashBankAccountRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'account_id.required' => 'Pilih akun buku besar',
-            'account_id.exists' => 'Akun buku besar tidak valid',
             'name.required' => 'Nama akun wajib diisi',
             'name.max' => 'Nama akun maksimal 100 karakter',
             'type.required' => 'Pilih jenis akun',

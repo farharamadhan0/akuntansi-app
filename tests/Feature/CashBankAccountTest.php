@@ -360,7 +360,7 @@ class CashBankAccountTest extends TestCase
     {
         $this->actingAs($this->user)
             ->post('/master/kas-bank', [])
-            ->assertSessionHasErrors(['account_id', 'name', 'type']);
+            ->assertSessionHasErrors(['name', 'type']);
     }
 
     public function test_invalid_type_is_rejected(): void
@@ -377,11 +377,19 @@ class CashBankAccountTest extends TestCase
             ->assertSessionHasErrors('opening_balance');
     }
 
-    public function test_nonexistent_account_id_is_rejected(): void
+    public function test_submitted_account_id_is_ignored(): void
     {
         $this->actingAs($this->user)
-            ->post('/master/kas-bank', $this->cashPayload(['account_id' => 99999]))
-            ->assertSessionHasErrors('account_id');
+            ->post('/master/kas-bank', $this->cashPayload(['account_id' => $this->bankLedgerAccount->id]))
+            ->assertRedirect('/master/kas-bank')
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('cash_bank_accounts', [
+            'company_id' => $this->companyId,
+            'name' => 'Kas Operasional',
+            'type' => CashBankType::Cash->value,
+            'account_id' => $this->cashLedgerAccount->id,
+        ]);
     }
 
     public function test_name_max_length_is_enforced(): void
@@ -398,7 +406,6 @@ class CashBankAccountTest extends TestCase
     private function cashPayload(array $overrides = []): array
     {
         return array_merge([
-            'account_id'           => $this->cashLedgerAccount->id,
             'name'                 => 'Kas Operasional',
             'type'                 => CashBankType::Cash->value,
             'opening_balance'      => 500000,
@@ -409,7 +416,6 @@ class CashBankAccountTest extends TestCase
     private function bankPayload(array $overrides = []): array
     {
         return array_merge([
-            'account_id'           => $this->bankLedgerAccount->id,
             'name'                 => 'BCA Utama',
             'type'                 => CashBankType::Bank->value,
             'bank_name'            => 'BCA',

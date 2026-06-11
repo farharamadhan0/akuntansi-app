@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\CashBankAccount;
-use App\Models\Account;
 use App\Enums\CashBankType;
 use App\Http\Requests\CashBankAccountRequest;
 use App\Services\AccountBalanceService;
@@ -57,16 +56,7 @@ class CashBankAccountController extends Controller
 
     public function create(): Response
     {
-        $companyId = auth()->user()->current_company_id;
-
-        $ledgerAccounts = Account::where('company_id', $companyId)
-            ->whereIn('subtype', ['cash', 'bank'])
-            ->active()
-            ->orderBy('code')
-            ->get(['id', 'code', 'name', 'subtype']);
-
         return Inertia::render('MasterData/CashBank/Form', [
-            'ledgerAccounts' => $ledgerAccounts,
             'types' => collect(CashBankType::cases())->map(fn($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
@@ -83,7 +73,7 @@ class CashBankAccountController extends Controller
 
         $this->service->create(
             $companyId,
-            $request->only(['account_id', 'name', 'type', 'bank_name', 'account_number']),
+            $request->only(['name', 'type', 'bank_name', 'account_number']),
             $request->filled('opening_balance') ? (float) $request->opening_balance : null,
             $request->filled('opening_balance_date') ? $request->opening_balance_date : null,
         );
@@ -96,27 +86,17 @@ class CashBankAccountController extends Controller
     {
         $this->authorizeCompany($cashBank);
 
-        $companyId = auth()->user()->current_company_id;
-
-        $ledgerAccounts = Account::where('company_id', $companyId)
-            ->whereIn('subtype', ['cash', 'bank'])
-            ->active()
-            ->orderBy('code')
-            ->get(['id', 'code', 'name', 'subtype']);
-
         $opening = $this->service->getOpeningBalance($cashBank);
         $canEditOpeningBalance = ! $this->service->hasUserTransactions($cashBank);
 
         return Inertia::render('MasterData/CashBank/Form', [
             'cashBank' => [
                 'id' => $cashBank->id,
-                'account_id' => $cashBank->account_id,
                 'name' => $cashBank->name,
                 'type' => $cashBank->type->value,
                 'bank_name' => $cashBank->bank_name,
                 'account_number' => $cashBank->account_number,
             ],
-            'ledgerAccounts' => $ledgerAccounts,
             'types' => collect(CashBankType::cases())->map(fn($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
@@ -133,7 +113,7 @@ class CashBankAccountController extends Controller
 
         $this->service->update(
             $cashBank,
-            $request->only(['account_id', 'name', 'type', 'bank_name', 'account_number']),
+            $request->only(['name', 'type', 'bank_name', 'account_number']),
             $request->filled('opening_balance') ? (float) $request->opening_balance : null,
             $request->filled('opening_balance_date') ? $request->opening_balance_date : null,
         );
