@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import WidgetGrid from "./components/WidgetGrid";
 import CustomizeModal from "./components/CustomizeModal";
-import { getDefaultLayout, mergeWithDefaults, type WidgetLayoutItem } from "./widgets/registry";
+import { getEmptyLayout, mergeWithDefaults, type WidgetLayoutItem } from "./widgets/registry";
 import type { DashboardProps } from "./types";
 
 export default function Dashboard({
@@ -22,7 +22,7 @@ export default function Dashboard({
     layout: savedLayout,
 }: DashboardProps) {
     const [layout, setLayout] = useState<WidgetLayoutItem[]>(() =>
-        savedLayout ? mergeWithDefaults(savedLayout) : getDefaultLayout()
+        savedLayout ? mergeWithDefaults(savedLayout) : getEmptyLayout()
     );
     const [showCustomize, setShowCustomize] = useState(false);
     const hasVisibleWidgets = layout.some((item) => item.visible);

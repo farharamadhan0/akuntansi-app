@@ -462,7 +462,7 @@ class DashboardController extends Controller
     protected function resolveVisibleWidgets(?array $layout): array
     {
         if (blank($layout)) {
-            return array_fill_keys(self::DEFAULT_VISIBLE_WIDGETS, true);
+            return array_fill_keys(self::DEFAULT_VISIBLE_WIDGETS, false);
         }
 
         $visibleWidgets = array_fill_keys(self::DEFAULT_VISIBLE_WIDGETS, true);

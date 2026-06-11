@@ -348,7 +348,7 @@ export default function Landing() {
                         </div>
                         <div className="flex items-center gap-3">
                             <Link className="hidden text-sm font-semibold text-[#0F172A] sm:inline-flex" href="/dashboard">Masuk</Link>
-                            <a target="_blank" className="inline-flex h-10 items-center justify-center rounded-lg bg-[#10B981] px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
+                            <a target="_blank" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
                                 Konsultasi
                             </a>
                         </div>
@@ -369,7 +369,7 @@ export default function Landing() {
                                 Catat uang masuk dan keluar, kelola penjualan, pembelian, stok, hutang piutang, hingga laporan keuangan dalam satu aplikasi yang bisa disesuaikan dengan kebutuhan bisnis Anda.
                             </p>
                             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                                <a target="_blank" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#10B981] px-6 text-sm font-bold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
+                                <a target="_blank" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
                                     Konsultasi
                                     <ArrowRight className="size-4" />
                                 </a>
@@ -484,7 +484,7 @@ export default function Landing() {
                         <ClipboardList className="mx-auto size-10 text-[#10B981]" />
                         <h2 className="mt-5 text-3xl font-bold sm:text-4xl">Siap membuat keuangan bisnis lebih rapi?</h2>
                         <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-300">Diskusikan kebutuhan menu, dashboard, dan alur pencatatan yang paling pas untuk UMKM Anda.</p>
-                        <a target="_blank" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#10B981] px-6 text-sm font-bold text-white transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
+                        <a target="_blank" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
                             Konsultasi
                             <ArrowRight className="size-4" />
                         </a>
