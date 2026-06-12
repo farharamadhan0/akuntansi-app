@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class LoginController extends Controller
 {
@@ -47,7 +48,19 @@ class LoginController extends Controller
 
     public function handleGoogleCallback(Request $request): RedirectResponse
     {
-        $googleUser = Socialite::driver('google')->user();
+        if ($request->string('error')->toString() === 'access_denied') {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Login dengan Google dibatalkan.');
+        }
+
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (InvalidStateException) {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Sesi login Google sudah tidak valid. Silakan coba lagi.');
+        }
 
         $user = User::where('google_id', $googleUser->getId())->first()
             ?: User::where('email', $googleUser->getEmail())->first();

@@ -8,7 +8,7 @@ import { FormField } from '@/components/ui/form-field';
 import GuestLayout from '@/Layouts/GuestLayout';
 
 export default function Login() {
-    const { flash } = usePage<{ flash: { status?: string } }>().props;
+    const { flash } = usePage<{ flash: { status?: string; error?: string } }>().props;
     const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
@@ -35,6 +35,12 @@ export default function Login() {
                             {flash.status === 'email-verified'
                                 ? 'Email kamu berhasil diverifikasi. Silakan masuk.'
                                 : flash.status}
+                        </div>
+                    )}
+
+                    {flash?.error && (
+                        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
+                            {flash.error}
                         </div>
                     )}
 
