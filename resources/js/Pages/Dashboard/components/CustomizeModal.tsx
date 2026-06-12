@@ -18,7 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, GripVertical, RotateCcw } from "lucide-react";
+import { X, GripVertical } from "lucide-react";
 import {
     WIDGET_REGISTRY,
     getDefaultLayout,
@@ -126,9 +126,7 @@ function SortableItem({
             className={`flex flex-wrap items-center gap-3 py-2.5 px-3 rounded-md border transition-colors select-none sm:flex-nowrap ${
                 isDragging
                     ? "bg-blue-50 border-blue-300 shadow-md z-10 relative"
-                    : item.visible
-                        ? "bg-white border-gray-200"
-                        : "bg-gray-50 border-gray-100 opacity-60"
+                    : "bg-white border-gray-200"
             }`}
         >
             {/* Drag handle */}
@@ -258,13 +256,6 @@ export default function CustomizeModal({
         [...layout].sort((a, b) => a.order - b.order)
     );
 
-    const resetToLayout = useCallback(
-        (newLayout: WidgetLayoutItem[]) => {
-            setItems([...newLayout].sort((a, b) => a.order - b.order));
-        },
-        []
-    );
-
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 5 },
@@ -304,10 +295,6 @@ export default function CustomizeModal({
             const reordered = arrayMove(prev, oldIndex, newIndex);
             return reordered.map((item, i) => ({ ...item, order: i + 1 }));
         });
-    };
-
-    const handleReset = () => {
-        resetToLayout(getDefaultLayout());
     };
 
     const handleSave = () => {
@@ -377,15 +364,7 @@ export default function CustomizeModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex flex-col gap-2 px-4 py-3 border-t bg-gray-50 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleReset}
-                    >
-                        <RotateCcw size={12} />
-                        Reset Default
-                    </Button>
+                <div className="flex flex-col gap-2 px-4 py-3 border-t bg-gray-50 sm:flex-row sm:items-center sm:justify-end sm:px-5">
                     <div className="flex w-full gap-2 sm:w-auto">
                         <Button
                             variant="outline"
