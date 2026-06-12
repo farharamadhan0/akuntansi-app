@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
@@ -35,10 +35,8 @@ interface Props {
     readonly?: boolean;
 }
 
-export default function Form({ product, accounts, product_types, readonly = false }: Props) {
+export default function Form({ product, product_types, readonly = false }: Props) {
     const isEdit = !!product && !readonly;
-    const hasConfiguredAccounts = !!(product?.inventory_account_id || product?.revenue_account_id || product?.cogs_account_id);
-    const [showAccountFields, setShowAccountFields] = useState(hasConfiguredAccounts);
     const { data, setData, post, put, processing, errors } = useForm({
         product_code: product?.product_code ?? '',
         sku: product?.sku ?? '',
@@ -116,46 +114,6 @@ export default function Form({ product, accounts, product_types, readonly = fals
                             <FormField label="Deskripsi" error={errors.description}>
                                 <Textarea value={data.description} onChange={(e) => setData('description', e.target.value)} disabled={readonly} rows={3} />
                             </FormField>
-
-                            <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 p-4">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Pengaturan Akun Produk</p>
-                                        <p className="text-xs text-gray-500">Opsional. Lewati jika tidak ingin mengatur akun khusus untuk produk ini.</p>
-                                    </div>
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setShowAccountFields(!showAccountFields)}>
-                                        {showAccountFields ? 'Sembunyikan Akun' : 'Atur Akun Produk'}
-                                    </Button>
-                                </div>
-
-                                {showAccountFields && (
-                                    <div className="mt-4 space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField label="Akun Persediaan (Opsional)" error={errors.inventory_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.inventory_account_id} onChange={(e) => setData('inventory_account_id', e.target.value)} disabled={readonly}>
-                                                    <option value="">-- Tidak diatur --</option>
-                                                    {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </Select>
-                                            </FormField>
-                                            <FormField label="Akun Penjualan (Opsional)" error={errors.revenue_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.revenue_account_id} onChange={(e) => setData('revenue_account_id', e.target.value)} disabled={readonly}>
-                                                    <option value="">-- Tidak diatur --</option>
-                                                    {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </Select>
-                                            </FormField>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField label="Akun HPP (Opsional)" error={errors.cogs_account_id} hint="Boleh dikosongkan jika belum ingin mengatur akun.">
-                                                <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.cogs_account_id} onChange={(e) => setData('cogs_account_id', e.target.value)} disabled={readonly}>
-                                                    <option value="">-- Tidak diatur --</option>
-                                                    {accounts.map((account) => <option key={account.id} value={account.id}>{account.code} - {account.name}</option>)}
-                                                </Select>
-                                            </FormField>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
 
                             <div className="flex flex-wrap items-center gap-6">
                                 <label className="flex items-center gap-2 text-sm">

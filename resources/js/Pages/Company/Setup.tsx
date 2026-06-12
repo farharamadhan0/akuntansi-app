@@ -131,16 +131,6 @@ export default function Setup() {
                                     />
                                 </FormField>
 
-                                <FormField label="NPWP (Opsional)" error={errors.tax_id} hint="Nomor Pokok Wajib Pajak usaha Anda">
-                                    <Input
-                                        type="text"
-                                        placeholder="00.000.000.0-000.000"
-                                        value={data.tax_id}
-                                        onChange={(e) => setData('tax_id', e.target.value)}
-                                        aria-invalid={!!errors.tax_id}
-                                    />
-                                </FormField>
-
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <FormField label="Telepon (Opsional)" error={errors.phone}>
                                         <Input
