@@ -255,7 +255,172 @@ sudo supervisorctl update
 sudo supervisorctl status
 ```
 
-## 8. Deploy ulang
+## 8. Backup database ke Cloudflare R2
+
+Backup production dibuat dengan `pg_dump`, dikompres, lalu di-upload ke Cloudflare R2 memakai AWS CLI. Jangan simpan credential R2 atau password database di repository.
+
+Install PostgreSQL client dan AWS CLI:
+
+```bash
+sudo apt update
+sudo apt install -y postgresql-client unzip curl
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+rm -rf aws awscliv2.zip
+```
+
+Konfigurasi profile AWS CLI untuk R2. Jalankan sebagai user yang akan menjalankan cron, contoh jika cron memakai root:
+
+```bash
+sudo aws configure --profile r2
+```
+
+Isi dengan credential dari **Cloudflare R2 > Manage R2 API Tokens**:
+
+```text
+AWS Access Key ID: <R2_ACCESS_KEY_ID>
+AWS Secret Access Key: <R2_SECRET_ACCESS_KEY>
+Default region name: auto
+Default output format: json
+```
+
+Buat file konfigurasi backup di server. File ini berisi credential dan tidak boleh dimasukkan ke Git:
+
+```bash
+sudo nano /etc/akuntansi-app-backup.env
+```
+
+Isi dengan nilai production:
+
+```bash
+APP_NAME="akuntansi-app"
+BACKUP_DIR="/var/backups/akuntansi-app"
+
+DB_HOST="127.0.0.1"
+DB_PORT="5432"
+DB_NAME="akuntansi_production"
+DB_USER="akuntansi_production"
+DB_PASS="<DB_PASSWORD_PRODUCTION>"
+
+R2_BUCKET="<R2_BUCKET_NAME>"
+R2_PREFIX="db"
+R2_ACCOUNT_ID="<CLOUDFLARE_ACCOUNT_ID>"
+R2_PROFILE="r2"
+```
+
+Amankan permission file konfigurasi:
+
+```bash
+sudo chmod 600 /etc/akuntansi-app-backup.env
+sudo chown root:root /etc/akuntansi-app-backup.env
+```
+
+Buat script backup:
+
+```bash
+sudo nano /usr/local/bin/backup-akuntansi-db.sh
+```
+
+Isi:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+source /etc/akuntansi-app-backup.env
+
+DATE=$(date +"%Y-%m-%d_%H-%M-%S")
+FILE="$BACKUP_DIR/${APP_NAME}_db_${DATE}.sql.gz"
+R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+
+mkdir -p "$BACKUP_DIR"
+
+echo "[$(date)] Starting PostgreSQL database backup..."
+
+PGPASSWORD="$DB_PASS" pg_dump \
+  -h "${DB_HOST:-127.0.0.1}" \
+  -p "${DB_PORT:-5432}" \
+  -U "$DB_USER" \
+  -d "$DB_NAME" \
+  --no-owner \
+  --no-privileges \
+  --format=plain \
+  | gzip > "$FILE"
+
+echo "[$(date)] Backup created: $FILE"
+
+aws s3 cp "$FILE" "s3://${R2_BUCKET}/${R2_PREFIX}/" \
+  --profile "$R2_PROFILE" \
+  --region auto \
+  --endpoint-url "$R2_ENDPOINT"
+
+echo "[$(date)] Uploaded to R2: s3://${R2_BUCKET}/${R2_PREFIX}/$(basename "$FILE")"
+
+find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +14 -delete
+
+echo "[$(date)] Backup completed."
+```
+
+Aktifkan script:
+
+```bash
+sudo chmod +x /usr/local/bin/backup-akuntansi-db.sh
+```
+
+Test manual:
+
+```bash
+sudo /usr/local/bin/backup-akuntansi-db.sh
+```
+
+Cek file lokal:
+
+```bash
+ls -lh /var/backups/akuntansi-app
+```
+
+Cek file di R2:
+
+```bash
+sudo aws s3 ls s3://<R2_BUCKET_NAME>/db/ \
+  --profile r2 \
+  --region auto \
+  --endpoint-url https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com
+```
+
+Jadwalkan backup harian jam 02:00:
+
+```bash
+sudo crontab -e
+```
+
+Tambahkan:
+
+```cron
+0 2 * * * /usr/local/bin/backup-akuntansi-db.sh >> /var/log/backup-akuntansi-db.log 2>&1
+```
+
+Pantau log:
+
+```bash
+tail -n 100 /var/log/backup-akuntansi-db.log
+```
+
+Restore dari backup:
+
+```bash
+gunzip < akuntansi-app_db_YYYY-MM-DD_HH-MM-SS.sql.gz | PGPASSWORD="<DB_PASSWORD_PRODUCTION>" psql \
+  -h 127.0.0.1 \
+  -p 5432 \
+  -U akuntansi_production \
+  -d akuntansi_production
+```
+
+Untuk test restore, gunakan database kosong terpisah terlebih dahulu. Jangan langsung restore ke database production kecuali memang sedang recovery.
+
+## 9. Deploy ulang
 
 Sebelum deploy production, pastikan backup database sudah aman.
 
@@ -284,7 +449,7 @@ sudo systemctl reload php8.4-fpm
 sudo systemctl reload nginx
 ```
 
-## 9. Quick checks
+## 10. Quick checks
 
 ```bash
 php artisan about
