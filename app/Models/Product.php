@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -88,6 +89,21 @@ class Product extends Model
     public function stockAdjustmentItems(): HasMany
     {
         return $this->hasMany(StockAdjustmentItem::class);
+    }
+
+    public function recipes(): HasMany
+    {
+        return $this->hasMany(Recipe::class);
+    }
+
+    public function activeRecipe(): HasOne
+    {
+        return $this->hasOne(Recipe::class)->where('is_active', true);
+    }
+
+    public function recipeItems(): HasMany
+    {
+        return $this->hasMany(RecipeItem::class, 'ingredient_product_id');
     }
 
     public function scopeActive(Builder $query): Builder

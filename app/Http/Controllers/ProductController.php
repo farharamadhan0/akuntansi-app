@@ -26,12 +26,18 @@ class ProductController extends Controller
     {
         $companyId = auth()->user()->current_company_id;
         $perPage = (int) $request->query('per_page', 25);
+        $type = $request->query('type');
 
         if (! in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 25;
         }
 
+        if (! in_array($type, $this->productTypeValues(), true)) {
+            $type = null;
+        }
+
         $products = Product::where('company_id', $companyId)
+            ->when($type, fn ($query) => $query->where('product_type', $type))
             ->with([
                 'inventoryAccount:id,code,name',
                 'revenueAccount:id,code,name',
@@ -80,7 +86,9 @@ class ProductController extends Controller
             'products' => $products,
             'filters' => [
                 'per_page' => $perPage,
+                'type' => $type,
             ],
+            'product_types' => $this->productTypeOptions(),
         ]);
     }
 
@@ -89,10 +97,7 @@ class ProductController extends Controller
         return Inertia::render('MasterData/Products/Form', [
             'product' => null,
             'accounts' => $this->accountOptions(),
-            'product_types' => [
-                ['value' => 'goods', 'label' => 'Barang'],
-                ['value' => 'service', 'label' => 'Jasa'],
-            ],
+            'product_types' => $this->productTypeOptions(),
         ]);
     }
 
@@ -295,10 +300,7 @@ class ProductController extends Controller
         return Inertia::render('MasterData/Products/Form', [
             'product' => $product,
             'accounts' => $this->accountOptions(),
-            'product_types' => [
-                ['value' => 'goods', 'label' => 'Barang'],
-                ['value' => 'service', 'label' => 'Jasa'],
-            ],
+            'product_types' => $this->productTypeOptions(),
         ]);
     }
 
@@ -356,6 +358,22 @@ class ProductController extends Controller
                 'subtype' => $account->subtype,
             ])
             ->toArray();
+    }
+
+    protected function productTypeOptions(): array
+    {
+        return [
+            ['value' => 'goods', 'label' => 'Barang'],
+            ['value' => 'service', 'label' => 'Jasa'],
+            ['value' => 'raw_material', 'label' => 'Bahan Baku'],
+            ['value' => 'menu_item', 'label' => 'Menu Jual'],
+            ['value' => 'semi_finished', 'label' => 'Produk Setengah Jadi'],
+        ];
+    }
+
+    protected function productTypeValues(): array
+    {
+        return array_column($this->productTypeOptions(), 'value');
     }
 
     protected function readProductImportCsv(string $path): array

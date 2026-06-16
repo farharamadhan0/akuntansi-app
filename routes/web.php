@@ -20,6 +20,8 @@ use App\Http\Controllers\PayablePaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
@@ -28,6 +30,7 @@ use App\Http\Controllers\DevCompanyController;
 use App\Http\Controllers\DevFeedbackController;
 use App\Http\Controllers\DevErrorLogController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\FnbAnalyticsController;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -169,6 +172,22 @@ Route::middleware('auth')->group(function () {
             Route::put('produk/{product}', [ProductController::class, 'update'])->middleware('permission:products.edit')->name('products.update');
             Route::delete('produk/{product}', [ProductController::class, 'destroy'])->middleware('permission:products.delete')->name('products.destroy');
             Route::post('produk/{product}/toggle', [ProductController::class, 'toggleActive'])->middleware('permission:products.edit')->name('products.toggle');
+        });
+
+        // F&B
+        Route::prefix('fnb')->group(function () {
+            Route::get('resep', [RecipeController::class, 'index'])->middleware('permission:recipes.view')->name('recipes.index');
+            Route::get('resep/tambah', [RecipeController::class, 'create'])->middleware('permission:recipes.create')->name('recipes.create');
+            Route::post('resep', [RecipeController::class, 'store'])->middleware('permission:recipes.create')->name('recipes.store');
+            Route::get('resep/{recipe}/edit', [RecipeController::class, 'edit'])->middleware('permission:recipes.edit')->name('recipes.edit');
+            Route::put('resep/{recipe}', [RecipeController::class, 'update'])->middleware('permission:recipes.edit')->name('recipes.update');
+            Route::delete('resep/{recipe}', [RecipeController::class, 'destroy'])->middleware('permission:recipes.delete')->name('recipes.destroy');
+            Route::get('produksi', [ProductionController::class, 'index'])->middleware('permission:productions.view')->name('productions.index');
+            Route::get('produksi/buat', [ProductionController::class, 'create'])->middleware('permission:productions.create')->name('productions.create');
+            Route::post('produksi', [ProductionController::class, 'store'])->middleware('permission:productions.create')->name('productions.store');
+            Route::get('produksi/{production}', [ProductionController::class, 'show'])->middleware('permission:productions.view')->name('productions.show');
+            Route::post('produksi/{production}/batal', [ProductionController::class, 'void'])->middleware('permission:productions.delete')->name('productions.void');
+            Route::get('analitik', [FnbAnalyticsController::class, 'index'])->middleware('permission:recipes.view')->name('fnb.analytics');
         });
 
         // Transaksi

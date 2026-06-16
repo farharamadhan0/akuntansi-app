@@ -103,6 +103,7 @@ class JournalEntry extends Model
             'ReceivablePayment' => 'Pelunasan Piutang',
             'PayablePayment'    => 'Pembayaran Hutang',
             'StockAdjustment'   => 'Penyesuaian Stok',
+            'Production'        => 'Produksi / Prep F&B',
             'CashBankAccount'   => 'Saldo Awal Kas/Bank',
             'JournalEntry'      => 'Pembalikan Jurnal',
             default             => class_basename($type),

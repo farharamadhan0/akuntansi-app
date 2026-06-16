@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\StockMovement;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
@@ -82,7 +83,7 @@ class SaleService
         }
 
         return DB::transaction(function () use ($sale) {
-            $sale->load('items.product', 'cashBankAccount.account', 'partner');
+            $sale->load('items.product.activeRecipe.items.ingredient', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($sale);
 
             $this->applyPostedStock($sale);
@@ -113,7 +114,7 @@ class SaleService
         }
 
         return DB::transaction(function () use ($oldSale, $newData) {
-            $oldSale->load('items.product', 'receivable.paymentAllocations');
+            $oldSale->load('items.product.activeRecipe.items.ingredient', 'receivable.paymentAllocations');
 
             $existingAllocations = $oldSale->receivable?->paymentAllocations()->get() ?? collect();
             $totalPaid = (float) $existingAllocations->sum('amount');
@@ -123,7 +124,7 @@ class SaleService
                 'corrects_id' => $oldSale->id,
             ]));
 
-            $newSale->load('items.product', 'cashBankAccount.account', 'partner');
+            $newSale->load('items.product.activeRecipe.items.ingredient', 'cashBankAccount.account', 'partner');
             $this->validatePaymentData($newSale);
 
             if ($totalPaid > 0 && $newSale->payment_type !== 'credit') {
@@ -134,7 +135,11 @@ class SaleService
                 throw new \Exception('Nilai koreksi penjualan tidak boleh lebih kecil dari total pembayaran yang sudah ada.');
             }
 
-            $this->ensureStockSufficientForCorrection($oldSale, $newSale);
+            $usesRecipeStock = $this->saleHasRecipeMovements($oldSale) || $this->saleHasRecipeItems($newSale);
+
+            if (! $usesRecipeStock) {
+                $this->ensureStockSufficientForCorrection($oldSale, $newSale);
+            }
 
             $journalEntry = $oldSale->journalEntries()
                 ->where('status', TransactionStatus::Posted)
@@ -146,7 +151,12 @@ class SaleService
 
             $this->voidLinkedIncome($oldSale, 'Koreksi penjualan: ' . $oldSale->sale_number);
 
-            $this->applyCorrectionStock($oldSale, $newSale);
+            if ($usesRecipeStock) {
+                $this->inventoryService->reverseSourceMovements($oldSale, $newSale->date->toDateString());
+                $this->applyPostedStock($newSale);
+            } else {
+                $this->applyCorrectionStock($oldSale, $newSale);
+            }
             $this->createSaleJournalEntry($newSale);
 
             if ($newSale->payment_type === 'cash') {
@@ -267,6 +277,11 @@ class SaleService
     protected function applyPostedStock(Sale $sale): void
     {
         foreach ($sale->items as $item) {
+            if ($this->itemUsesRecipe($item)) {
+                $this->issueRecipeIngredients($sale, $item);
+                continue;
+            }
+
             if (! $item->is_stock_tracked) {
                 continue;
             }
@@ -287,7 +302,48 @@ class SaleService
             ]);
         }
 
-        $sale->load('items.product', 'cashBankAccount.account');
+        $sale->load('items.product.activeRecipe.items.ingredient', 'cashBankAccount.account');
+    }
+
+    protected function itemUsesRecipe(SaleItem $item): bool
+    {
+        return (bool) $item->product?->activeRecipe;
+    }
+
+    protected function issueRecipeIngredients(Sale $sale, SaleItem $item): void
+    {
+        $recipe = $item->product->activeRecipe;
+        $yieldQuantity = max((float) $recipe->yield_quantity, 0.00001);
+        $saleQuantity = (float) $item->quantity;
+        $totalCost = 0;
+
+        foreach ($recipe->items as $recipeItem) {
+            $ingredient = $recipeItem->ingredient;
+            $requiredQuantity = ((float) $recipeItem->quantity / $yieldQuantity) * $saleQuantity;
+            $requiredQuantity *= 1 + ((float) $recipeItem->waste_percentage / 100);
+            $requiredQuantity = round($requiredQuantity, 2);
+
+            if ($requiredQuantity <= 0) {
+                continue;
+            }
+
+            $movement = $this->inventoryService->issue(
+                $ingredient,
+                $sale->date->toDateString(),
+                $requiredQuantity,
+                'sale_recipe',
+                $sale,
+                $item,
+                'Pemakaian bahan resep: ' . $item->product->name
+            );
+
+            $totalCost += (float) $movement->total_cost;
+        }
+
+        $item->update([
+            'unit_cost' => $saleQuantity > 0 ? round($totalCost / $saleQuantity, 2) : 0,
+            'cost_amount' => round($totalCost, 2),
+        ]);
     }
 
     protected function createSaleJournalEntry(Sale $sale): void
@@ -314,18 +370,58 @@ class SaleService
             $revenueAccountId = $item->revenue_account_id ?: $item->product->revenue_account_id ?: $this->getDefaultRevenueAccountId($sale->company_id);
             $this->pushLine($journalLines, $revenueAccountId, 0, (float) $item->line_total);
 
-            if (! $item->is_stock_tracked) {
+            if (! $item->is_stock_tracked && ! $this->itemUsesRecipe($item)) {
+                continue;
+            }
+
+            if ((float) $item->cost_amount <= 0) {
                 continue;
             }
 
             $cogsAccountId = $item->cogs_account_id ?: $item->product->cogs_account_id ?: $this->getDefaultCogsAccountId($sale->company_id);
-            $inventoryAccountId = $item->inventory_account_id ?: $item->product->inventory_account_id ?: $this->getDefaultInventoryAccountId($sale->company_id);
-
             $this->pushLine($journalLines, $cogsAccountId, (float) $item->cost_amount, 0);
-            $this->pushLine($journalLines, $inventoryAccountId, 0, (float) $item->cost_amount);
+
+            $stockMovements = $this->stockMovementsForSaleItem($sale, $item);
+
+            if ($stockMovements->isEmpty()) {
+                $inventoryAccountId = $item->inventory_account_id ?: $item->product->inventory_account_id ?: $this->getDefaultInventoryAccountId($sale->company_id);
+                $this->pushLine($journalLines, $inventoryAccountId, 0, (float) $item->cost_amount);
+                continue;
+            }
+
+            foreach ($stockMovements as $movement) {
+                $inventoryAccountId = $movement->product->inventory_account_id ?: $this->getDefaultInventoryAccountId($sale->company_id);
+                $this->pushLine($journalLines, $inventoryAccountId, 0, (float) $movement->total_cost);
+            }
         }
 
         return array_values($journalLines);
+    }
+
+    protected function stockMovementsForSaleItem(Sale $sale, SaleItem $item)
+    {
+        return StockMovement::where('source_type', get_class($sale))
+            ->where('source_id', $sale->id)
+            ->where('source_item_type', get_class($item))
+            ->where('source_item_id', $item->id)
+            ->where('quantity_out', '>', 0)
+            ->with('product')
+            ->get();
+    }
+
+    protected function saleHasRecipeItems(Sale $sale): bool
+    {
+        $sale->loadMissing('items.product.activeRecipe');
+
+        return $sale->items->contains(fn (SaleItem $item) => $this->itemUsesRecipe($item));
+    }
+
+    protected function saleHasRecipeMovements(Sale $sale): bool
+    {
+        return StockMovement::where('source_type', get_class($sale))
+            ->where('source_id', $sale->id)
+            ->where('movement_type', 'sale_recipe')
+            ->exists();
     }
 
     protected function ensureStockSufficientForCorrection(Sale $oldSale, Sale $newSale): void

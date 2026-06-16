@@ -63,6 +63,14 @@ class Permissions
                 'label' => 'Produk',
                 'actions' => $crud,
             ],
+            'recipes' => [
+                'label' => 'Resep F&B',
+                'actions' => $crud,
+            ],
+            'productions' => [
+                'label' => 'Produksi / Prep F&B',
+                'actions' => $crud,
+            ],
             'purchases' => [
                 'label' => 'Pembelian',
                 'actions' => $crud,

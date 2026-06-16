@@ -10,13 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 
 interface Account { id: number; code: string; name: string; type: string; subtype?: string | null; }
-interface ProductTypeOption { value: 'goods' | 'service'; label: string; }
+type ProductType = 'goods' | 'service' | 'raw_material' | 'menu_item' | 'semi_finished';
+interface ProductTypeOption { value: ProductType; label: string; }
 interface ProductData {
     id: number;
     product_code?: string;
     sku?: string | null;
     name: string;
-    product_type: 'goods' | 'service';
+    product_type: ProductType;
     unit: string;
     description?: string | null;
     is_stock_tracked: boolean;
@@ -52,6 +53,24 @@ export default function Form({ product, product_types, readonly = false }: Props
         cogs_account_id: product?.cogs_account_id?.toString() ?? '',
         is_active: product?.is_active ?? true,
     });
+
+    const stockTrackedDefaults: Record<ProductType, boolean> = {
+        goods: true,
+        service: false,
+        raw_material: true,
+        menu_item: false,
+        semi_finished: true,
+    };
+
+    const typeHelp: Record<ProductType, string> = {
+        goods: 'Barang umum yang bisa dibeli, dijual, dan dilacak stoknya.',
+        service: 'Jasa tidak menggunakan pelacakan stok.',
+        raw_material: 'Bahan baku F&B seperti beras, telur, susu, atau gula.',
+        menu_item: 'Menu yang dijual ke pelanggan. Resep dan HPP otomatis masuk di tahap berikutnya.',
+        semi_finished: 'Produk olahan/prep seperti saus, adonan, kaldu, atau bumbu racik.',
+    };
+
+    const isService = data.product_type === 'service';
 
     const submit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -90,12 +109,13 @@ export default function Form({ product, product_types, readonly = false }: Props
                                 </FormField>
                                 <FormField label="Tipe Produk" error={errors.product_type} required>
                                     <Select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={data.product_type} onChange={(e) => {
-                                        const value = e.target.value as 'goods' | 'service';
+                                        const value = e.target.value as ProductType;
                                         setData('product_type', value);
-                                        if (value === 'service') setData('is_stock_tracked', false);
+                                        setData('is_stock_tracked', stockTrackedDefaults[value]);
                                     }} disabled={readonly}>
                                         {product_types.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
                                     </Select>
+                                    <p className="mt-1 text-xs text-muted-foreground">{typeHelp[data.product_type]}</p>
                                 </FormField>
                             </div>
 
@@ -117,7 +137,7 @@ export default function Form({ product, product_types, readonly = false }: Props
 
                             <div className="flex flex-wrap items-center gap-6">
                                 <label className="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" checked={data.is_stock_tracked} onChange={(e) => setData('is_stock_tracked', e.target.checked)} disabled={readonly || data.product_type === 'service'} />
+                                    <input type="checkbox" checked={data.is_stock_tracked} onChange={(e) => setData('is_stock_tracked', e.target.checked)} disabled={readonly || isService} />
                                     Produk stok
                                 </label>
                                 <label className="flex items-center gap-2 text-sm">

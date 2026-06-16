@@ -24,6 +24,9 @@ import {
     Lightbulb,
     FileText,
     Plus,
+    CookingPot,
+    ChartNoAxesColumnIncreasing,
+    ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -88,6 +91,13 @@ export const topNavCategories: TopNavCategory[] = [
         matchPaths: ["/master"],
     },
     {
+        key: "fnb",
+        label: "F&B",
+        href: "/fnb/resep",
+        icon: CookingPot,
+        matchPaths: ["/fnb"],
+    },
+    {
         key: "laporan",
         label: "Laporan",
         href: "/laporan/transaksi",
@@ -126,6 +136,11 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
         { key: "produk", label: "Produk", href: "/master/produk", icon: Package, permission: "products.view" },
         { key: "kas-bank", label: "Kas & Bank", href: "/master/kas-bank", icon: Wallet, permission: "cash_bank.view" },
         { key: "kategori", label: "Kategori Transaksi", href: "/master/kategori", icon: Tags, permission: "accounts.view" },
+    ],
+    fnb: [
+        { key: "resep", label: "Resep Menu", href: "/fnb/resep", icon: CookingPot, permission: "recipes.view" },
+        { key: "produksi", label: "Produksi / Prep", href: "/fnb/produksi", icon: ClipboardList, permission: "productions.view" },
+        { key: "analitik", label: "Analitik F&B", href: "/fnb/analitik", icon: ChartNoAxesColumnIncreasing, permission: "recipes.view" },
     ],
     laporan: [
         { key: "transaksi", label: "Daftar Transaksi", href: "/laporan/transaksi", icon: List, permission: "reports.transactions" },
@@ -271,6 +286,19 @@ export const menuSettingGroups: MenuSettingGroupDef[] = [
             { category: "transaksi", item: "pembelian" },
             { category: "transaksi", item: "stok-penyesuaian" },
             { category: "master-data", item: "mitra" },
+        ],
+    },
+    {
+        key: "fnb",
+        label: "F&B",
+        members: [
+            { category: "fnb", item: "resep" },
+            { category: "fnb", item: "produksi" },
+            { category: "fnb", item: "analitik" },
+            { category: "master-data", item: "produk" },
+            { category: "transaksi", item: "pembelian" },
+            { category: "transaksi", item: "penjualan" },
+            { category: "transaksi", item: "stok-penyesuaian" },
         ],
     },
     {

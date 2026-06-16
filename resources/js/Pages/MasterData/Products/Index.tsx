@@ -10,12 +10,19 @@ import { usePermissions } from '@/lib/permissions';
 import { Download, MoreVertical, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2, Upload } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+type ProductType = 'goods' | 'service' | 'raw_material' | 'menu_item' | 'semi_finished';
+
+interface ProductTypeOption {
+    value: ProductType;
+    label: string;
+}
+
 interface Product {
     id: number;
     product_code: string;
     sku?: string | null;
     name: string;
-    product_type: 'goods' | 'service';
+    product_type: ProductType;
     unit: string;
     is_stock_tracked: boolean;
     sales_price: number;
@@ -50,7 +57,9 @@ interface Props {
     products: PaginatedProducts;
     filters: {
         per_page: number;
+        type?: ProductType | null;
     };
+    product_types: ProductTypeOption[];
 }
 
 function formatCurrency(value: number) {
@@ -62,11 +71,32 @@ function formatCurrency(value: number) {
     }).format(value);
 }
 
-export default function Index({ products, filters }: Props) {
+const productTypeStyles: Record<ProductType, string> = {
+    goods: 'bg-amber-100 text-amber-700',
+    service: 'bg-sky-100 text-sky-700',
+    raw_material: 'bg-emerald-100 text-emerald-700',
+    menu_item: 'bg-rose-100 text-rose-700',
+    semi_finished: 'bg-violet-100 text-violet-700',
+};
+
+const fallbackProductTypeLabels: Record<ProductType, string> = {
+    goods: 'Barang',
+    service: 'Jasa',
+    raw_material: 'Bahan Baku',
+    menu_item: 'Menu Jual',
+    semi_finished: 'Setengah Jadi',
+};
+
+function productTypeLabel(type: ProductType, options: ProductTypeOption[]) {
+    return options.find((option) => option.value === type)?.label ?? fallbackProductTypeLabels[type];
+}
+
+export default function Index({ products, filters, product_types }: Props) {
     const { can } = usePermissions();
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
     const [importType, setImportType] = useState<'goods' | 'service' | null>(null);
     const perPage = filters?.per_page ?? 25;
+    const selectedType = filters?.type ?? null;
     const {
         data: importData,
         setData: setImportData,
@@ -112,6 +142,14 @@ export default function Index({ products, filters }: Props) {
     const importTemplatePath = importType === 'goods'
         ? '/master/produk/template-import/barang'
         : '/master/produk/template-import/jasa';
+    const tabs: Array<{ value: ProductType | null; label: string }> = [
+        { value: null, label: 'Semua' },
+        ...product_types,
+    ];
+
+    const applyTypeFilter = (type: ProductType | null) => {
+        router.get('/master/produk', { per_page: perPage, type }, { preserveState: true, replace: true });
+    };
 
     return (
         <AuthenticatedLayout>
@@ -154,6 +192,25 @@ export default function Index({ products, filters }: Props) {
                         </Link>
                     </div>
                 )}
+            </div>
+
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+                {tabs.map((tab) => {
+                    const active = selectedType === tab.value;
+
+                    return (
+                        <Button
+                            key={tab.value ?? 'all'}
+                            type="button"
+                            variant={active ? 'default' : 'outline'}
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => applyTypeFilter(tab.value)}
+                        >
+                            {tab.label}
+                        </Button>
+                    );
+                })}
             </div>
 
             <Card>
@@ -226,8 +283,8 @@ export default function Index({ products, filters }: Props) {
                                         </div>
 
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${product.product_type === 'goods' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
-                                                {product.product_type === 'goods' ? 'Barang' : 'Jasa'}
+                                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${productTypeStyles[product.product_type]}`}>
+                                                {productTypeLabel(product.product_type, product_types)}
                                             </span>
                                             <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                                 {product.is_active ? 'Aktif' : 'Nonaktif'}
@@ -301,8 +358,8 @@ export default function Index({ products, filters }: Props) {
                                                     {product.sku && <div className="text-xs text-muted-foreground">{product.sku}</div>}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className={`rounded-full px-2 py-1 text-xs ${product.product_type === 'goods' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
-                                                        {product.product_type === 'goods' ? 'Barang' : 'Jasa'}
+                                                    <span className={`rounded-full px-2 py-1 text-xs ${productTypeStyles[product.product_type]}`}>
+                                                        {productTypeLabel(product.product_type, product_types)}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="text-right">{formatCurrency(product.sales_price)}</TableCell>
@@ -358,7 +415,7 @@ export default function Index({ products, filters }: Props) {
                             </div>
                         </>
                     )}
-                    <Pagination transactions={products} perPage={perPage} onPerPageChange={(val) => router.get('/master/produk', { per_page: val }, { preserveState: true, replace: true })} />
+                    <Pagination transactions={products} perPage={perPage} onPerPageChange={(val) => router.get('/master/produk', { per_page: val, type: selectedType }, { preserveState: true, replace: true })} />
                 </CardContent>
             </Card>
             {deleteTarget && (

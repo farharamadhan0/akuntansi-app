@@ -19,7 +19,7 @@ interface ProductDetail {
     product_code: string;
     sku?: string | null;
     name: string;
-    product_type: 'goods' | 'service';
+    product_type: ProductType;
     unit: string;
     description?: string | null;
     is_stock_tracked: boolean;
@@ -34,6 +34,8 @@ interface ProductDetail {
     expense_account?: AccountRef | null;
     cogs_account?: AccountRef | null;
 }
+
+type ProductType = 'goods' | 'service' | 'raw_material' | 'menu_item' | 'semi_finished';
 
 interface StockMovementItem {
     id: number;
@@ -101,8 +103,23 @@ function statusClasses(status: string) {
         inactive: 'bg-gray-100 text-gray-600',
         goods: 'bg-amber-100 text-amber-700',
         service: 'bg-sky-100 text-sky-700',
+        raw_material: 'bg-emerald-100 text-emerald-700',
+        menu_item: 'bg-rose-100 text-rose-700',
+        semi_finished: 'bg-violet-100 text-violet-700',
     };
     return classes[status] ?? 'bg-slate-100 text-slate-700';
+}
+
+function productTypeLabel(type: ProductType) {
+    const labels: Record<ProductType, string> = {
+        goods: 'Barang',
+        service: 'Jasa',
+        raw_material: 'Bahan Baku',
+        menu_item: 'Menu Jual',
+        semi_finished: 'Produk Setengah Jadi',
+    };
+
+    return labels[type];
 }
 
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
@@ -152,7 +169,7 @@ export default function Show({ product, recentMovements, total_purchases, total_
                                     {product.is_active ? 'Aktif' : 'Nonaktif'}
                                 </span>
                                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses(product.product_type)}`}>
-                                    {product.product_type === 'goods' ? 'Barang' : 'Jasa'}
+                                    {productTypeLabel(product.product_type)}
                                 </span>
                             </div>
                             <p className="mt-1 font-mono text-sm text-muted-foreground">
@@ -340,7 +357,7 @@ export default function Show({ product, recentMovements, total_purchases, total_
                                 ) : (
                                     <div className="rounded-xl border bg-sky-50 p-4">
                                         <p className="text-sm text-muted-foreground">Tipe</p>
-                                        <p className="mt-1 text-lg font-semibold text-sky-700">Jasa / Non-Stok</p>
+                                        <p className="mt-1 text-lg font-semibold text-sky-700">{productTypeLabel(product.product_type)} / Non-Stok</p>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-3">

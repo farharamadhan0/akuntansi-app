@@ -8,6 +8,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\JournalEntry;
 use App\Models\Product;
+use App\Models\Production;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\StockAdjustment;
@@ -73,6 +74,11 @@ class NumberGeneratorService
     public function generateStockAdjustmentNumber(int $companyId): string
     {
         return $this->generate($companyId, 'ADJ', StockAdjustment::class, 'adjustment_number');
+    }
+
+    public function generateProductionNumber(int $companyId): string
+    {
+        return $this->generate($companyId, 'PRP', Production::class, 'production_number');
     }
 
     protected function generate(int $companyId, string $prefix, string $model, string $column): string

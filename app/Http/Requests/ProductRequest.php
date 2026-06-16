@@ -37,7 +37,7 @@ class ProductRequest extends FormRequest
                     ->ignore($productId),
             ],
             'name' => ['required', 'string', 'max:255'],
-            'product_type' => ['required', Rule::in(['goods', 'service'])],
+            'product_type' => ['required', Rule::in(['goods', 'service', 'raw_material', 'menu_item', 'semi_finished'])],
             'unit' => ['required', 'string', 'max:20'],
             'description' => ['nullable', 'string'],
             'is_stock_tracked' => ['nullable', 'boolean'],

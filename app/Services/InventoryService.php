@@ -124,17 +124,7 @@ class InventoryService
             return collect();
         }
 
-        foreach ($movements as $movement) {
-            $latest = StockMovement::where('product_id', $movement->product_id)
-                ->latest('id')
-                ->first();
-
-            if (! $latest || $latest->id !== $movement->id) {
-                throw new \Exception(
-                    "Dokumen tidak dapat dibatalkan karena stok produk {$movement->product->name} sudah memiliki mutasi yang lebih baru."
-                );
-            }
-        }
+        $this->ensureMovementsCanBeReversed($movements);
 
         return $movements->map(function (StockMovement $movement) use ($source, $date) {
             $product = $movement->product;
@@ -163,6 +153,61 @@ class InventoryService
                 'Pembalikan stok'
             );
         });
+    }
+
+    protected function ensureMovementsCanBeReversed(Collection $movements): void
+    {
+        $movements
+            ->groupBy('product_id')
+            ->each(function (Collection $productMovements) {
+                /** @var StockMovement $movement */
+                $movement = $productMovements->first();
+                $newerMovements = StockMovement::where('product_id', $movement->product_id)
+                    ->where('id', '>', $productMovements->max('id'))
+                    ->orderBy('id')
+                    ->get();
+
+                if ($newerMovements->isEmpty()) {
+                    return;
+                }
+
+                $hasActiveNewerMovement = $newerMovements
+                    ->groupBy(fn (StockMovement $newerMovement) => $newerMovement->source_type . ':' . $newerMovement->source_id)
+                    ->contains(fn (Collection $sourceMovements) => ! $this->isVoidedMovementGroup($sourceMovements));
+
+                if ($hasActiveNewerMovement) {
+                    throw new \Exception(
+                        "Dokumen tidak dapat dibatalkan karena stok produk {$movement->product->name} sudah memiliki mutasi yang lebih baru."
+                    );
+                }
+            });
+    }
+
+    protected function isVoidedMovementGroup(Collection $movements): bool
+    {
+        /** @var StockMovement $firstMovement */
+        $firstMovement = $movements->first();
+
+        if (! $firstMovement->source_type || ! $firstMovement->source_id) {
+            return false;
+        }
+
+        $source = $firstMovement->source;
+        $status = $source?->status;
+        $statusValue = $status instanceof \BackedEnum
+            ? $status->value
+            : (string) $status;
+
+        if (! in_array($statusValue, ['voided', 'corrected'], true)) {
+            return false;
+        }
+
+        $netQuantity = $movements->sum(fn (StockMovement $movement) => (float) $movement->quantity_in - (float) $movement->quantity_out);
+        $netCost = $movements->sum(fn (StockMovement $movement) => (float) $movement->quantity_in > 0
+            ? (float) $movement->total_cost
+            : -1 * (float) $movement->total_cost);
+
+        return abs($netQuantity) < 0.01 && abs($netCost) < 0.01;
     }
 
     protected function ensureStockTracked(Product $product): void

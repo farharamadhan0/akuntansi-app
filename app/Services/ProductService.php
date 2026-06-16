@@ -18,7 +18,7 @@ class ProductService
         return DB::transaction(function () use ($data) {
             $companyId = $data['company_id'] ?? auth()->user()->current_company_id;
             $productType = $data['product_type'];
-            $isStockTracked = (bool) ($data['is_stock_tracked'] ?? $productType === 'goods');
+            $isStockTracked = (bool) ($data['is_stock_tracked'] ?? $this->defaultStockTracked($productType));
 
             return Product::create([
                 'company_id' => $companyId,
@@ -46,6 +46,9 @@ class ProductService
     public function update(Product $product, array $data): Product
     {
         $productType = $data['product_type'] ?? $product->product_type;
+        $isStockTracked = array_key_exists('is_stock_tracked', $data)
+            ? (bool) $data['is_stock_tracked']
+            : ($productType !== $product->product_type ? $this->defaultStockTracked($productType) : (bool) $product->is_stock_tracked);
 
         $product->update([
             'sku' => $data['sku'] ?? $product->sku,
@@ -53,9 +56,7 @@ class ProductService
             'product_type' => $productType,
             'unit' => $data['unit'] ?? $product->unit,
             'description' => $data['description'] ?? $product->description,
-            'is_stock_tracked' => $productType === 'service'
-                ? false
-                : ($data['is_stock_tracked'] ?? $product->is_stock_tracked),
+            'is_stock_tracked' => $productType === 'service' ? false : $isStockTracked,
             'sales_price' => $data['sales_price'] ?? $product->sales_price,
             'purchase_price' => $data['purchase_price'] ?? $product->purchase_price,
             'inventory_account_id' => $data['inventory_account_id'] ?? $product->inventory_account_id,
@@ -82,6 +83,11 @@ class ProductService
             ->where('subtype', 'inventory')
             ->where('is_system', true)
             ->value('id');
+    }
+
+    protected function defaultStockTracked(string $productType): bool
+    {
+        return in_array($productType, ['goods', 'raw_material', 'semi_finished'], true);
     }
 
     protected function getDefaultRevenueAccountId(int $companyId): ?int

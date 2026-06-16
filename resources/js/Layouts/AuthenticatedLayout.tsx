@@ -1,4 +1,4 @@
-import { Link, useForm, usePage, router } from "@inertiajs/react";
+﻿import { Link, useForm, usePage, router } from "@inertiajs/react";
 import { Toaster } from "sonner";
 import { useFlashToast } from "@/hooks/useFlashToast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -6,19 +6,15 @@ import { usePermissions } from "@/lib/permissions";
 import {
     topNavCategories,
     contextualSidebarItems,
-    quickActions,
     getActiveCategoryKey,
     isSidebarItemActive,
     isMenuEnabled,
     menuId,
-    type NavItem,
-    type TopNavCategory,
 } from "@/lib/navigation.config";
 import {
     LogOut,
     Building2,
     ChevronDown,
-    Plus,
     Menu,
     X,
     Send,
@@ -110,61 +106,6 @@ function TopNavigation({
                 </Link>
             ))}
         </nav>
-    );
-}
-
-// ============================================================================
-// Quick Action Button Component
-// ============================================================================
-
-function QuickActionButton() {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const { can, isOwner } = usePermissions();
-    const { company } = usePage<PageProps>().props;
-    const enabledMenus = company?.enabled_menus ?? null;
-
-    const visibleActions = quickActions.filter((action) => {
-        if (!isMenuEnabled(menuId("transaksi", action.key), enabledMenus)) return false;
-        if (!action.permission) return true;
-        return isOwner || can(action.permission);
-    });
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    if (visibleActions.length === 0) return null;
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <Button onClick={() => setIsOpen(!isOpen)} className="gap-2">
-                <Plus size={16} />
-                <span className="hidden sm:inline">Tambah</span>
-            </Button>
-
-            {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    {visibleActions.map((action) => (
-                        <Link
-                            key={action.key}
-                            href={action.href}
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <action.icon size={16} className="text-gray-500" />
-                            {action.label}
-                        </Link>
-                    ))}
-                </div>
-            )}
-        </div>
     );
 }
 
@@ -966,9 +907,6 @@ function Header({
             />
 
             <div className="hidden flex-1 md:block" />
-
-            {/* Quick Action Button */}
-            <QuickActionButton />
 
             <Link
                 href="/bantuan"
