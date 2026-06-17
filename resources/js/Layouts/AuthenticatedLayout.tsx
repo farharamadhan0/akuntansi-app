@@ -21,6 +21,7 @@ import {
     ImageUp,
     LifeBuoy,
     RefreshCw,
+    ScanLine,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -867,8 +868,13 @@ function Header({
     isMobileMenuOpen: boolean;
 }) {
     const { auth, company } = usePage<PageProps>().props;
+    const { can, isOwner } = usePermissions();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const enabledMenus = company?.enabled_menus ?? null;
+    const showPosShortcut =
+        (isOwner || can("sales.create")) &&
+        isMenuEnabled(menuId("transaksi", "pos"), enabledMenus);
 
     const handleLogout = () => {
         router.post("/logout");
@@ -888,8 +894,10 @@ function Header({
         <header className="sticky top-0 z-30 flex min-w-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-3 sm:gap-3 sm:px-4 md:px-6">
             {/* Mobile menu button */}
             <button
+                type="button"
                 onClick={onMobileMenuToggle}
                 className="shrink-0 p-2 text-gray-500 hover:bg-gray-100 rounded-md md:hidden"
+                aria-label={isMobileMenuOpen ? "Tutup navigasi" : "Buka navigasi"}
             >
                 <Menu size={20} />
             </button>
@@ -907,6 +915,17 @@ function Header({
             />
 
             <div className="hidden flex-1 md:block" />
+
+            {showPosShortcut && (
+                <Link
+                    href="/transaksi/pos"
+                    className="inline-flex h-9 shrink-0 items-center justify-center gap-2 border border-primary/20 bg-primary/10 px-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+                >
+                    <ScanLine size={16} />
+                    <span className="hidden sm:inline">POS Kasir</span>
+                    <span className="sm:hidden">POS</span>
+                </Link>
+            )}
 
             <Link
                 href="/bantuan"
@@ -966,10 +985,26 @@ function FlashToastHandler() {
     return null;
 }
 
-export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
+export default function AuthenticatedLayout({
+    children,
+    fullscreen = false,
+}: {
+    children: ReactNode;
+    fullscreen?: boolean;
+}) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
     const activeCategoryKey = getActiveCategoryKey(pathname);
+
+    if (fullscreen) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <FlashToastHandler />
+                <Toaster position="top-right" richColors closeButton />
+                {children}
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">

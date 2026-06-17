@@ -17,6 +17,7 @@ use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
 use App\Http\Controllers\ReceivablePaymentController;
 use App\Http\Controllers\PayablePaymentController;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ProductController;
@@ -192,6 +193,10 @@ Route::middleware('auth')->group(function () {
 
         // Transaksi
         Route::prefix('transaksi')->group(function () {
+            // POS Kasir
+            Route::get('pos', [PosController::class, 'create'])->middleware('permission:sales.create')->name('pos.create');
+            Route::post('pos', [PosController::class, 'store'])->middleware('permission:sales.create')->name('pos.store');
+
             // Uang Masuk
             Route::get('uang-masuk', [IncomeTransactionController::class, 'index'])->middleware('permission:income.view')->name('income.index');
             Route::get('uang-masuk/catat', [IncomeTransactionController::class, 'create'])->middleware('permission:income.create')->name('income.create');

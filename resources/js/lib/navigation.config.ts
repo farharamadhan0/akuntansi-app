@@ -122,6 +122,7 @@ export const contextualSidebarItems: Record<string, NavItem[]> = {
     // Dashboard tidak memiliki sidebar (empty array)
     dashboard: [],
     transaksi: [
+        { key: "pos", label: "POS Kasir", href: "/transaksi/pos", icon: ScanLine, permission: "sales.create" },
         { key: "uang-masuk", label: "Uang Masuk", href: "/transaksi/uang-masuk", icon: TrendingUp, permission: "income.view" },
         { key: "uang-keluar", label: "Uang Keluar", href: "/transaksi/uang-keluar", icon: TrendingDown, permission: "expense.view" },
         { key: "piutang", label: "Piutang", href: "/transaksi/piutang", icon: Users, permission: "receivables.view" },
@@ -282,6 +283,7 @@ export const menuSettingGroups: MenuSettingGroupDef[] = [
         label: "Produk, Penjualan & Pembelian",
         members: [
             { category: "master-data", item: "produk" },
+            { category: "transaksi", item: "pos" },
             { category: "transaksi", item: "penjualan" },
             { category: "transaksi", item: "pembelian" },
             { category: "transaksi", item: "stok-penyesuaian" },
@@ -296,6 +298,7 @@ export const menuSettingGroups: MenuSettingGroupDef[] = [
             { category: "fnb", item: "produksi" },
             { category: "fnb", item: "analitik" },
             { category: "master-data", item: "produk" },
+            { category: "transaksi", item: "pos" },
             { category: "transaksi", item: "pembelian" },
             { category: "transaksi", item: "penjualan" },
             { category: "transaksi", item: "stok-penyesuaian" },
