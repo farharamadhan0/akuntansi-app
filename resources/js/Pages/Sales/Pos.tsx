@@ -7,7 +7,7 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { formatRupiah } from '@/lib/format';
-import { ArrowLeft, CheckCircle2, Minus, Plus, Printer, RefreshCw, Save, Search, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, CheckCircle2, Minus, Plus, Printer, RefreshCw, Save, Search, ShoppingCart, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CashBankAccount {
@@ -55,7 +55,6 @@ type PosForm = {
     payment_type: 'cash';
     cash_bank_account_id: string;
     notes: string;
-    reference: string;
     print_receipt: boolean;
     items: CartItem[];
 };
@@ -106,7 +105,6 @@ interface HeldCart {
     data: {
         cash_bank_account_id: string;
         notes: string;
-        reference: string;
         cash_received: string;
         discount_amount: string;
         items: CartItem[];
@@ -256,7 +254,6 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
         payment_type: 'cash',
         cash_bank_account_id: defaultCashBankAccountId,
         notes: '',
-        reference: '',
         print_receipt: false,
         items: [],
     });
@@ -315,7 +312,6 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
             payment_type: 'cash',
             cash_bank_account_id: data.cash_bank_account_id || defaultCashBankAccountId,
             notes: '',
-            reference: '',
             print_receipt: false,
             items: [],
         });
@@ -400,7 +396,6 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
             data: {
                 cash_bank_account_id: data.cash_bank_account_id,
                 notes: data.notes,
-                reference: data.reference,
                 cash_received: cashReceived,
                 discount_amount: globalDiscount,
                 items: data.items,
@@ -416,7 +411,6 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
             ...data,
             cash_bank_account_id: cart.data.cash_bank_account_id,
             notes: cart.data.notes,
-            reference: cart.data.reference,
             items: cart.data.items,
         });
         setCashReceived(cart.data.cash_received);
@@ -511,7 +505,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
             <Head title="POS Kasir" />
 
             <div className="flex min-h-screen flex-col print:hidden lg:h-screen lg:min-h-0 lg:overflow-hidden">
-                <header className="flex min-w-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-3 py-2 md:px-4">
+                <header className="flex min-w-0 flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 md:flex-nowrap md:px-4">
                     <div className="flex min-w-0 items-center gap-3">
                         <h1 className="shrink-0 text-sm font-semibold text-gray-900">
                             POS Kasir
@@ -539,9 +533,45 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                             </div>
                         </div>
                     </div>
+
+                    <div className="order-3 grid w-full grid-cols-[minmax(0,1fr)_148px] gap-2 md:order-none md:ml-auto md:w-auto md:grid-cols-[minmax(220px,360px)_148px]">
+                        <div className="relative min-w-0">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+                            <Input
+                                value={query}
+                                onChange={(event) => setQuery(event.target.value)}
+                                onKeyDown={handleSearchKeyDown}
+                                placeholder="Cari produk, kode, atau SKU"
+                                aria-label="Cari produk"
+                                className="h-8 pl-8 text-xs"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="relative">
+                            <Input
+                                type="date"
+                                value={data.date}
+                                onChange={(event) => setData('date', event.target.value)}
+                                aria-label="Tanggal transaksi"
+                                className="h-8 pr-9 text-xs"
+                            />
+                            <div className="absolute inset-y-0 right-0 flex w-8 items-center justify-center border-l border-gray-200 text-gray-500">
+                                <CalendarDays className="size-4" />
+                                <input
+                                    type="date"
+                                    value={data.date}
+                                    max={new Date().toISOString().split('T')[0]}
+                                    onChange={(event) => setData('date', event.target.value)}
+                                    aria-label="Buka kalender tanggal transaksi"
+                                    className="absolute inset-0 cursor-pointer opacity-0"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <Link
                         href="/dashboard"
-                        className="inline-flex h-8 shrink-0 items-center justify-center gap-2 border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        className="order-2 ml-auto inline-flex h-8 shrink-0 items-center justify-center gap-2 border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 md:order-none md:ml-0"
                     >
                         <ArrowLeft className="size-4" />
                         Dashboard
@@ -554,45 +584,8 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                     </div>
                 )}
 
-                <form onSubmit={submit} className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_400px] lg:overflow-hidden">
+                <form onSubmit={submit} className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_500px] lg:overflow-hidden">
                     <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border border-gray-200 bg-white">
-                        <div className="border-b border-gray-200 p-3">
-                            <div className="flex flex-col gap-3 md:flex-row md:items-end">
-                                <div className="min-w-0 flex-1">
-                                    <FormField label="Cari Produk">
-                                        <div className="relative">
-                                            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
-                                            <Input
-                                                value={query}
-                                                onChange={(event) => setQuery(event.target.value)}
-                                                onKeyDown={handleSearchKeyDown}
-                                                placeholder="Nama, kode, atau SKU"
-                                                className="h-9 pl-8 text-sm"
-                                                autoFocus
-                                            />
-                                        </div>
-                                    </FormField>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3 md:w-80">
-                                    <FormField label="Tanggal" error={errors.date}>
-                                        <Input
-                                            type="date"
-                                            value={data.date}
-                                            onChange={(event) => setData('date', event.target.value)}
-                                            className="h-9"
-                                        />
-                                    </FormField>
-                                    <FormField label="Referensi" error={errors.reference}>
-                                        <Input
-                                            value={data.reference}
-                                            onChange={(event) => setData('reference', event.target.value)}
-                                            className="h-9"
-                                        />
-                                    </FormField>
-                                </div>
-                            </div>
-                        </div>
-
                         <div className="flex items-center justify-between border-y border-gray-200 bg-gray-50 px-3 py-1.5">
                             <div>
                                 <p className="text-xs font-semibold uppercase text-gray-500">
@@ -604,7 +597,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                             </p>
                         </div>
 
-                        <div className="grid min-h-0 flex-1 grid-cols-1 gap-px overflow-y-auto bg-gray-200 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid min-h-0 flex-1 auto-rows-[128px] content-start grid-cols-1 gap-px overflow-y-auto bg-gray-200 sm:grid-cols-2 xl:grid-cols-3">
                             {filteredProducts.map((product) => {
                                 const stock = Number(product.current_stock ?? 0);
                                 const stockLimited = product.is_stock_tracked && stock <= 0;
@@ -615,7 +608,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                         type="button"
                                         onClick={() => addProduct(product)}
                                         disabled={stockLimited}
-                                        className="flex min-h-32 flex-col justify-between bg-white p-4 text-left transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                        className="flex h-32 min-h-0 flex-col justify-between bg-white p-4 text-left transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                                     >
                                         <div className="min-w-0">
                                             <div className="flex items-start justify-between gap-3">
@@ -764,38 +757,27 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                             )}
 
                             {data.items.map((item, index) => (
-                                <div key={`${item.product_id}-${index}`} className="space-y-3 p-4">
-                                    <div className="flex items-start justify-between gap-3">
+                                <div key={`${item.product_id}-${index}`} className="px-3 py-2">
+                                    <div className="grid grid-cols-[minmax(110px,1fr)_108px_88px_100px_28px] items-center gap-2">
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-medium text-gray-900">
+                                            <p className="truncate text-xs font-medium text-gray-900" title={item.description}>
                                                 {item.description}
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                {formatRupiah(Number(item.unit_price || 0))} / {item.unit}
+                                            <p className="truncate text-[11px] text-gray-500">
+                                                {item.unit}
                                             </p>
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() => removeItem(index)}
-                                            aria-label="Hapus item"
-                                        >
-                                            <Trash2 className="size-4 text-red-500" />
-                                        </Button>
-                                    </div>
 
-                                    <div className="grid grid-cols-[136px_minmax(0,1fr)] gap-3">
-                                        <div className="flex h-9 items-center border border-gray-200">
+                                        <div className="flex h-8 items-center border border-gray-200">
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon-sm"
                                                 onClick={() => stepQuantity(index, -1)}
                                                 aria-label="Kurangi qty"
-                                                className="h-9 w-9"
+                                                className="h-8 w-7 shrink-0"
                                             >
-                                                <Minus className="size-4" />
+                                                <Minus className="size-3.5" />
                                             </Button>
                                             <Input
                                                 type="number"
@@ -803,7 +785,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                                 step="1"
                                                 value={item.quantity}
                                                 onChange={(event) => updateItem(index, 'quantity', event.target.value)}
-                                                className="h-8 min-w-14 border-0 px-1 text-center tabular-nums"
+                                                className="h-7 min-w-0 border-0 px-0.5 text-center text-xs tabular-nums"
                                             />
                                             <Button
                                                 type="button"
@@ -811,27 +793,36 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                                 size="icon-sm"
                                                 onClick={() => stepQuantity(index, 1)}
                                                 aria-label="Tambah qty"
-                                                className="h-9 w-9"
+                                                className="h-8 w-7 shrink-0"
                                             >
-                                                <Plus className="size-4" />
+                                                <Plus className="size-3.5" />
                                             </Button>
                                         </div>
+
                                         <Input
                                             type="number"
                                             min="0"
                                             step="0.01"
                                             value={item.unit_price}
                                             onChange={(event) => updateItem(index, 'unit_price', event.target.value)}
-                                            className="h-9"
+                                            className="h-8 px-2 text-right text-xs tabular-nums"
                                             aria-label="Harga item"
                                         />
-                                    </div>
 
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Subtotal</span>
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="truncate text-right text-xs font-semibold text-gray-900 tabular-nums">
                                             {formatRupiah(lineTotal(item))}
                                         </span>
+
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            className="size-7"
+                                            onClick={() => removeItem(index)}
+                                            aria-label="Hapus item"
+                                        >
+                                            <Trash2 className="size-3.5 text-red-500" />
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -903,7 +894,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                     )}
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-gray-500">Total</span>
-                                        <span className="text-xl font-bold text-gray-900">
+                                        <span className="text-lg font-bold text-gray-900">
                                             {formatRupiah(cartTotal)}
                                         </span>
                                     </div>
