@@ -42,7 +42,6 @@ interface SaleItem {
     unit: string;
     unit_price: number;
     discount_amount: number;
-    tax_amount: number;
 }
 
 interface RelatedPayment {
@@ -91,7 +90,6 @@ interface ItemRow {
     unit: string;
     unit_price: string;
     discount_amount: string;
-    tax_amount: string;
 }
 
 export default function Edit({ sale, partners, cashBankAccounts, products }: Props) {
@@ -103,10 +101,9 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
         unit: item.unit || '',
         unit_price: String(item.unit_price),
         discount_amount: String(item.discount_amount ?? 0),
-        tax_amount: String(item.tax_amount ?? 0),
     }));
 
-    const [items, setItems] = useState<ItemRow[]>(initialItems.length > 0 ? initialItems : [{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
+    const [items, setItems] = useState<ItemRow[]>(initialItems.length > 0 ? initialItems : [{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0' }]);
     const { data, setData, post, processing, errors } = useForm({
         partner_id: sale.partner_id ? String(sale.partner_id) : '',
         date: sale.date,
@@ -115,7 +112,7 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
         cash_bank_account_id: sale.cash_bank_account_id ? String(sale.cash_bank_account_id) : '',
         notes: sale.notes || '',
         reference: sale.reference || '',
-        items: initialItems.length > 0 ? initialItems : [{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }],
+        items: initialItems.length > 0 ? initialItems : [{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0' }],
     });
 
     const syncItems = (nextItems: ItemRow[]) => {
@@ -139,7 +136,7 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
         syncItems(next);
     };
 
-    const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
+    const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0' }]);
     const removeItem = (index: number) => syncItems(items.filter((_, idx) => idx !== index));
 
     const handlePaymentTypeChange = (value: string) => {
@@ -154,7 +151,7 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
         post(`/transaksi/penjualan/${sale.id}/koreksi`);
     };
 
-    const total = items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0) + Number(item.tax_amount || 0)), 0);
+    const total = items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0)), 0);
 
     return (
         <AuthenticatedLayout>
@@ -270,9 +267,8 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
                                         <div className="md:col-span-1"><FormField label="Unit"><Input value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-2"><FormField label="Harga"><Input type="number" min="0" step="0.01" value={item.unit_price} onChange={(e) => updateItem(index, 'unit_price', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-1"><FormField label="Diskon"><Input type="number" min="0" step="0.01" value={item.discount_amount} onChange={(e) => updateItem(index, 'discount_amount', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-1"><FormField label="Pajak"><Input type="number" min="0" step="0.01" value={item.tax_amount} onChange={(e) => updateItem(index, 'tax_amount', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-12 flex justify-between text-sm text-muted-foreground">
-                                            <span>Total baris: {(Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0) + Number(item.tax_amount || 0)).toLocaleString('id-ID')}</span>
+                                            <span>Total baris: {(Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0)).toLocaleString('id-ID')}</span>
                                             {items.length > 1 && <button type="button" className="text-red-600" onClick={() => removeItem(index)}>Hapus</button>}
                                         </div>
                                     </div>

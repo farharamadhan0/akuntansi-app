@@ -19,6 +19,7 @@ class InventoryService
         ?Model $sourceItem = null,
         ?string $notes = null
     ): StockMovement {
+        $product = $this->lockedProduct($product);
         $this->ensureStockTracked($product);
 
         if ($quantity <= 0) {
@@ -71,6 +72,7 @@ class InventoryService
         ?Model $sourceItem = null,
         ?string $notes = null
     ): StockMovement {
+        $product = $this->lockedProduct($product);
         $this->ensureStockTracked($product);
 
         if ($quantity <= 0) {
@@ -215,5 +217,12 @@ class InventoryService
         if (! $product->is_stock_tracked) {
             throw new \Exception("Produk {$product->name} tidak menggunakan pelacakan stok.");
         }
+    }
+
+    protected function lockedProduct(Product $product): Product
+    {
+        return Product::whereKey($product->id)
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 }

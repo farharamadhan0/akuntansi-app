@@ -196,6 +196,7 @@ Route::middleware('auth')->group(function () {
             // POS Kasir
             Route::get('pos', [PosController::class, 'create'])->middleware('permission:sales.create')->name('pos.create');
             Route::post('pos', [PosController::class, 'store'])->middleware('permission:sales.create')->name('pos.store');
+            Route::get('pos/{sale}/struk', [PosController::class, 'receipt'])->middleware('permission:sales.create')->name('pos.receipt');
 
             // Uang Masuk
             Route::get('uang-masuk', [IncomeTransactionController::class, 'index'])->middleware('permission:income.view')->name('income.index');

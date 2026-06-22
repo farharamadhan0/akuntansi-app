@@ -151,3 +151,40 @@
     @apply font-sans;
     }
 }
+
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 58mm;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .thermal-receipt {
+    width: 48mm;
+    margin: 0;
+    padding: 3mm;
+    color: #111827;
+    background: #fff;
+    box-shadow: none;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .thermal-receipt * {
+    box-shadow: none !important;
+  }
+
+  [data-sonner-toaster],
+  [data-sonner-toaster] *,
+  [data-sonner-toast] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}

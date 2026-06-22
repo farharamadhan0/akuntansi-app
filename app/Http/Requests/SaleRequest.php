@@ -56,7 +56,6 @@ class SaleRequest extends FormRequest
             'items.*.unit' => ['nullable', 'string', 'max:20'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.line_total' => ['nullable', 'numeric', 'min:0'],
             'items.*.revenue_account_id' => [
                 'nullable',
@@ -97,8 +96,6 @@ class SaleRequest extends FormRequest
             'items.*.unit_price.min' => 'Harga item tidak boleh negatif.',
             'items.*.discount_amount.numeric' => 'Diskon item harus berupa angka.',
             'items.*.discount_amount.min' => 'Diskon item tidak boleh negatif.',
-            'items.*.tax_amount.numeric' => 'Pajak item harus berupa angka.',
-            'items.*.tax_amount.min' => 'Pajak item tidak boleh negatif.',
             'items.*.line_total.numeric' => 'Total item harus berupa angka.',
             'items.*.line_total.min' => 'Total item tidak boleh negatif.',
             'items.*.revenue_account_id.exists' => 'Akun penjualan item tidak valid.',
@@ -160,7 +157,6 @@ class SaleRequest extends FormRequest
             $normalized = array_map(function ($item) {
                 return array_merge($item, [
                     'discount_amount' => isset($item['discount_amount']) && $item['discount_amount'] !== '' ? $item['discount_amount'] : 0,
-                    'tax_amount' => isset($item['tax_amount']) && $item['tax_amount'] !== '' ? $item['tax_amount'] : 0,
                 ]);
             }, $items);
 

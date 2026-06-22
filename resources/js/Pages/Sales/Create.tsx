@@ -15,11 +15,11 @@ interface CashBankAccount { id: number; name: string; }
 interface Product { id: number; product_code: string; name: string; unit: string; sales_price: number; is_stock_tracked: boolean; current_stock?: string; }
 interface Flash { error?: string; }
 interface Props { partners: Partner[]; cashBankAccounts: CashBankAccount[]; products: Product[]; }
-interface ItemRow { product_id: string; description: string; quantity: string; unit: string; unit_price: string; discount_amount: string; tax_amount: string; }
+interface ItemRow { product_id: string; description: string; quantity: string; unit: string; unit_price: string; discount_amount: string; }
 
 export default function Create({ partners, cashBankAccounts, products }: Props) {
     const { flash } = usePage().props as { flash?: Flash };
-    const [items, setItems] = useState<ItemRow[]>([{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
+    const [items, setItems] = useState<ItemRow[]>([{ product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0' }]);
     const { data, setData, post, processing, errors } = useForm({
         partner_id: '',
         date: new Date().toISOString().split('T')[0],
@@ -52,7 +52,7 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
         syncItems(next);
     };
 
-    const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0', tax_amount: '0' }]);
+    const addItem = () => syncItems([...items, { product_id: '', description: '', quantity: '1', unit: '', unit_price: '0', discount_amount: '0' }]);
     const removeItem = (index: number) => syncItems(items.filter((_, idx) => idx !== index));
 
     const handlePaymentTypeChange = (value: string) => {
@@ -67,7 +67,7 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
         post('/transaksi/penjualan');
     };
 
-    const total = items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0) + Number(item.tax_amount || 0)), 0);
+    const total = items.reduce((acc, item) => acc + (Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0)), 0);
 
     return (
         <AuthenticatedLayout>
@@ -142,9 +142,8 @@ export default function Create({ partners, cashBankAccounts, products }: Props) 
                                         <div className="md:col-span-1"><FormField label="Unit"><Input value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-2"><FormField label="Harga"><Input type="number" min="0" step="0.01" value={item.unit_price} onChange={(e) => updateItem(index, 'unit_price', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-1"><FormField label="Diskon"><Input type="number" min="0" step="0.01" value={item.discount_amount} onChange={(e) => updateItem(index, 'discount_amount', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-1"><FormField label="Pajak"><Input type="number" min="0" step="0.01" value={item.tax_amount} onChange={(e) => updateItem(index, 'tax_amount', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-12 flex justify-between text-sm text-muted-foreground">
-                                            <span>Total baris: {(Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0) + Number(item.tax_amount || 0)).toLocaleString('id-ID')}</span>
+                                            <span>Total baris: {(Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0)).toLocaleString('id-ID')}</span>
                                             {items.length > 1 && <button type="button" className="text-red-600" onClick={() => removeItem(index)}>Hapus</button>}
                                         </div>
                                     </div>

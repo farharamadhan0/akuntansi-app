@@ -16,6 +16,7 @@ interface Sale {
     date: string;
     due_date?: string | null;
     payment_type: string;
+    source?: string;
     receivable_payment_status?: 'unpaid' | 'partial' | 'paid' | null;
     partner_name?: string | null;
     cash_bank_name?: string | null;
@@ -253,6 +254,11 @@ export default function Index({ sales, summary, filters }: Props) {
                                                 <p className="truncate font-mono text-sm text-primary">
                                                     {sale.sale_number}
                                                 </p>
+                                                {sale.source === 'pos' && (
+                                                    <span className="mt-1 inline-flex border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                                        POS
+                                                    </span>
+                                                )}
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     {formatDate(sale.date)}
                                                 </p>
@@ -301,6 +307,11 @@ export default function Index({ sales, summary, filters }: Props) {
                                                     <Link href={`/transaksi/penjualan/${sale.id}`} className="font-mono text-sm text-primary hover:underline">
                                                         {sale.sale_number}
                                                     </Link>
+                                                    {sale.source === 'pos' && (
+                                                        <span className="ml-2 inline-flex border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                                            POS
+                                                        </span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                                                     {formatDate(sale.date)}

@@ -1000,7 +1000,7 @@ export default function AuthenticatedLayout({
         return (
             <div className="min-h-screen bg-gray-50">
                 <FlashToastHandler />
-                <Toaster position="top-right" richColors closeButton />
+                <Toaster position="top-right" richColors closeButton className="print:hidden" />
                 {children}
             </div>
         );
@@ -1009,7 +1009,7 @@ export default function AuthenticatedLayout({
     return (
         <div className="min-h-screen bg-gray-50">
             <FlashToastHandler />
-            <Toaster position="top-right" richColors closeButton />
+            <Toaster position="top-right" richColors closeButton className="print:hidden" />
             {/* Header with Top Navigation */}
             <Header
                 activeCategoryKey={activeCategoryKey}

@@ -36,6 +36,7 @@ class SaleService
                 'date' => $data['date'],
                 'due_date' => $data['due_date'] ?? null,
                 'payment_type' => $data['payment_type'],
+                'source' => $data['source'] ?? 'manual',
                 'cash_bank_account_id' => $data['cash_bank_account_id'] ?? null,
                 'subtotal' => $totals['subtotal'],
                 'discount_amount' => $totals['discount_amount'],

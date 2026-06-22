@@ -25,6 +25,7 @@ class Sale extends Model
         'date',
         'due_date',
         'payment_type',
+        'source',
         'cash_bank_account_id',
         'receivable_id',
         'subtotal',
