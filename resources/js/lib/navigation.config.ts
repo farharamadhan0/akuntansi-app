@@ -298,7 +298,6 @@ export const menuSettingGroups: MenuSettingGroupDef[] = [
             { category: "fnb", item: "produksi" },
             { category: "fnb", item: "analitik" },
             { category: "master-data", item: "produk" },
-            { category: "transaksi", item: "pos" },
             { category: "transaksi", item: "pembelian" },
             { category: "transaksi", item: "penjualan" },
             { category: "transaksi", item: "stok-penyesuaian" },
