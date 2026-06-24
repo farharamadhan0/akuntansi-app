@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Emwal" />
     <meta property="og:url" content="https://emwal.id/" />
     <meta property="og:title" content="Emwal - Aplikasi Pencatatan Keuangan" />
     <meta property="og:description" content="Catat transaksi, hutang piutang, dan laporan keuangan dalam satu aplikasi." />
