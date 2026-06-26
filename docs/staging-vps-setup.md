@@ -272,3 +272,5 @@ Pastikan juga:
 - OAuth Google menambahkan redirect URI `https://staging.emwal.id/auth/google/callback`.
 - Data staging tidak memakai database production.
 - `APP_DEBUG=false` di staging yang dapat diakses publik.
+
+powered by ramacita
