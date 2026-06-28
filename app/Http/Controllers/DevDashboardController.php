@@ -7,6 +7,7 @@ use App\Models\PageView;
 use App\Models\Transaction;
 use App\Models\CashBankAccount;
 use App\Models\Partner;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,7 +19,6 @@ class DevDashboardController extends Controller
         $now = now();
         $startOfMonth = $now->copy()->startOfMonth();
         $endOfMonth = $now->copy()->endOfMonth();
-        $todayStart = $now->copy()->startOfDay()->timestamp;
 
         // ----------------------------------------------------------------
         // 1. Total Tenant
@@ -85,12 +85,8 @@ class DevDashboardController extends Controller
         // ----------------------------------------------------------------
         $dauData = $this->getDailyActiveUsers(14);
 
-        // DAU hari ini (dari sessions tabel)
-        $dauToday = DB::table('sessions')
-            ->whereNotNull('user_id')
-            ->where('last_activity', '>=', $todayStart)
-            ->distinct('user_id')
-            ->count('user_id');
+        // DAU hari ini memakai page_views agar konsisten dengan data historis.
+        $dauToday = $this->countDailyActiveUsers($now);
 
         return Inertia::render('Dev/Dashboard', [
             'metrics' => [
@@ -156,23 +152,26 @@ class DevDashboardController extends Controller
 
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = $now->copy()->subDays($i);
-            $startTs = $date->copy()->startOfDay()->timestamp;
-            $endTs   = $date->copy()->endOfDay()->timestamp;
-
-            $dau = DB::table('sessions')
-                ->whereNotNull('user_id')
-                ->whereBetween('last_activity', [$startTs, $endTs])
-                ->distinct('user_id')
-                ->count('user_id');
 
             $data[] = [
                 'date'  => $date->format('Y-m-d'),
                 'label' => $date->format('d/m'),
-                'dau'   => $dau,
+                'dau'   => $this->countDailyActiveUsers($date),
             ];
         }
 
         return $data;
+    }
+
+    private function countDailyActiveUsers(Carbon $date): int
+    {
+        return PageView::whereNotNull('user_id')
+            ->whereBetween('viewed_at', [
+                $date->copy()->startOfDay(),
+                $date->copy()->endOfDay(),
+            ])
+            ->distinct('user_id')
+            ->count('user_id');
     }
 
     private function menuLabel(string $menuKey): string
