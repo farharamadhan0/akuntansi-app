@@ -2,7 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TransactionStatus;
+use App\Models\CashBankAccount;
 use App\Models\CompanyUser;
+use App\Models\OnboardingState;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,9 +42,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $permissions = [];
+        $companyId = $user?->current_company_id;
         if ($user && $user->current_company_id) {
             $membership = CompanyUser::with('role:id,permissions')
-                ->where('company_id', $user->current_company_id)
+                ->where('company_id', $companyId)
                 ->where('user_id', $user->id)
                 ->first();
             $permissions = $membership?->role?->permissions ?? [];
@@ -63,11 +68,39 @@ class HandleInertiaRequests extends Middleware
                 'name' => $request->user()->currentCompany->name,
                 'enabled_menus' => $request->user()->currentCompany->enabledMenus(),
             ] : null,
+            'onboarding' => fn () => $this->onboarding($user, $companyId),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'status' => fn () => $request->session()->get('status'),
             ],
+        ];
+    }
+
+    protected function onboarding($user, ?int $companyId): ?array
+    {
+        if (! $user || ! $companyId) {
+            return null;
+        }
+
+        $state = OnboardingState::where('user_id', $user->id)
+            ->where('company_id', $companyId)
+            ->first();
+        $hasCashBank = CashBankAccount::where('company_id', $companyId)->exists();
+        $hasTransaction = Transaction::where('company_id', $companyId)
+            ->where('status', TransactionStatus::Posted)
+            ->exists();
+        $isComplete = $hasCashBank && $hasTransaction;
+        $isSkipped = $state?->skipped_at !== null;
+        $isCompletedDismissed = $state?->completed_dismissed_at !== null;
+
+        return [
+            'has_cash_bank' => $hasCashBank,
+            'has_transaction' => $hasTransaction,
+            'is_skipped' => $isSkipped,
+            'is_complete' => $isComplete,
+            'is_completed_dismissed' => $isCompletedDismissed,
+            'should_show' => ! $isSkipped && (! $isComplete || ! $isCompletedDismissed),
         ];
     }
 }

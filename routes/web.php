@@ -12,6 +12,7 @@ use App\Http\Controllers\IncomeTransactionController;
 use App\Http\Controllers\ExpenseTransactionController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\MenuSettingController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PayableController;
 use App\Http\Controllers\ReceivableController;
@@ -122,6 +123,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['verified', 'has.company'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/preferences', [DashboardController::class, 'savePreferences'])->name('dashboard.preferences');
+        Route::post('/onboarding/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
+        Route::post('/onboarding/dismiss-completed', [OnboardingController::class, 'dismissCompleted'])->name('onboarding.dismiss-completed');
         Route::get('/bantuan', [FeedbackController::class, 'pageIndex'])->name('feedback.page.index');
         Route::get('/bantuan/ticket/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
         Route::get('/bantuan/ticket/{feedback}/attachment', [FeedbackController::class, 'attachment'])->name('feedback.attachment');

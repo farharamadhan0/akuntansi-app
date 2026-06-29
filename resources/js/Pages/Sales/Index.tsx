@@ -8,7 +8,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateDDMMYYYY } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
-import { Plus, ScanLine, TrendingUp } from 'lucide-react';
+import { PackagePlus, Plus, ScanLine, TrendingUp } from 'lucide-react';
 
 interface Sale {
     id: number;
@@ -59,6 +59,9 @@ interface Props {
     filters: {
         status: string;
         per_page: number;
+    };
+    prerequisites: {
+        hasProducts: boolean;
     };
 }
 
@@ -149,7 +152,7 @@ function paymentTypeBadge(sale: Sale) {
     );
 }
 
-export default function Index({ sales, summary, filters }: Props) {
+export default function Index({ sales, summary, filters, prerequisites }: Props) {
     const { can } = usePermissions();
     const filter = (filters?.status as FilterType) || 'posted';
     const perPage = filters?.per_page ?? 25;
@@ -236,9 +239,29 @@ export default function Index({ sales, summary, filters }: Props) {
                 <CardContent className="p-0">
                     {filtered.length === 0 ? (
                         <div className="px-4 py-12 text-center text-muted-foreground">
-                            <ScanLine size={40} className="mx-auto mb-2 text-gray-300" />
-                            <p>Belum ada penjualan</p>
-                            <p className="mt-1 text-sm">Klik "Buat Penjualan" untuk mencatat penjualan pertama.</p>
+                            {!prerequisites.hasProducts ? (
+                                <>
+                                    <PackagePlus size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p className="font-medium text-gray-700">Buat produk terlebih dahulu</p>
+                                    <p className="mx-auto mt-1 max-w-md text-sm">
+                                        Penjualan membutuhkan produk atau jasa yang akan ditagihkan ke pelanggan.
+                                    </p>
+                                    {can('products.create') && (
+                                        <Link href="/master/produk/tambah" className="mt-4 inline-flex">
+                                            <Button className="gap-1.5">
+                                                <PackagePlus size={16} />
+                                                Buat Produk
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <ScanLine size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p>Belum ada penjualan</p>
+                                    <p className="mt-1 text-sm">Klik "Buat Penjualan" untuk mencatat penjualan pertama.</p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <>

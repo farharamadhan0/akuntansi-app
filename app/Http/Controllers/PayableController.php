@@ -105,6 +105,12 @@ class PayableController extends Controller
             'payables' => $payables,
             'summary' => $summary,
             'filters' => ['status' => $statusFilter, 'per_page' => $perPage],
+            'prerequisites' => [
+                'hasSuppliers' => Partner::where('company_id', $companyId)
+                    ->active()
+                    ->supplier()
+                    ->exists(),
+            ],
         ]);
     }
 

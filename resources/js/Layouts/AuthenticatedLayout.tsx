@@ -22,6 +22,8 @@ import {
     LifeBuoy,
     RefreshCw,
     ScanLine,
+    CheckCircle2,
+    Circle,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,14 @@ import logo from "@/assets/logo.png";
 interface PageProps {
     auth: { user: { name: string; is_owner?: boolean } };
     company?: { name: string; enabled_menus?: string[] | null };
+    onboarding?: {
+        has_cash_bank: boolean;
+        has_transaction: boolean;
+        is_skipped: boolean;
+        is_complete: boolean;
+        is_completed_dismissed: boolean;
+        should_show: boolean;
+    } | null;
     [key: string]: unknown;
 }
 
@@ -985,6 +995,142 @@ function FlashToastHandler() {
     return null;
 }
 
+function OnboardingPanel() {
+    const { onboarding } = usePage<PageProps>().props;
+    const { can, isOwner } = usePermissions();
+    const [isSkipping, setIsSkipping] = useState(false);
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    const isOnGuidedForm = [
+        "/master/kas-bank/tambah",
+        "/transaksi/uang-masuk/catat",
+        "/transaksi/uang-keluar/catat",
+    ].includes(pathname);
+
+    if (!onboarding?.should_show || isOnGuidedForm) return null;
+
+    const canCreateCashBank = isOwner || can("cash_bank.create");
+    const canCreateIncome = isOwner || can("income.create");
+    const canCreateExpense = isOwner || can("expense.create");
+
+    if (!canCreateCashBank && !canCreateIncome && !canCreateExpense) {
+        return null;
+    }
+
+    const skip = () => {
+        setIsSkipping(true);
+        router.post("/onboarding/skip", {}, {
+            preserveScroll: true,
+            onFinish: () => setIsSkipping(false),
+        });
+    };
+
+    const dismissCompleted = () => {
+        setIsSkipping(true);
+        router.post("/onboarding/dismiss-completed", {}, {
+            preserveScroll: true,
+            onFinish: () => setIsSkipping(false),
+        });
+    };
+
+    const StepIcon = ({ done }: { done: boolean }) => (
+        done
+            ? <CheckCircle2 size={18} className="text-emerald-600" />
+            : <Circle size={18} className="text-gray-300" />
+    );
+
+    return (
+        <aside className="fixed inset-x-4 bottom-4 z-40 border border-gray-200 bg-white p-4 shadow-xl sm:left-auto sm:right-5 sm:w-[360px]">
+            {onboarding.is_complete ? (
+                <>
+                    <div className="flex items-start gap-3">
+                        <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-emerald-600" />
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">
+                                Selamat, Anda sudah membuat transaksi pertama.
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-gray-500">
+                                Kas dan transaksi awal sudah siap. Dashboard akan mulai terisi dari data yang Anda catat.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                        <Button type="button" size="sm" onClick={dismissCompleted} disabled={isSkipping}>
+                            Tutup
+                        </Button>
+                    </div>
+                </>
+            ) : (
+                <>
+            <div>
+                <p className="text-sm font-semibold text-gray-900">Mulai pencatatan pertama</p>
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Siapkan kas utama, lalu catat transaksi pertama supaya dashboard mulai terisi.
+                </p>
+            </div>
+
+            <div className="mt-4 space-y-3">
+                <div className="flex items-start gap-3">
+                    <StepIcon done={onboarding.has_cash_bank} />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900">Buat kas/rekening</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                            Tempat uang masuk dan keluar dicatat.
+                        </p>
+                        {!onboarding.has_cash_bank && canCreateCashBank && (
+                            <Link href="/master/kas-bank/tambah" className="mt-2 inline-flex">
+                                <Button size="sm">Buat Kas</Button>
+                            </Link>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                    <StepIcon done={onboarding.has_transaction} />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900">Catat transaksi pertama</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                            Pilih uang masuk atau uang keluar setelah kas tersedia.
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {canCreateIncome && (
+                                onboarding.has_cash_bank ? (
+                                    <Link href="/transaksi/uang-masuk/catat">
+                                        <Button size="sm" variant="outline">Uang Masuk</Button>
+                                    </Link>
+                                ) : (
+                                    <Button size="sm" variant="outline" disabled>Uang Masuk</Button>
+                                )
+                            )}
+                            {canCreateExpense && (
+                                onboarding.has_cash_bank ? (
+                                    <Link href="/transaksi/uang-keluar/catat">
+                                        <Button size="sm" variant="outline">Uang Keluar</Button>
+                                    </Link>
+                                ) : (
+                                    <Button size="sm" variant="outline" disabled>Uang Keluar</Button>
+                                )
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-4 border-t border-gray-100 pt-3">
+                <button
+                    type="button"
+                    onClick={skip}
+                    disabled={isSkipping}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-800 disabled:opacity-50"
+                >
+                    Lewati panduan
+                </button>
+            </div>
+                </>
+            )}
+        </aside>
+    );
+}
+
 export default function AuthenticatedLayout({
     children,
     fullscreen = false,
@@ -1038,6 +1184,7 @@ export default function AuthenticatedLayout({
                     {children}
                 </main>
             </div>
+            <OnboardingPanel />
         </div>
     );
 }

@@ -10,7 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Plus, Users, AlertTriangle, Banknote } from 'lucide-react';
+import { Plus, Users, AlertTriangle, Banknote, UserPlus } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 import { formatDateDDMMYYYY } from '@/lib/format';
@@ -71,6 +71,9 @@ interface Props {
         status: string;
         per_page: number;
     };
+    prerequisites: {
+        hasCustomers: boolean;
+    };
 }
 
 type FilterType = 'all' | 'outstanding' | 'overdue' | 'paid';
@@ -88,7 +91,7 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ receivables, summary, filters }: Props) {
+export default function Index({ receivables, summary, filters, prerequisites }: Props) {
     const { can } = usePermissions();
     const filter = (filters?.status as FilterType) || 'outstanding';
     const perPage = filters?.per_page ?? 25;
@@ -219,12 +222,29 @@ export default function Index({ receivables, summary, filters }: Props) {
                 <CardContent className="p-0">
                     {filtered.length === 0 ? (
                         <div className="py-12 px-4 text-center text-muted-foreground">
-                            <Users
-                                size={40}
-                                className="mx-auto mb-2 text-gray-300"
-                            />
-                            <p>Belum ada data piutang</p>
-                            <p className="text-sm mt-1">Klik "Buat Piutang" untuk mencatat tagihan.</p>
+                            {!prerequisites.hasCustomers ? (
+                                <>
+                                    <UserPlus size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p className="font-medium text-gray-700">Buat pelanggan terlebih dahulu</p>
+                                    <p className="mx-auto mt-1 max-w-md text-sm">
+                                        Piutang membutuhkan mitra pelanggan sebagai pihak yang ditagih.
+                                    </p>
+                                    {can('partners.create') && (
+                                        <Link href="/master/mitra/tambah?type=customer" className="mt-4 inline-flex">
+                                            <Button className="gap-1.5">
+                                                <UserPlus size={16} />
+                                                Buat Pelanggan
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <Users size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p>Belum ada data piutang</p>
+                                    <p className="text-sm mt-1">Klik "Buat Piutang" untuk mencatat tagihan.</p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <>

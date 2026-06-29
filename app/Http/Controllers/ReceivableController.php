@@ -104,6 +104,12 @@ class ReceivableController extends Controller
             'receivables' => $receivables,
             'summary' => $summary,
             'filters' => ['status' => $statusFilter, 'per_page' => $perPage],
+            'prerequisites' => [
+                'hasCustomers' => Partner::where('company_id', $companyId)
+                    ->active()
+                    ->customer()
+                    ->exists(),
+            ],
         ]);
     }
 

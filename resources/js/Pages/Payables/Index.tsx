@@ -14,7 +14,7 @@ import {
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { FilterTabs } from '@/components/ui/filter-tabs';
 import { formatDateDDMMYYYY } from '@/lib/format';
-import { Plus, Wallet, AlertTriangle, Banknote } from 'lucide-react';
+import { Plus, Wallet, AlertTriangle, Banknote, UserPlus } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
 
 interface Payable {
@@ -71,6 +71,9 @@ interface Props {
         status: string;
         per_page: number;
     };
+    prerequisites: {
+        hasSuppliers: boolean;
+    };
 }
 
 type FilterType = 'all' | 'outstanding' | 'overdue' | 'paid';
@@ -88,7 +91,7 @@ function formatDate(dateStr: string) {
     return formatDateDDMMYYYY(dateStr);
 }
 
-export default function Index({ payables, summary, filters }: Props) {
+export default function Index({ payables, summary, filters, prerequisites }: Props) {
     const { can } = usePermissions();
     const filter = (filters?.status as FilterType) || 'outstanding';
     const perPage = filters?.per_page ?? 25;
@@ -218,12 +221,29 @@ export default function Index({ payables, summary, filters }: Props) {
                 <CardContent className="p-0">
                     {filtered.length === 0 ? (
                         <div className="py-12 px-4 text-center text-muted-foreground">
-                            <Wallet
-                                size={40}
-                                className="mx-auto mb-2 text-gray-300"
-                            />
-                            <p>Belum ada data hutang</p>
-                            <p className="text-sm mt-1">Klik "Catat Hutang" untuk mencatat hutang pertama.</p>
+                            {!prerequisites.hasSuppliers ? (
+                                <>
+                                    <UserPlus size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p className="font-medium text-gray-700">Buat supplier terlebih dahulu</p>
+                                    <p className="mx-auto mt-1 max-w-md text-sm">
+                                        Hutang membutuhkan mitra supplier sebagai pihak yang akan dibayar.
+                                    </p>
+                                    {can('partners.create') && (
+                                        <Link href="/master/mitra/tambah?type=supplier" className="mt-4 inline-flex">
+                                            <Button className="gap-1.5">
+                                                <UserPlus size={16} />
+                                                Buat Supplier
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <Wallet size={40} className="mx-auto mb-2 text-gray-300" />
+                                    <p>Belum ada data hutang</p>
+                                    <p className="text-sm mt-1">Klik "Catat Hutang" untuk mencatat hutang pertama.</p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <>

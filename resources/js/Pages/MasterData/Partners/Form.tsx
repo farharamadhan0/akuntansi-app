@@ -33,6 +33,12 @@ const ALL_TYPES = [
 
 export default function Form({ partner }: Props) {
     const isEdit = !!partner;
+    const requestedType = !isEdit && typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('type')
+        : null;
+    const defaultTypes = requestedType === 'supplier' || requestedType === 'customer'
+        ? [requestedType]
+        : ['customer'];
 
     const { data, setData, post, put, processing, errors } = useForm({
         name: partner?.name ?? '',
@@ -44,7 +50,7 @@ export default function Form({ partner }: Props) {
         credit_limit: partner?.credit_limit != null ? String(partner.credit_limit) : '',
         notes: partner?.notes ?? '',
         is_active: partner?.is_active ?? true,
-        types: (partner?.types ?? ['customer']) as string[],
+        types: (partner?.types ?? defaultTypes) as string[],
     });
 
     const toggleType = (type: string) => {

@@ -80,6 +80,11 @@ class SaleController extends Controller
                 'status' => $statusFilter,
                 'per_page' => $perPage,
             ],
+            'prerequisites' => [
+                'hasProducts' => Product::where('company_id', $companyId)
+                    ->active()
+                    ->exists(),
+            ],
         ]);
     }
 
