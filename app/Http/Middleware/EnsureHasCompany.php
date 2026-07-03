@@ -12,12 +12,23 @@ class EnsureHasCompany
     {
         $user = $request->user();
 
+        if (! $user) {
+            abort(403);
+        }
+
         if (!$user->current_company_id) {
             $firstCompanyId = $user->companies()
                 ->wherePivot('is_active', true)
                 ->value('companies.id');
 
             if (!$firstCompanyId) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'User belum memiliki perusahaan aktif.',
+                        'code' => 'company_required',
+                    ], 409);
+                }
+
                 return redirect()->route('company.setup');
             }
 
@@ -36,8 +47,16 @@ class EnsureHasCompany
                 ->value('companies.id');
 
             $user->update(['current_company_id' => $firstCompanyId]);
+            $user->refresh();
 
             if (!$firstCompanyId) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'User belum memiliki perusahaan aktif.',
+                        'code' => 'company_required',
+                    ], 409);
+                }
+
                 return redirect()->route('company.setup');
             }
         }
