@@ -346,9 +346,9 @@ export default function Landing() {
                             <a className="hover:text-[#0F172A]" href="#keunggulan">Keunggulan</a>
                             <a className="hover:text-[#0F172A]" href="#cara-kerja">Cara kerja</a>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Link className="hidden text-sm font-semibold text-[#0F172A] sm:inline-flex" href="/dashboard">Masuk</Link>
-                            <a target="_blank" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
+                        <div className="flex items-center gap-1 md:gap-3">
+                            <Link className="h-7 inline-flex md:h-10 items-center justify-center rounded-lg border border-slate-300 bg-emerald-500 px-6 text-xs md:text-sm font-bold text-white hover:text-emerald-500 hover:bg-gray-200 transition" href="/dashboard">Masuk</Link>
+                            <a target="_blank" className="inline-flex h-7 md:h-10 items-center justify-center rounded-lg bg-primary px-4 text-xs md:text-sm  font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-gray-200 hover:text-primary" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
                                 Konsultasi
                             </a>
                         </div>
@@ -362,18 +362,18 @@ export default function Landing() {
                                 <ShieldCheck className="size-4" />
                                 Akuntansi ramah untuk UMKM
                             </div>
-                            <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
+                            <h1 className="mt-6 text-2xl font-bold tracking-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
                                 Aplikasi Pencatatan Keuangan Fleksibel
                             </h1>
-                            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#64748B]">
+                            <p className="mt-6 max-w-2xl text-sm md:text-xl leading-8 text-[#64748B]">
                                 Catat uang masuk dan keluar, kelola penjualan, pembelian, stok, hutang piutang, hingga laporan keuangan dalam satu aplikasi yang bisa disesuaikan dengan kebutuhan bisnis Anda.
                             </p>
                             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                                <a target="_blank" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-xl shadow-emerald-500/20 transition hover:bg-emerald-600" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
+                                <a target="_blank" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-xl shadow-emerald-500/20 transition hover:text-primary hover:bg-gray-200" href="https://api.whatsapp.com/send?phone=6285230811625&text=Halo%2C%20saya%20mau%20konsultasi%20soal%20emwal.%20">
                                     Konsultasi
                                     <ArrowRight className="size-4" />
                                 </a>
-                                <a className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-300 bg-white px-6 text-sm font-bold text-[#0F172A] transition hover:border-slate-400" href="/dashboard">
+                                <a className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-300 bg-emerald-500 px-6 text-sm font-bold text-white hover:text-emerald-500 hover:bg-gray-200 transition" href="/dashboard">
                                     Mulai Menggunakan
                                 </a>
                             </div>
