@@ -82,9 +82,7 @@ class PurchaseController extends Controller
                 'per_page' => $perPage,
             ],
             'prerequisites' => [
-                'hasProducts' => Product::where('company_id', $companyId)
-                    ->active()
-                    ->exists(),
+                'hasProducts' => $this->purchaseProductQuery($companyId)->exists(),
             ],
         ]);
     }
@@ -97,7 +95,7 @@ class PurchaseController extends Controller
             'purchase' => null,
             'partners' => Partner::where('company_id', $companyId)->active()->supplier()->orderBy('name')->get(['id', 'name', 'code']),
             'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
-            'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
+            'products' => $this->purchaseProductQuery($companyId)->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
         ]);
     }
 
@@ -255,7 +253,7 @@ class PurchaseController extends Controller
             ],
             'partners' => Partner::where('company_id', $companyId)->active()->supplier()->orderBy('name')->get(['id', 'name', 'code']),
             'cashBankAccounts' => CashBankAccount::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'name']),
-            'products' => Product::where('company_id', $companyId)->active()->orderBy('name')->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
+            'products' => $this->purchaseProductQuery($companyId)->get(['id', 'product_code', 'sku', 'name', 'product_type', 'unit', 'purchase_price', 'is_stock_tracked', 'current_stock']),
         ]);
     }
 
@@ -298,5 +296,13 @@ class PurchaseController extends Controller
         if ($purchase->company_id !== auth()->user()->current_company_id) {
             abort(403);
         }
+    }
+
+    protected function purchaseProductQuery(int $companyId)
+    {
+        return Product::where('company_id', $companyId)
+            ->active()
+            ->where('product_type', '!=', 'menu_item')
+            ->orderBy('name');
     }
 }

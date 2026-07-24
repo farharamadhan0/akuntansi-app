@@ -50,6 +50,11 @@ class PurchaseService
 
             foreach ($data['items'] as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
+
+                if ($product->product_type === 'menu_item') {
+                    throw new \Exception('Produk tipe menu tidak dapat dibeli langsung.');
+                }
+
                 $line = $this->normalizeLine($product, $itemData);
 
                 PurchaseItem::create([

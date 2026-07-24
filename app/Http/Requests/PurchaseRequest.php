@@ -136,6 +136,11 @@ class PurchaseRequest extends FormRequest
                     continue;
                 }
 
+                if ($product->product_type === 'menu_item') {
+                    $v->errors()->add("items.$index.product_id", 'Produk tipe menu tidak dapat dibeli langsung.');
+                    continue;
+                }
+
                 if (($item['quantity'] ?? 0) <= 0) {
                     continue;
                 }
