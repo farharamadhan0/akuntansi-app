@@ -263,10 +263,10 @@ export default function Edit({ sale, partners, cashBankAccounts, products }: Pro
                                             </FormField>
                                         </div>
                                         <div className="md:col-span-3"><FormField label="Deskripsi"><Input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-1"><FormField label="Qty"><Input type="number" min="0" step="0.01" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} /></FormField></div>
+                                        <div className="md:col-span-1"><FormField label="Qty"><Input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-1"><FormField label="Unit"><Input value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-2"><FormField label="Harga"><Input type="number" min="0" step="0.01" value={item.unit_price} onChange={(e) => updateItem(index, 'unit_price', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-1"><FormField label="Diskon"><Input type="number" min="0" step="0.01" value={item.discount_amount} onChange={(e) => updateItem(index, 'discount_amount', e.target.value)} /></FormField></div>
+                                        <div className="md:col-span-2"><FormField label="Harga"><Input type="number" min="0" step="1" value={item.unit_price} onChange={(e) => updateItem(index, 'unit_price', e.target.value)} /></FormField></div>
+                                        <div className="md:col-span-1"><FormField label="Diskon"><Input type="number" min="0" step="1" value={item.discount_amount} onChange={(e) => updateItem(index, 'discount_amount', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-12 flex justify-between text-sm text-muted-foreground">
                                             <span>Total baris: {(Number(item.quantity || 0) * Number(item.unit_price || 0) - Number(item.discount_amount || 0)).toLocaleString('id-ID')}</span>
                                             {items.length > 1 && <button type="button" className="text-red-600" onClick={() => removeItem(index)}>Hapus</button>}

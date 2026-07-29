@@ -124,10 +124,10 @@ export default function Form({ product, product_types, readonly = false }: Props
                                     <Input value={data.unit} onChange={(e) => setData('unit', e.target.value)} disabled={readonly} />
                                 </FormField>
                                 <FormField label="Harga Jual" error={errors.sales_price}>
-                                    <Input type="number" min="0" step="0.01" value={data.sales_price} onChange={(e) => setData('sales_price', e.target.value)} disabled={readonly} />
+                                    <Input type="number" min="0" step="1" value={data.sales_price} onChange={(e) => setData('sales_price', e.target.value)} disabled={readonly} />
                                 </FormField>
                                 <FormField label="Harga Beli" error={errors.purchase_price}>
-                                    <Input type="number" min="0" step="0.01" value={data.purchase_price} onChange={(e) => setData('purchase_price', e.target.value)} disabled={readonly} />
+                                    <Input type="number" min="0" step="1" value={data.purchase_price} onChange={(e) => setData('purchase_price', e.target.value)} disabled={readonly} />
                                 </FormField>
                             </div>
 

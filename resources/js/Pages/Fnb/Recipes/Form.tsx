@@ -202,7 +202,7 @@ export default function Form({ recipe, menuProducts, ingredientProducts }: Props
                                         </Select>
                                     </FormField>
                                     <FormField label="Jumlah Hasil" error={errors.yield_quantity} required>
-                                        <Input type="number" min="0" step="0.01" value={data.yield_quantity} onChange={(event) => setData('yield_quantity', event.target.value)} />
+                                        <Input type="number" min="0" step="1" value={data.yield_quantity} onChange={(event) => setData('yield_quantity', event.target.value)} />
                                     </FormField>
                                     <FormField label="Satuan Hasil" error={errors.yield_unit} required>
                                         <Input value={data.yield_unit} onChange={(event) => setData('yield_unit', event.target.value)} />
@@ -250,7 +250,7 @@ export default function Form({ recipe, menuProducts, ingredientProducts }: Props
                                                     </div>
                                                     <div className="md:col-span-2">
                                                         <FormField label="Qty" error={errors[`items.${index}.quantity` as keyof typeof errors] as string}>
-                                                            <Input type="number" min="0" step="0.01" value={item.quantity} onChange={(event) => updateItem(index, 'quantity', event.target.value)} />
+                                                            <Input type="number" min="0" step="1" value={item.quantity} onChange={(event) => updateItem(index, 'quantity', event.target.value)} />
                                                         </FormField>
                                                     </div>
                                                     <div className="md:col-span-2">
@@ -260,7 +260,7 @@ export default function Form({ recipe, menuProducts, ingredientProducts }: Props
                                                     </div>
                                                     <div className="md:col-span-2">
                                                         <FormField label="Waste %" error={errors[`items.${index}.waste_percentage` as keyof typeof errors] as string}>
-                                                            <Input type="number" min="0" max="100" step="0.01" value={item.waste_percentage} onChange={(event) => updateItem(index, 'waste_percentage', event.target.value)} />
+                                                            <Input type="number" min="0" max="100" step="1" value={item.waste_percentage} onChange={(event) => updateItem(index, 'waste_percentage', event.target.value)} />
                                                         </FormField>
                                                     </div>
                                                     <div className="flex items-end justify-end md:col-span-1">

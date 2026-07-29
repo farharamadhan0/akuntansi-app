@@ -802,7 +802,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                         <Input
                                             type="number"
                                             min="0"
-                                            step="0.01"
+                                            step="1"
                                             value={item.unit_price}
                                             onChange={(event) => updateItem(index, 'unit_price', event.target.value)}
                                             className="h-8 px-2 text-right text-xs tabular-nums"
@@ -850,7 +850,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                         <Input
                                             type="number"
                                             min="0"
-                                            step="0.01"
+                                            step="1"
                                             value={cashReceived}
                                             onChange={(event) => setCashReceived(event.target.value)}
                                             className="h-9"
@@ -861,7 +861,7 @@ export default function Pos({ cashBankAccounts, products, receiptSale, autoPrint
                                         <Input
                                             type="number"
                                             min="0"
-                                            step="0.01"
+                                            step="1"
                                             value={globalDiscount}
                                             onChange={(event) => setGlobalDiscount(event.target.value)}
                                             className="h-9"

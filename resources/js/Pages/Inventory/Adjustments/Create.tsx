@@ -110,8 +110,8 @@ export default function Create({ products }: Props) {
                                                 </Select>
                                             </FormField>
                                         </div>
-                                        <div className="md:col-span-2"><FormField label="Qty"><Input type="number" min="0" step="0.01" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} /></FormField></div>
-                                        <div className="md:col-span-2"><FormField label="Unit Cost"><Input type="number" min="0" step="0.01" value={item.unit_cost} onChange={(e) => updateItem(index, 'unit_cost', e.target.value)} disabled={item.adjustment_type === 'out'} /></FormField></div>
+                                        <div className="md:col-span-2"><FormField label="Qty"><Input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, 'quantity', e.target.value)} /></FormField></div>
+                                        <div className="md:col-span-2"><FormField label="Unit Cost"><Input type="number" min="0" step="1" value={item.unit_cost} onChange={(e) => updateItem(index, 'unit_cost', e.target.value)} disabled={item.adjustment_type === 'out'} /></FormField></div>
                                         <div className="md:col-span-2"><FormField label="Alasan"><Input value={item.reason} onChange={(e) => updateItem(index, 'reason', e.target.value)} /></FormField></div>
                                         <div className="md:col-span-12 flex justify-end">{items.length > 1 && <button type="button" className="text-sm text-red-600" onClick={() => removeItem(index)}>Hapus</button>}</div>
                                     </div>

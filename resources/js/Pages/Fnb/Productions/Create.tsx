@@ -185,7 +185,7 @@ export default function Create({ recipes }: Props) {
                                         <Input type="date" value={data.date} onChange={(event) => setData('date', event.target.value)} />
                                     </FormField>
                                     <FormField label={`Jumlah Produksi${selectedRecipe ? ` (${selectedRecipe.yield_unit})` : ''}`} error={errors.actual_yield_quantity} required>
-                                        <Input type="number" min="0" step="0.01" value={data.actual_yield_quantity} onChange={(event) => handleYieldQuantityChange(event.target.value)} />
+                                        <Input type="number" min="0" step="1" value={data.actual_yield_quantity} onChange={(event) => handleYieldQuantityChange(event.target.value)} />
                                     </FormField>
                                     <FormField label="Catatan" error={errors.notes} className="md:col-span-2">
                                         <Textarea rows={3} value={data.notes} onChange={(event) => setData('notes', event.target.value)} />
@@ -222,7 +222,7 @@ export default function Create({ recipes }: Props) {
                                                                 <Input
                                                                     type="number"
                                                                     min="0"
-                                                                    step="0.01"
+                                                                    step="1"
                                                                     value={input.planned_quantity}
                                                                     readOnly
                                                                     className="bg-muted/50 text-muted-foreground"
@@ -231,7 +231,7 @@ export default function Create({ recipes }: Props) {
                                                         </div>
                                                         <div className="md:col-span-2">
                                                             <FormField label="Aktual" error={errors[`inputs.${index}.actual_quantity` as keyof typeof errors] as string}>
-                                                                <Input type="number" min="0" step="0.01" value={input.actual_quantity} onChange={(event) => updateInput(index, 'actual_quantity', event.target.value)} />
+                                                                <Input type="number" min="0" step="1" value={input.actual_quantity} onChange={(event) => updateInput(index, 'actual_quantity', event.target.value)} />
                                                             </FormField>
                                                         </div>
                                                         <div className="md:col-span-1">
